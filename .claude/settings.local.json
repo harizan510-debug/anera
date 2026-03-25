@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:til.simonwillison.net)",
+      "WebFetch(domain:www.builder.io)",
+      "mcp__mcp-registry__search_mcp_registry",
+      "Read(//c/Users/zirah/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/e0360839-4422-4f9d-bab3-71dc0c3577f2/9fe5b16c-4493-4a9c-bf63-0aa3de0b2438/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\zirah\\\\Downloads\\\\AI Scouts\\\\Anera Bolt Prompt Brainstorm.docx\" unpacked_anera/)",
+      "Bash(pip install:*)",
+      "Bash(python -c \":*)",
+      "Bash(npm create:*)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npm --version)"
+    ]
+  }
+}

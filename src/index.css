@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,300;1,14..32,400&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --bg: #F9F7F4;
+  --surface: #FFFFFF;
+  --border: #EAE0D5;
+  --text-primary: #1C1A18;
+  --text-secondary: #7A6A5A;
+  --accent: #B8956A;
+  --accent-dark: #8E6E48;
+  --accent-light: #F2EAE0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+input, textarea, button { font-family: inherit; }
