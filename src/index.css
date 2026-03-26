@@ -3,14 +3,14 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #F9F7F4;
+  --bg: #FFFFFF;
   --surface: #FFFFFF;
-  --border: #EAE0D5;
-  --text-primary: #1C1A18;
-  --text-secondary: #7A6A5A;
-  --accent: #B8956A;
-  --accent-dark: #8E6E48;
-  --accent-light: #F2EAE0;
+  --border: #EBEBEB;
+  --text-primary: #18181B;
+  --text-secondary: #71717A;
+  --accent: #5B9BD5;
+  --accent-dark: #2F72B3;
+  --accent-light: #E1EFFA;
 }
 
 * {
@@ -35,3 +35,20 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 input, textarea, button { font-family: inherit; }
+
+/* ── Custom utilities ──────────────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes badge-pop {
+  0%   { transform: scale(0.65) translateY(6px); opacity: 0; }
+  65%  { transform: scale(1.07) translateY(-2px); opacity: 1; }
+  82%  { transform: scale(0.97) translateY(0px); }
+  100% { transform: scale(1) translateY(0px); opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0px);  opacity: 1; }
+}

@@ -145,7 +145,7 @@ export default function Declutter() {
               {/* Item header */}
               <div className="flex items-center gap-3 p-4">
                 <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} />
+                  {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm capitalize truncate" style={{ color: 'var(--text-primary)' }}>

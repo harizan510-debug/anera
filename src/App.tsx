@@ -7,7 +7,6 @@ import Outfits from './pages/Outfits';
 import AskAnera from './pages/AskAnera';
 import Purchase from './pages/Purchase';
 import Insights from './pages/Insights';
-import Declutter from './pages/Declutter';
 import Social from './pages/Social';
 
 function AppShell({ children }: { children: React.ReactNode }) {
@@ -54,10 +53,7 @@ export default function App() {
           path="/insights"
           element={<AppShell><Insights /></AppShell>}
         />
-        <Route
-          path="/declutter"
-          element={<AppShell><Declutter /></AppShell>}
-        />
+        <Route path="/declutter" element={<Navigate to="/insights" replace />} />
         <Route
           path="/social"
           element={<AppShell><Social /></AppShell>}

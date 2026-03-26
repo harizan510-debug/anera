@@ -1,16 +1,44 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutGrid, Sparkles, MessageCircle, ShoppingBag, BarChart2, Trash2, Users
+  LayoutGrid, Sparkles, ShoppingBag, BarChart2, Users
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/wardrobe',  icon: LayoutGrid,    label: 'Wardrobe' },
-  { to: '/outfits',   icon: Sparkles,      label: 'Outfits' },
-  { to: '/ask',       icon: MessageCircle, label: 'Ask' },
-  { to: '/social',    icon: Users,         label: 'Community' },
-  { to: '/purchase',  icon: ShoppingBag,   label: 'Buy?' },
-  { to: '/insights',  icon: BarChart2,     label: 'Insights' },
-  { to: '/declutter', icon: Trash2,        label: 'Declutter' },
+  {
+    to: '/wardrobe',
+    icon: LayoutGrid,
+    label: 'Wardrobe',
+    color: '#7C3AED',
+    bg: '#EDE9FE',
+  },
+  {
+    to: '/outfits',
+    icon: Sparkles,
+    label: 'Outfits',
+    color: '#DB2777',
+    bg: '#FCE7F3',
+  },
+  {
+    to: '/social',
+    icon: Users,
+    label: 'Community',
+    color: '#059669',
+    bg: '#D1FAE5',
+  },
+  {
+    to: '/purchase',
+    icon: ShoppingBag,
+    label: 'Buy?',
+    color: '#EA580C',
+    bg: '#FFEDD5',
+  },
+  {
+    to: '/insights',
+    icon: BarChart2,
+    label: 'Insights',
+    color: '#0891B2',
+    bg: '#CFFAFE',
+  },
 ];
 
 export default function BottomNav() {
@@ -19,28 +47,34 @@ export default function BottomNav() {
       style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
       className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-1 safe-area-bottom"
     >
-      {navItems.map(({ to, icon: Icon, label }) => (
+      {navItems.map(({ to, icon: Icon, label, color, bg }) => (
         <NavLink
           key={to}
           to={to}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-150 min-w-0 flex-1 ${
-              isActive
-                ? 'text-[var(--accent)]'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`
-          }
+          className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-xl transition-all duration-150 min-w-0 flex-1"
         >
           {({ isActive }) => (
             <>
               <div
-                className={`p-1.5 rounded-xl transition-all duration-150 ${
-                  isActive ? 'bg-[var(--accent-light)]' : ''
-                }`}
+                className="p-1.5 rounded-xl transition-all duration-150"
+                style={
+                  isActive
+                    ? { background: bg, color }
+                    : { color: 'var(--text-secondary)' }
+                }
               >
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
+                <Icon
+                  size={18}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                  color={isActive ? color : undefined}
+                />
               </div>
-              <span className="text-[10px] font-medium tracking-wide">{label}</span>
+              <span
+                className="text-[10px] font-medium tracking-wide transition-colors duration-150"
+                style={{ color: isActive ? color : 'var(--text-secondary)' }}
+              >
+                {label}
+              </span>
             </>
           )}
         </NavLink>

@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, CheckCircle, ArrowRight, Loader2, Shirt } from 'lucide-react';
-import { analyzeClothingImage } from '../api';
+import { detectClothingItems } from '../api';
+import type { RawDetection } from '../api';
 import { completeOnboarding, fileToBase64, genId } from '../store';
-import type { WardrobeItem } from '../types';
+import type { WardrobeItem, DetectedItem } from '../types';
+import { cropImage } from '../utils/cropImage';
+import MultiItemReview from '../components/MultiItemReview';
 
-type Step = 'welcome' | 'name' | 'upload' | 'processing' | 'done';
+type Step = 'welcome' | 'name' | 'upload' | 'processing' | 'review' | 'done';
 
 interface UploadedPhoto {
   file: File;
@@ -13,13 +16,23 @@ interface UploadedPhoto {
   base64?: string;
 }
 
+// Demo detections for when no API key is configured
+const DEMO_DETECTIONS: RawDetection[] = [
+  { category: 'top', categoryConfidence: 0.92, subcategory: 'blazer', subcategoryConfidence: 0.88, color: 'navy', colorConfidence: 0.95, brand: 'Zara', brandConfidence: 0.55, pattern: 'plain', fit: 'regular', tags: ['formal', 'work'], boundingBox: { x: 0.02, y: 0.02, width: 0.96, height: 0.96 } },
+  { category: 'bottom', categoryConfidence: 0.90, subcategory: 'jeans', subcategoryConfidence: 0.85, color: 'blue', colorConfidence: 0.91, brand: '', brandConfidence: 0.3, pattern: 'plain', fit: 'slim', tags: ['casual'], boundingBox: { x: 0.02, y: 0.02, width: 0.96, height: 0.96 } },
+  { category: 'footwear', categoryConfidence: 0.96, subcategory: 'sneakers', subcategoryConfidence: 0.91, color: 'white', colorConfidence: 0.98, brand: 'Nike', brandConfidence: 0.91, pattern: 'plain', fit: 'regular', tags: ['casual', 'sporty'], boundingBox: { x: 0.02, y: 0.02, width: 0.96, height: 0.96 } },
+  { category: 'dress', categoryConfidence: 0.94, subcategory: 'midi dress', subcategoryConfidence: 0.87, color: 'black', colorConfidence: 0.96, brand: '', brandConfidence: 0.3, pattern: 'plain', fit: 'fitted', tags: ['elegant'], boundingBox: { x: 0.02, y: 0.02, width: 0.96, height: 0.96 } },
+  { category: 'outerwear', categoryConfidence: 0.89, subcategory: 'trench coat', subcategoryConfidence: 0.84, color: 'camel', colorConfidence: 0.91, brand: 'Burberry', brandConfidence: 0.78, pattern: 'plain', fit: 'oversized', tags: ['classic'], boundingBox: { x: 0.02, y: 0.02, width: 0.96, height: 0.96 } },
+];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('welcome');
   const [name, setName] = useState('');
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [progressMsg, setProgressMsg] = useState('');
-  const [detectedItems, setDetectedItems] = useState<WardrobeItem[]>([]);
+  const [detectedItems, setDetectedItems] = useState<DetectedItem[]>([]);
+  const [savedCount, setSavedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFilePick = useCallback(async (files: FileList | null) => {
@@ -48,86 +61,87 @@ export default function Onboarding() {
 
   const processPhotos = async () => {
     setStep('processing');
-    const items: WardrobeItem[] = [];
+    const allDetected: DetectedItem[] = [];
     const hasApiKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
 
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
-      setProgressMsg(`Analysing photo ${i + 1} of ${photos.length}…`);
+      setProgressMsg(`Detecting items in photo ${i + 1} of ${photos.length}…`);
+
       try {
+        let rawItems: RawDetection[];
+
         if (hasApiKey && photo.base64) {
-          const mimeType = photo.file.type || 'image/jpeg';
-          const analysed = await analyzeClothingImage(photo.base64, mimeType);
-          items.push({
-            id: genId(),
-            imageUrl: photo.previewUrl,
-            category: analysed.category || 'top',
-            subcategory: analysed.subcategory || 'top',
-            color: analysed.color || 'unknown',
-            pattern: analysed.pattern || 'plain',
-            fit: analysed.fit || 'regular',
-            wearCount: 0,
-            lastWorn: null,
-            estimatedValue: 0,
-            tags: analysed.tags || [],
-          } as WardrobeItem);
+          rawItems = await detectClothingItems(photo.base64, photo.file.type || 'image/jpeg');
         } else {
-          // Demo fallback when no API key
-          const demoCategories: WardrobeItem['category'][] = ['top', 'bottom', 'shoes', 'outerwear', 'dress'];
-          const demoColors = ['black', 'white', 'navy', 'beige', 'grey', 'brown'];
-          const demoSubcats = { top: 't-shirt', bottom: 'jeans', shoes: 'sneakers', outerwear: 'jacket', dress: 'dress', accessory: 'bag' };
-          const cat = demoCategories[i % demoCategories.length];
-          items.push({
-            id: genId(),
-            imageUrl: photo.previewUrl,
-            category: cat,
-            subcategory: demoSubcats[cat],
-            color: demoColors[i % demoColors.length],
-            pattern: 'plain',
-            fit: 'regular',
-            wearCount: 0,
-            lastWorn: null,
-            estimatedValue: 0,
-            tags: ['casual'],
+          await new Promise(r => setTimeout(r, 600));
+          rawItems = [DEMO_DETECTIONS[i % DEMO_DETECTIONS.length]];
+        }
+
+        for (const raw of rawItems) {
+          let croppedImageUrl = photo.previewUrl;
+          try {
+            croppedImageUrl = await cropImage(photo.previewUrl, raw.boundingBox);
+          } catch {
+            // fallback: use full photo
+          }
+          allDetected.push({
+            tempId: genId(),
+            croppedImageUrl,
+            originalImageUrl: photo.previewUrl,
+            category: raw.category,
+            categoryConfidence: raw.categoryConfidence,
+            subcategory: raw.subcategory,
+            subcategoryConfidence: raw.subcategoryConfidence,
+            color: raw.color,
+            colorConfidence: raw.colorConfidence,
+            brand: raw.brand,
+            brandConfidence: raw.brandConfidence,
+            pattern: raw.pattern,
+            fit: raw.fit,
+            tags: raw.tags,
+            boundingBox: raw.boundingBox,
           });
-          await new Promise(r => setTimeout(r, 400)); // simulate delay
         }
       } catch (err) {
-        console.error('Error analysing photo:', err);
-        // Keep going with a placeholder
-        items.push({
-          id: genId(),
-          imageUrl: photo.previewUrl,
+        console.error('Detection failed for photo:', i, err);
+        allDetected.push({
+          tempId: genId(),
+          croppedImageUrl: photo.previewUrl,
+          originalImageUrl: photo.previewUrl,
           category: 'top',
+          categoryConfidence: 0.5,
           subcategory: 'item',
+          subcategoryConfidence: 0.5,
           color: 'unknown',
+          colorConfidence: 0.5,
+          brand: '',
+          brandConfidence: 0.3,
           pattern: 'plain',
           fit: 'regular',
-          wearCount: 0,
-          lastWorn: null,
-          estimatedValue: 0,
           tags: [],
+          boundingBox: { x: 0, y: 0, width: 1, height: 1 },
         });
       }
     }
 
-    setDetectedItems(items);
-    completeOnboarding(name, items);
+    setDetectedItems(allDetected);
+    setStep('review');
+  };
+
+  const handleReviewConfirm = (confirmed: WardrobeItem[]) => {
+    completeOnboarding(name, confirmed);
+    setSavedCount(confirmed.length);
     setStep('done');
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: 'var(--bg)' }}
-    >
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
+
       {/* Header */}
       <div className="px-6 pt-14 pb-6">
         <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: 'var(--accent)' }}
-          >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent)' }}>
             <Shirt size={16} color="white" />
           </div>
           <span className="font-semibold tracking-wide text-lg" style={{ color: 'var(--text-primary)' }}>
@@ -138,6 +152,7 @@ export default function Onboarding() {
 
       {/* Steps */}
       <div className="flex-1 px-6">
+
         {step === 'welcome' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
             <div className="mb-10">
@@ -176,11 +191,7 @@ export default function Onboarding() {
               placeholder="Your name"
               autoFocus
               className="w-full px-4 py-4 rounded-2xl text-lg outline-none mb-6"
-              style={{
-                background: 'var(--surface)',
-                border: '1.5px solid var(--border)',
-                color: 'var(--text-primary)',
-              }}
+              style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', color: 'var(--text-primary)' }}
               onKeyDown={e => e.key === 'Enter' && name.trim() && setStep('upload')}
             />
             <button
@@ -200,7 +211,7 @@ export default function Onboarding() {
               Upload your outfits,<br />{name}.
             </h2>
             <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Photos of individual clothing items or full OOTDs work great. The more you add, the better I get.
+              Photos of individual items or full OOTDs work great. Anera can detect multiple garments from a single photo.
             </p>
 
             {/* Drop zone */}
@@ -209,16 +220,9 @@ export default function Onboarding() {
               onDragOver={e => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
               className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer mb-5"
-              style={{
-                border: '1.5px dashed var(--border)',
-                background: 'var(--surface)',
-                padding: '32px 20px',
-              }}
+              style={{ border: '1.5px dashed var(--border)', background: 'var(--surface)', padding: '32px 20px' }}
             >
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center"
-                style={{ background: 'var(--accent-light)' }}
-              >
+              <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
                 <Upload size={22} style={{ color: 'var(--accent)' }} />
               </div>
               <div className="text-center">
@@ -272,11 +276,7 @@ export default function Onboarding() {
               Build my wardrobe <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => {
-                // Skip — go straight in with empty wardrobe
-                completeOnboarding(name || 'You', []);
-                navigate('/wardrobe');
-              }}
+              onClick={() => { completeOnboarding(name || 'You', []); navigate('/wardrobe'); }}
               className="w-full py-3 text-sm text-center"
               style={{ color: 'var(--text-secondary)' }}
             >
@@ -287,35 +287,29 @@ export default function Onboarding() {
 
         {step === 'processing' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div
-              className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-              style={{ background: 'var(--accent-light)' }}
-            >
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'var(--accent-light)' }}>
               <Loader2 size={32} style={{ color: 'var(--accent)' }} className="animate-spin" />
             </div>
             <h2 className="text-2xl font-light mb-3" style={{ color: 'var(--text-primary)' }}>
-              Building your wardrobe…
+              Scanning your wardrobe…
             </h2>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {progressMsg || 'Detecting clothing items and colours…'}
+              {progressMsg || 'Detecting clothing items…'}
             </p>
           </div>
         )}
 
         {step === 'done' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div
-              className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-              style={{ background: 'var(--accent-light)' }}
-            >
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'var(--accent-light)' }}>
               <CheckCircle size={32} style={{ color: 'var(--accent)' }} />
             </div>
             <h2 className="text-3xl font-light mb-3" style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-              We've detected<br />
-              <span style={{ color: 'var(--accent)' }}>{detectedItems.length} items</span>
+              Wardrobe ready!<br />
+              <span style={{ color: 'var(--accent)' }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
             </h2>
             <p className="text-sm mb-10" style={{ color: 'var(--text-secondary)' }}>
-              Your wardrobe is ready. Let's start styling.
+              Let's start styling, {name}.
             </p>
             <button
               onClick={() => navigate('/wardrobe')}
@@ -327,6 +321,32 @@ export default function Onboarding() {
           </div>
         )}
       </div>
+
+      {/* Multi-item review overlay — shown as its own full-screen step */}
+      {step === 'review' && (
+        <MultiItemReview
+          items={detectedItems}
+          onConfirm={handleReviewConfirm}
+          onCancel={() => {
+            // Skip review: save detected items as-is
+            const fallback: WardrobeItem[] = detectedItems.map(d => ({
+              id: genId(),
+              imageUrl: d.croppedImageUrl || d.originalImageUrl,
+              category: d.category,
+              subcategory: d.subcategory,
+              color: d.color,
+              pattern: d.pattern,
+              fit: d.fit,
+              wearCount: 0,
+              lastWorn: null,
+              estimatedValue: 0,
+              tags: d.tags,
+            }));
+            completeOnboarding(name, fallback);
+            navigate('/wardrobe');
+          }}
+        />
+      )}
     </div>
   );
 }
