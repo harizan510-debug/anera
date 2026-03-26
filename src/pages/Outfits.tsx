@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser, genId } from '../store';
 import type { WardrobeItem } from '../types';
 import { generateOutfitRecommendations } from '../api';
-import { supabase, getCityWeather } from '../supabase';
+import { supabase, isSupabaseConfigured, getCityWeather } from '../supabase';
 import type { WeatherInfo } from '../supabase';
 import PageHeader from '../components/PageHeader';
 
@@ -132,6 +132,7 @@ export default function Outfits() {
 
   // Weather on mount
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
     (async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;

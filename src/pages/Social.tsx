@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Plus, X, Loader2, Send, Video, Image } from 'lucide-react';
-import { supabase } from '../supabase';
+import { supabase, isSupabaseConfigured } from '../supabase';
 import type { OotdPost, PostComment } from '../supabase';
 import AuthModal from './AuthModal';
 
@@ -20,6 +20,7 @@ export default function Social() {
   const [openComments, setOpenComments] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) { setLoading(false); return; }
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     fetchPosts();
@@ -27,6 +28,7 @@ export default function Social() {
   }, []);
 
   const fetchPosts = async () => {
+    if (!isSupabaseConfigured) { setLoading(false); return; }
     setLoading(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData.session?.user.id;
