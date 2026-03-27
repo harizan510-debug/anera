@@ -92,8 +92,8 @@ function inferLifetime(name: string, p: number): number {
   if (/\bjeans\b|\bdenim\b/.test(n)) return p > 150 ? 8 : p > 80 ? 6 : p > 40 ? 4 : 3;
   // Coats / outerwear — built to last
   if (/\bcoat\b|\bjacket\b|\bblazer\b|\bparka\b|\btrench/.test(n)) return p > 300 ? 10 : p > 150 ? 7 : p > 70 ? 5 : 3;
-  // Leather goods — very long-lasting
-  if (/\bleather\b/.test(n)) return p > 200 ? 10 : p > 100 ? 7 : 5;
+  // Leather goods — ages beautifully, lasts decades if quality
+  if (/\bleather\b/.test(n)) return p > 300 ? 20 : p > 150 ? 15 : p > 80 ? 10 : 7;
   // Shoes / boots
   if (/\bboot|\bshoe/.test(n)) return p > 200 ? 8 : p > 100 ? 5 : p > 50 ? 3.5 : 2;
   // Sneakers — wear faster

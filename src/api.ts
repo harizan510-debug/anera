@@ -309,7 +309,7 @@ INSTRUCTIONS:
    Lifetime estimates by item type — PRICE IS A MAJOR FACTOR (higher price = quality = lasts longer):
    - Jeans/denim: 3–8 years (budget 3, mid 5–6, premium 7–8)
    - Coats/jackets/blazers: 3–10 years (budget 3, mid 5–7, premium 8–10)
-   - Leather goods: 5–10+ years
+   - Leather goods: 7–20+ years (quality leather is vintage — it only gets better with age)
    - Blouses/shirts: 2.5–6 years (budget 2.5, mid 3.5–4.5, premium 5–6)
    - Knitwear/sweaters: 2.5–7 years (budget 2.5, mid 4–5, premium 6–7)
    - Dresses: 2.5–7 years (budget 2.5, mid 3.5–5, premium 6–7)
@@ -366,7 +366,7 @@ Return ONLY valid JSON (no markdown, no extra text):
     let lifetime: number;
     if (/jeans|denim/.test(desc)) lifetime = price > 150 ? 8 : price > 80 ? 6 : price > 40 ? 4 : 3;
     else if (/coat|jacket|blazer|parka|trench/.test(desc)) lifetime = price > 300 ? 10 : price > 150 ? 7 : price > 70 ? 5 : 3;
-    else if (/leather/.test(desc)) lifetime = price > 200 ? 10 : price > 100 ? 7 : 5;
+    else if (/leather/.test(desc)) lifetime = price > 300 ? 20 : price > 150 ? 15 : price > 80 ? 10 : 7;
     else if (/blouse|shirt/.test(desc)) lifetime = price > 150 ? 6 : price > 80 ? 4.5 : price > 40 ? 3.5 : 2.5;
     else if (/sweater|cardigan|knit|jumper/.test(desc)) lifetime = price > 150 ? 7 : price > 80 ? 5 : price > 40 ? 3.5 : 2.5;
     else if (/dress/.test(desc)) lifetime = price > 200 ? 7 : price > 100 ? 5 : price > 50 ? 3.5 : 2.5;
