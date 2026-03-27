@@ -481,8 +481,12 @@ ${pageText}
 
 INSTRUCTIONS:
 - Extract the EXACT fabric/material composition if listed on the page (e.g. "98% cotton, 2% elastane")
-- Extract the exact product name
-- Extract the exact price and currency as shown on the page
+- Extract the exact product name — this is the MAIN product title at the top of the page, NOT "you may also like" items
+- PRICE: Extract the MAIN PRODUCT price only — this is the price you would pay if you click "Add to Bag/Cart"
+  - IGNORE prices from "Related products", "You may also like", "Complete the look", "Recommended" sections
+  - If there is a sale price and an original price, use the CURRENT/SALE price (what you actually pay)
+  - The main product price is usually the FIRST prominent price near the product title
+  - If structured data (JSON-LD) contains a price, prefer that — it is always the main product price
 - Recognise ALL synthetic fibres: polyester, nylon, polyamide, acrylic, elastane, spandex, microfibre, lycra, lurex, modacrylic
 - Polyamide IS nylon — it is 100% synthetic
 - If fabric not on page, infer from item type and brand
@@ -498,7 +502,7 @@ Return ONLY JSON (no markdown):
 }
 
 Use source "label" if you found the actual composition on the page, "inferred" if you had to guess.
-For price: use the actual price from the page. Use 0 only if completely missing.`
+For price: use the MAIN product add-to-cart price. Use 0 only if completely missing.`
     : `Based on this product URL, infer the most likely fabric composition, item type, and price.
 
 URL: ${url}
