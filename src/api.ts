@@ -581,6 +581,32 @@ export async function detectItemFromUrl(url: string): Promise<UrlItemDetection> 
     scrapedImageUrl = scraped.imageUrl || '';
   } catch { /* will infer from URL alone */ }
 
+  // Step 1b: If no image from scraper, try Google's cache as a fallback
+  if (!scrapedImageUrl && !pageText) {
+    try {
+      const cacheRes = await fetch(`https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (cacheRes.ok) {
+        const cacheHtml = await cacheRes.text();
+        // Try to extract og:image from cached page
+        const ogMatch = cacheHtml.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+        if (ogMatch) scrapedImageUrl = ogMatch[1];
+        // Also try to extract page text if we didn't get it from scraping
+        if (!pageText && cacheHtml.length > 500) {
+          pageText = cacheHtml
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 3000);
+        }
+      }
+    } catch { /* not critical */ }
+  }
+
   const hasPage = pageText.length > 50;
 
   const contextBlock = hasPage
