@@ -526,11 +526,115 @@ For currency: use the currency most likely for the brand/region (£, $, €, ¥)
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const urlText = response.content[0].type === 'text' ? response.content[0].text : '';
   try {
-    const clean = text.replace(/```json\n?|\n?```/g, '').trim();
+    const clean = urlText.replace(/```json\n?|\n?```/g, '').trim();
     return JSON.parse(clean);
   } catch {
     return { fabric: '', itemName: '', source: 'inferred' };
+  }
+}
+
+// ── Detect wardrobe item from a product URL ──────────────────────────────────
+
+export interface UrlItemDetection {
+  category: WardrobeItem['category'];
+  categoryConfidence: number;
+  subcategory: string;
+  subcategoryConfidence: number;
+  color: string;
+  colorConfidence: number;
+  brand: string;
+  brandConfidence: number;
+  pattern: string;
+  fit: string;
+  tags: string[];
+  imageUrl: string;
+  price: number;
+  currency: string;
+}
+
+export async function detectItemFromUrl(url: string): Promise<UrlItemDetection> {
+  // Step 1: Scrape the page
+  let pageText = '';
+  let structuredData = '';
+  try {
+    const scraped = await scrapeUrl(url);
+    pageText = scraped.text || '';
+    structuredData = scraped.structuredData || '';
+  } catch { /* will infer from URL alone */ }
+
+  const hasPage = pageText.length > 50;
+
+  const contextBlock = hasPage
+    ? `${structuredData ? `STRUCTURED DATA (JSON-LD):\n${structuredData}\n\n` : ''}PAGE CONTENT:\n${pageText}`
+    : '(Page content unavailable — infer from URL and brand)';
+
+  const response = await claudeMessage({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 500,
+    messages: [{
+      role: 'user',
+      content: `Analyze this product URL and extract all clothing item details for a wardrobe app.
+
+URL: ${url}
+
+${contextBlock}
+
+Extract or infer ALL of the following. If the page content is available, use EXACT values from the page.
+If not available, infer from the URL, brand, and item type.
+
+Return ONLY JSON (no markdown):
+{
+  "category": "top"|"bottom"|"footwear"|"outerwear"|"jewellery"|"bag"|"dress",
+  "categoryConfidence": 0.0-1.0,
+  "subcategory": "specific type e.g. blazer, straight-leg jeans, sneakers, midi dress",
+  "subcategoryConfidence": 0.0-1.0,
+  "color": "primary color as one or two words",
+  "colorConfidence": 0.0-1.0,
+  "brand": "brand name",
+  "brandConfidence": 0.0-1.0,
+  "pattern": "plain"|"striped"|"checked"|"floral"|"printed"|"other",
+  "fit": "slim"|"regular"|"oversized"|"fitted"|"relaxed",
+  "tags": ["tag1","tag2","tag3"],
+  "imageUrl": "main product image URL if found on page, otherwise empty string",
+  "price": 0,
+  "currency": "£"
+}
+
+For imageUrl: look for og:image meta tag content, or product image URLs in the page.
+For confidence: use 0.9+ if extracted from page, 0.6-0.8 if inferred from URL/brand.`,
+    }],
+  });
+
+  const detText = response.content[0].type === 'text' ? response.content[0].text : '';
+  try {
+    const clean = detText.replace(/```json\n?|\n?```/g, '').trim();
+    const parsed = JSON.parse(clean) as Record<string, unknown>;
+    return {
+      category: VALID_CATS.has(String(parsed.category)) ? String(parsed.category) as WardrobeItem['category'] : 'top',
+      categoryConfidence: Math.min(1, Math.max(0, Number(parsed.categoryConfidence) || 0.7)),
+      subcategory: String(parsed.subcategory || 'item'),
+      subcategoryConfidence: Math.min(1, Math.max(0, Number(parsed.subcategoryConfidence) || 0.7)),
+      color: String(parsed.color || 'unknown'),
+      colorConfidence: Math.min(1, Math.max(0, Number(parsed.colorConfidence) || 0.7)),
+      brand: String(parsed.brand || ''),
+      brandConfidence: Math.min(1, Math.max(0, Number(parsed.brandConfidence) || 0.5)),
+      pattern: String(parsed.pattern || 'plain'),
+      fit: String(parsed.fit || 'regular'),
+      tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
+      imageUrl: String(parsed.imageUrl || ''),
+      price: Number(parsed.price) || 0,
+      currency: String(parsed.currency || '£'),
+    };
+  } catch {
+    return {
+      category: 'top', categoryConfidence: 0.5,
+      subcategory: 'item', subcategoryConfidence: 0.5,
+      color: 'unknown', colorConfidence: 0.5,
+      brand: '', brandConfidence: 0.3,
+      pattern: 'plain', fit: 'regular', tags: [],
+      imageUrl: '', price: 0, currency: '£',
+    };
   }
 }

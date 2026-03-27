@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { Plus, Search, X, Trash2, Check, Sparkles } from 'lucide-react';
+import { Plus, Search, X, Trash2, Check, Sparkles, Link2, Camera, Loader2 } from 'lucide-react';
 import { hasClaudeKey } from '../apiHelper';
 import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, fileToBase64, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
 import type { RawDetection } from '../api';
+import { detectItemFromUrl } from '../api';
 import { cropImage } from '../utils/cropImage';
 import { processClothingImage } from '../pipeline/clothingPipeline';
 import MultiItemReview from '../components/MultiItemReview';
@@ -384,6 +385,10 @@ export default function Wardrobe() {
   const [addProgress, setAddProgress] = useState('');
   const [detectedItems, setDetectedItems] = useState<DetectedItem[]>([]);
   const [showReview, setShowReview] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkLoading, setLinkLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const items = user.wardrobeItems;
@@ -486,6 +491,41 @@ export default function Wardrobe() {
     setDetectedItems([]);
   };
 
+  const handleAddFromLink = async () => {
+    if (!linkUrl || linkUrl.length < 10) return;
+    setLinkLoading(true);
+    setAddProgress('Reading product page…');
+    try {
+      const result = await detectItemFromUrl(linkUrl);
+      const detected: DetectedItem = {
+        tempId: genId(),
+        croppedImageUrl: result.imageUrl || '',
+        originalImageUrl: result.imageUrl || '',
+        category: result.category,
+        categoryConfidence: result.categoryConfidence,
+        subcategory: result.subcategory,
+        subcategoryConfidence: result.subcategoryConfidence,
+        color: result.color,
+        colorConfidence: result.colorConfidence,
+        brand: result.brand,
+        brandConfidence: result.brandConfidence,
+        pattern: result.pattern,
+        fit: result.fit,
+        tags: result.tags,
+        boundingBox: { x: 0, y: 0, width: 1, height: 1 },
+      };
+      setDetectedItems([detected]);
+      setShowReview(true);
+      setShowLinkInput(false);
+      setLinkUrl('');
+    } catch (err) {
+      console.error('URL detection failed:', err);
+      setAddProgress('Failed to read link. Try again or use a photo.');
+      setTimeout(() => setAddProgress(''), 3000);
+    }
+    setLinkLoading(false);
+  };
+
   /** True if a wardrobe item with this subcategory + color already exists */
   const isBasicAdded = (b: BasicItem) =>
     items.some(
@@ -556,25 +596,94 @@ export default function Wardrobe() {
         title="Wardrobe"
         subtitle={items.length > 0 ? `You own ${summary()}` : 'No items yet — add your first piece'}
         action={
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={addLoading}
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--accent)', color: 'white' }}
-          >
-            {addLoading
-              ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              : <Plus size={18} />}
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowAddMenu(v => !v)}
+              disabled={addLoading || linkLoading}
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--accent)', color: 'white' }}
+            >
+              {(addLoading || linkLoading)
+                ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : <Plus size={18} />}
+            </button>
+            {showAddMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)} />
+                <div
+                  className="absolute right-0 top-11 z-50 rounded-xl shadow-lg overflow-hidden"
+                  style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.1)', minWidth: '170px' }}
+                >
+                  <button
+                    onClick={() => { setShowAddMenu(false); fileInputRef.current?.click(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    <Camera size={16} style={{ color: 'var(--accent)' }} />
+                    Add from photo
+                  </button>
+                  <div style={{ borderTop: '1px solid rgba(43,43,43,0.06)' }} />
+                  <button
+                    onClick={() => { setShowAddMenu(false); setShowLinkInput(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    <Link2 size={16} style={{ color: 'var(--accent)' }} />
+                    Add from link
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         }
       />
 
       {/* Loading progress */}
-      {addLoading && addProgress && (
+      {(addLoading || linkLoading) && addProgress && (
         <div className="mb-3 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2"
           style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}>
           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
           {addProgress}
+        </div>
+      )}
+
+      {/* Link input panel */}
+      {showLinkInput && (
+        <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.12)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'rgba(43,43,43,0.45)' }}>
+              Add from product link
+            </p>
+            <button onClick={() => { setShowLinkInput(false); setLinkUrl(''); }}>
+              <X size={16} style={{ color: 'var(--text-secondary)' }} />
+            </button>
+          </div>
+          <p className="text-xs mb-3" style={{ color: 'rgba(43,43,43,0.5)' }}>
+            Paste a product URL — Anera will auto-detect the item details, colour, brand, and image.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              placeholder="https://www.zara.com/…"
+              className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
+              style={{ background: 'var(--bg)', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-primary)' }}
+              onKeyDown={e => { if (e.key === 'Enter' && !linkLoading) handleAddFromLink(); }}
+              autoFocus
+            />
+            <button
+              onClick={handleAddFromLink}
+              disabled={linkLoading || !linkUrl || linkUrl.length < 10}
+              className="px-5 py-3 rounded-xl font-semibold text-sm text-white flex items-center gap-2 flex-shrink-0"
+              style={{ background: (!linkUrl || linkUrl.length < 10) ? 'rgba(43,43,43,0.2)' : 'var(--accent)' }}
+            >
+              {linkLoading
+                ? <><Loader2 size={14} className="animate-spin" />Reading…</>
+                : <>Detect</>
+              }
+            </button>
+          </div>
         </div>
       )}
 
