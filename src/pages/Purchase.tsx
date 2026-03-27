@@ -180,6 +180,9 @@ export default function Purchase() {
   // Auto-detect state
   const [fabricLoading, setFabricLoading]       = useState(false);
   const [fabricSource, setFabricSource]         = useState<'label' | 'inferred' | null>(null);
+  const [urlDetecting, setUrlDetecting]         = useState(false);
+  const [urlDetected, setUrlDetected]           = useState(false);
+  const [urlError, setUrlError]                 = useState('');
 
   // Submission
   const [loading, setLoading]   = useState(false);
@@ -200,37 +203,58 @@ export default function Purchase() {
     return () => clearTimeout(t);
   }, [analysis]);
 
-  // Auto-detect fabric from URL with 700 ms debounce
+  // Detect product details from URL — called manually or auto-triggered
+  const detectFromUrl = async (url: string) => {
+    if (!url || url.length < 10) return;
+    setUrlDetecting(true);
+    setUrlDetected(false);
+    setUrlError('');
+    setFabricLoading(true);
+    setFabricSource(null);
+    try {
+      const hasKey = hasClaudeKey();
+      if (hasKey) {
+        const res = await detectFabricFromUrl(url);
+        let detected = false;
+        if (res.fabric) { setFabric(res.fabric); setFabricSource(res.source || 'inferred'); detected = true; }
+        if (res.itemName) { setItemName(res.itemName); detected = true; }
+        if (res.price && res.price > 0) { setPrice(String(res.price)); detected = true; }
+        if (res.currency) { setCurrency(res.currency); }
+        if (detected) {
+          setUrlDetected(true);
+        } else {
+          setUrlError('Could not detect details from this URL. Please fill in manually.');
+        }
+      } else {
+        // Demo: keyword match on URL
+        const lower = url.toLowerCase();
+        const hit = URL_FABRIC_HINTS.find(([k]) => lower.includes(k));
+        if (hit) { setFabric(hit[1]); setFabricSource('inferred'); setUrlDetected(true); }
+        else { setUrlError('API key not configured. Please fill in details manually.'); }
+      }
+    } catch (e) {
+      console.error('[Purchase] URL detection failed:', e);
+      setUrlError('Detection failed. Please fill in details manually or try again.');
+    }
+    setFabricLoading(false);
+    setUrlDetecting(false);
+  };
+
+  // Auto-trigger detection when URL is pasted (with 800ms debounce)
   useEffect(() => {
     if (method !== 'link') return;
     if (linkDebounce.current) clearTimeout(linkDebounce.current);
     if (!link || link.length < 10) return;
 
-    linkDebounce.current = setTimeout(async () => {
-      setFabricLoading(true);
-      setFabricSource(null);
-      try {
-        const hasKey = hasClaudeKey();
-        if (hasKey) {
-          const res = await detectFabricFromUrl(link);
-          if (res.fabric) { setFabric(res.fabric); setFabricSource('inferred'); }
-          if (res.itemName && !itemName) setItemName(res.itemName);
-          // Auto-populate price if detected and not already filled
-          if (res.price && res.price > 0 && !price) {
-            setPrice(String(res.price));
-          }
-          if (res.currency && !price) {
-            setCurrency(res.currency);
-          }
-        } else {
-          // Demo: keyword match on URL
-          const lower = link.toLowerCase();
-          const hit = URL_FABRIC_HINTS.find(([k]) => lower.includes(k));
-          if (hit) { setFabric(hit[1]); setFabricSource('inferred'); }
-        }
-      } catch { /* silently ignore */ }
-      setFabricLoading(false);
-    }, 700);
+    // Reset detected state when URL changes
+    setUrlDetected(false);
+    setUrlError('');
+
+    linkDebounce.current = setTimeout(() => {
+      detectFromUrl(link);
+    }, 800);
+
+    return () => { if (linkDebounce.current) clearTimeout(linkDebounce.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [link, method]);
 
@@ -329,6 +353,7 @@ export default function Purchase() {
     setItemName(''); setLink(''); setPrice(''); setFabric(''); setEstWears('');
     setImagePreview(null); setImageBase64(null); setError('');
     setFabricLoading(false); setFabricSource(null);
+    setUrlDetecting(false); setUrlDetected(false); setUrlError('');
   };
 
   // ── Input screen ───────────────────────────────────────────────────────────
@@ -428,9 +453,14 @@ export default function Purchase() {
               <label className="text-[11px] font-bold uppercase" style={labelStyle}>
                 Product URL
               </label>
-              {fabricLoading && (
-                <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--accent)' }}>
-                  <Loader2 size={10} className="animate-spin" /> Reading link…
+              {urlDetecting && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+                  <Loader2 size={10} className="animate-spin" /> Detecting name, price, fabric…
+                </span>
+              )}
+              {urlDetected && !urlDetecting && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#15803D' }}>
+                  <Sparkles size={10} /> Auto-detected
                 </span>
               )}
             </div>
@@ -438,23 +468,54 @@ export default function Purchase() {
               type="url" value={link} onChange={e => setLink(e.target.value)}
               placeholder="https://www.zara.com/…"
               className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-              style={fieldStyle}
+              style={{
+                ...fieldStyle,
+                borderColor: urlDetected ? '#86EFAC' : urlError ? '#FECACA' : 'rgba(43,43,43,0.12)',
+              }}
             />
+            {/* Detection status / retry */}
+            {urlError && (
+              <div className="flex items-center justify-between mt-2 px-1">
+                <span className="text-[11px]" style={{ color: '#DC2626' }}>{urlError}</span>
+                <button
+                  onClick={() => detectFromUrl(link)}
+                  className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                  style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            {urlDetecting && (
+              <div className="mt-2 px-1">
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--accent-light)' }}>
+                  <div className="h-full rounded-full animate-pulse" style={{ background: 'var(--accent)', width: '60%' }} />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Item name */}
         <div className="mb-3">
-          <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>
-            Item name{method !== 'manual' && (
-              <span style={{ fontWeight: 400, textTransform: 'none' as const }}> (optional)</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[11px] font-bold uppercase" style={labelStyle}>
+              Item name{method !== 'manual' && (
+                <span style={{ fontWeight: 400, textTransform: 'none' as const }}> (optional)</span>
+              )}
+            </label>
+            {method === 'link' && urlDetected && itemName && (
+              <span className="text-[10px] font-semibold" style={{ color: '#15803D' }}>Auto-detected</span>
             )}
-          </label>
+          </div>
           <input
             type="text" value={itemName} onChange={e => setItemName(e.target.value)}
             placeholder="e.g. Black ankle boots, silk midi dress…"
             className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-            style={fieldStyle}
+            style={{
+              ...fieldStyle,
+              borderColor: (method === 'link' && urlDetected && itemName) ? '#86EFAC' : 'rgba(43,43,43,0.12)',
+            }}
           />
         </div>
 
@@ -471,12 +532,20 @@ export default function Purchase() {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>Price</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] font-bold uppercase" style={labelStyle}>Price</label>
+              {method === 'link' && urlDetected && price && parseFloat(price) > 0 && (
+                <span className="text-[10px] font-semibold" style={{ color: '#15803D' }}>Auto-detected</span>
+              )}
+            </div>
             <input
               type="number" value={price} onChange={e => setPrice(e.target.value)}
               placeholder="0.00" min="0"
               className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-              style={fieldStyle}
+              style={{
+                ...fieldStyle,
+                borderColor: (method === 'link' && urlDetected && price && parseFloat(price) > 0) ? '#86EFAC' : 'rgba(43,43,43,0.12)',
+              }}
             />
           </div>
         </div>
