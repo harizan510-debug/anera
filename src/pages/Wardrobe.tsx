@@ -18,8 +18,8 @@ const categoryLabel: Record<WardrobeItem['category'], string> = {
 };
 
 const CATEGORY_COLORS: Record<WardrobeItem['category'], string> = {
-  top: '#E8D5C0', bottom: '#D0DDE8', footwear: '#D8E0D0', outerwear: '#E0D0D8',
-  dress: '#D8D0E8', bag: '#E8E0C8', jewellery: '#F0E8D8',
+  top: '#F2F2F4', bottom: '#F2F2F4', footwear: '#F2F2F4', outerwear: '#F2F2F4',
+  dress: '#F2F2F4', bag: '#F2F2F4', jewellery: '#F2F2F4',
 };
 
 // ── Basics ──────────────────────────────────────────────────────────────────
@@ -741,9 +741,9 @@ export default function Wardrobe() {
               className="rounded-2xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
               style={{ background: CATEGORY_COLORS[item.category] || 'var(--accent-light)', border: '1px solid rgba(43,43,43,0.06)' }}
             >
-              <div className="aspect-square w-full rounded-xl overflow-hidden">
+              <div className="aspect-square w-full rounded-xl overflow-hidden" style={{ background: '#F2F2F4' }}>
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} />
+                  <img src={item.imageUrl} className="w-full h-full object-contain p-2" alt={item.subcategory} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">👕</div>
                 )}
@@ -828,9 +828,9 @@ export default function Wardrobe() {
             <div className="flex items-start gap-4 mb-5">
               <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
                 {editModal.item.imageUrl ? (
-                  <img src={editModal.item.imageUrl} className="w-full h-full object-cover" alt="" />
+                  <img src={editModal.item.imageUrl} className="w-full h-full object-contain p-2" alt="" style={{ background: '#F2F2F4' }} />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl" style={{ background: CATEGORY_COLORS[editModal.item.category] }}>👕</div>
+                  <div className="w-full h-full flex items-center justify-center text-2xl" style={{ background: '#F2F2F4' }}>👕</div>
                 )}
               </div>
               <div className="flex-1">
