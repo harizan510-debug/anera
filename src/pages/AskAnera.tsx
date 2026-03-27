@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, Shirt } from 'lucide-react';
 import { useUser } from '../store';
 import { chatWithAnera } from '../api';
+import { hasClaudeKey } from '../apiHelper';
 import type { ChatMessage } from '../types';
 
 const QUICK_PROMPTS = [
@@ -46,7 +47,7 @@ export default function AskAnera() {
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
-      const hasApiKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+      const hasApiKey = hasClaudeKey();
 
       let replyText: string;
       if (hasApiKey) {

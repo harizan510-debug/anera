@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, CheckCircle, ArrowRight, Loader2, Shirt } from 'lucide-react';
 import { detectClothingItems } from '../api';
+import { hasClaudeKey } from '../apiHelper';
 import type { RawDetection } from '../api';
 import { completeOnboarding, fileToBase64, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
@@ -62,7 +63,7 @@ export default function Onboarding() {
   const processPhotos = async () => {
     setStep('processing');
     const allDetected: DetectedItem[] = [];
-    const hasApiKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const hasApiKey = hasClaudeKey();
 
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];

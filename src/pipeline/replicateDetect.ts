@@ -3,6 +3,8 @@
  * Detects clothing items in an image and returns bounding boxes.
  */
 
+import { replicateCreate, replicatePoll } from '../apiHelper';
+
 export interface GroundingDINOBox {
   bbox: [number, number, number, number]; // x1, y1, x2, y2 in pixels
   label: string;
@@ -18,65 +20,36 @@ const TEXT_PROMPT =
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 40; // 60 seconds max
 
-function getReplicateKey(): string {
-  const key = import.meta.env.VITE_REPLICATE_API_KEY;
-  if (!key) throw new Error('VITE_REPLICATE_API_KEY not set');
-  return key;
-}
-
 /**
  * Create a prediction on Replicate and poll until it completes.
  */
 export async function detectWithGroundingDINO(
   base64Image: string,
 ): Promise<GroundingDINOBox[]> {
-  const apiKey = getReplicateKey();
-
   // Ensure we have a proper data URI
   const dataUri = base64Image.startsWith('data:')
     ? base64Image
     : `data:image/jpeg;base64,${base64Image}`;
 
-  // Step 1: Create prediction
-  const createRes = await fetch('https://api.replicate.com/v1/predictions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+  // Step 1: Create prediction via dual-mode helper
+  const prediction = await replicateCreate({
+    version: REPLICATE_MODEL_VERSION,
+    input: {
+      image: dataUri,
+      text_prompt: TEXT_PROMPT,
+      box_threshold: 0.25,
+      text_threshold: 0.2,
     },
-    body: JSON.stringify({
-      version: REPLICATE_MODEL_VERSION,
-      input: {
-        image: dataUri,
-        text_prompt: TEXT_PROMPT,
-        box_threshold: 0.25,
-        text_threshold: 0.2,
-      },
-    }),
   });
 
-  if (!createRes.ok) {
-    const errText = await createRes.text();
-    throw new Error(`Replicate create prediction failed (${createRes.status}): ${errText}`);
-  }
-
-  const prediction = await createRes.json();
-  const pollUrl: string = prediction.urls?.get;
+  const pollUrl: string = (prediction.urls as Record<string, string>)?.get;
   if (!pollUrl) throw new Error('Replicate response missing poll URL');
 
-  // Step 2: Poll for completion
+  // Step 2: Poll for completion via dual-mode helper
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
 
-    const pollRes = await fetch(pollUrl, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-
-    if (!pollRes.ok) {
-      throw new Error(`Replicate poll failed (${pollRes.status})`);
-    }
-
-    const result = await pollRes.json();
+    const result = await replicatePoll(pollUrl);
 
     if (result.status === 'failed' || result.status === 'canceled') {
       throw new Error(`Replicate prediction ${result.status}: ${result.error || 'unknown error'}`);

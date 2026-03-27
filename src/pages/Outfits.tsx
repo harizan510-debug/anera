@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser, genId } from '../store';
 import type { WardrobeItem } from '../types';
 import { generateOutfitRecommendations } from '../api';
+import { hasClaudeKey } from '../apiHelper';
 import { supabase, isSupabaseConfigured, getCityWeather } from '../supabase';
 import type { WeatherInfo } from '../supabase';
 
@@ -201,7 +202,7 @@ export default function Outfits() {
       ].filter((s): s is string => s !== null);
       const styleNotes = noteParts.length > 0 ? noteParts.join(', ') : undefined;
 
-      if (import.meta.env.VITE_ANTHROPIC_API_KEY) {
+      if (hasClaudeKey()) {
         const result = await generateOutfitRecommendations(wardrobeItems, occasion, wCtx, styleNotes);
         setOutfits(result.outfits.map(o => ({
           items: o.items.map(id => wardrobeItems.find(w => w.id === id)).filter(Boolean) as WardrobeItem[],

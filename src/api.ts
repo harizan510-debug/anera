@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages.mjs';
+import { claudeMessage } from './apiHelper';
 import type { WardrobeItem, BoundingBox } from './types';
 
 export interface RawDetection {
@@ -16,16 +17,8 @@ export interface RawDetection {
   boundingBox: BoundingBox;
 }
 
-// Get API key from env
-const getClient = () => {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY not set in .env');
-  return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-};
-
 export async function analyzeClothingImage(base64Image: string, mimeType: string = 'image/jpeg'): Promise<Partial<WardrobeItem>> {
-  const client = getClient();
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 500,
     messages: [{
@@ -83,8 +76,7 @@ export async function detectClothingItems(
   base64Image: string,
   mimeType: string = 'image/jpeg',
 ): Promise<RawDetection[]> {
-  const client = getClient();
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 1800,
     messages: [{
@@ -168,13 +160,11 @@ export async function generateOutfitRecommendations(
   weather: string,
   styleNotes?: string
 ): Promise<{ outfits: Array<{ items: string[]; note: string }> }> {
-  const client = getClient();
-
   const wardrobeSummary = wardrobe.map(i =>
     `ID:${i.id} - ${i.color} ${i.subcategory} (${i.category}), fit:${i.fit}, worn:${i.wearCount}x`
   ).join('\n');
 
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 1000,
     messages: [{
@@ -221,18 +211,16 @@ export async function chatWithAnera(
   wardrobe: WardrobeItem[],
   history: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<string> {
-  const client = getClient();
-
   const wardrobeSummary = wardrobe.length > 0
     ? wardrobe.map(i => `- ${i.color} ${i.subcategory} (${i.category}), ${i.fit} fit, worn ${i.wearCount}x`).join('\n')
     : 'No wardrobe items yet.';
 
-  const messages = [
+  const messages: MessageParam[] = [
     ...history.map(h => ({ role: h.role as 'user' | 'assistant', content: h.content })),
     { role: 'user' as const, content: userMessage },
   ];
 
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 600,
     system: `You are Anera, a warm and stylish personal AI stylist. You help users style their wardrobe, plan outfits for occasions, and make purchase decisions.
@@ -268,13 +256,11 @@ export async function analyzePurchase(
   estimatedWears?: number,
   fabricComposition?: string,
 ): Promise<PurchaseAnalysis> {
-  const client = getClient();
-
   const wardrobeSummary = wardrobe.length > 0
     ? wardrobe.map(i => `- ${i.color} ${i.subcategory} (${i.category})`).join('\n')
     : 'Empty wardrobe.';
 
-  const content: Anthropic.MessageParam['content'] = [];
+  const content: MessageParam['content'] = [];
 
   if (imageBase64) {
     content.push({
@@ -343,7 +329,7 @@ Return ONLY valid JSON (no markdown, no extra text):
 }`,
   });
 
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 600,
     messages: [{ role: 'user', content }],
@@ -380,9 +366,7 @@ export interface FabricDetection {
 }
 
 export async function detectFabricFromImage(base64Image: string): Promise<FabricDetection> {
-  const client = getClient();
-
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 200,
     messages: [{
@@ -426,9 +410,7 @@ Return ONLY JSON (no markdown):
 
 // ── Auto-detect fabric from a product URL ────────────────────────────────────
 export async function detectFabricFromUrl(url: string): Promise<FabricDetection> {
-  const client = getClient();
-
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 200,
     messages: [{

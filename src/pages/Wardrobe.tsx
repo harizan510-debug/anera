@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Plus, Search, X, Trash2, Check, Sparkles } from 'lucide-react';
+import { hasClaudeKey } from '../apiHelper';
 import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, fileToBase64, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
 import type { RawDetection } from '../api';
@@ -400,7 +401,7 @@ export default function Wardrobe() {
   const handleAddPhotos = async (files: FileList) => {
     if (files.length === 0) return;
     setAddLoading(true);
-    const hasApiKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const hasApiKey = hasClaudeKey();
     const allDetected: DetectedItem[] = [];
 
     for (let i = 0; i < files.length; i++) {

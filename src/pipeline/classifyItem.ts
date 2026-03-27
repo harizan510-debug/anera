@@ -3,7 +3,7 @@
  * Much more accurate than classifying all items in a full photo at once.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { claudeMessage } from '../apiHelper';
 import type { WardrobeItem } from '../types';
 
 export interface ClassificationResult {
@@ -26,12 +26,6 @@ function safeCategory(v: string): WardrobeItem['category'] {
   return VALID_CATS.has(v) ? (v as WardrobeItem['category']) : 'top';
 }
 
-function getClient() {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY not set in .env');
-  return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-}
-
 /**
  * Classify a single cropped clothing item image.
  * @param croppedBase64 - base64 data URI or raw base64 of the cropped image
@@ -41,15 +35,13 @@ export async function classifyClothingItem(
   croppedBase64: string,
   hint?: string,
 ): Promise<ClassificationResult> {
-  const client = getClient();
-
   const imageData = croppedBase64.includes(',')
     ? croppedBase64.split(',')[1]
     : croppedBase64;
 
   const hintText = hint ? `\nHint from object detector: this item was detected as "${hint}". Use this as a starting point but override if clearly wrong.` : '';
 
-  const response = await client.messages.create({
+  const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 500,
     messages: [

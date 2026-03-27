@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useUser, fileToBase64 } from '../store';
 import { analyzePurchase, detectFabricFromImage, detectFabricFromUrl } from '../api';
+import { hasClaudeKey } from '../apiHelper';
 import type { PurchaseAnalysis } from '../api';
 
 
@@ -139,7 +140,7 @@ export default function Purchase() {
       setFabricLoading(true);
       setFabricSource(null);
       try {
-        const hasKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+        const hasKey = hasClaudeKey();
         if (hasKey) {
           const res = await detectFabricFromUrl(link);
           if (res.fabric) { setFabric(res.fabric); setFabricSource('inferred'); }
@@ -164,7 +165,7 @@ export default function Purchase() {
     setFabricLoading(true);
     setFabricSource(null);
     try {
-      const hasKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+      const hasKey = hasClaudeKey();
       if (hasKey) {
         const res = await detectFabricFromImage(b64);
         if (res.fabric) { setFabric(res.fabric); setFabricSource(res.source); }
@@ -186,7 +187,7 @@ export default function Purchase() {
           ? `Product URL: ${link}${itemName ? ` — ${itemName}` : ''}`
           : itemName || (method === 'scan' || method === 'photo' ? 'Item in photo' : 'Unknown item');
 
-      const hasKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+      const hasKey = hasClaudeKey();
 
       if (hasKey) {
         const result = await analyzePurchase(

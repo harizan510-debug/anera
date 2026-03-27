@@ -11,6 +11,7 @@
  */
 
 import type { DetectedItem, BoundingBox } from '../types';
+import { hasReplicateKey } from '../apiHelper';
 import { detectWithGroundingDINO } from './replicateDetect';
 import type { GroundingDINOBox } from './replicateDetect';
 import { classifyClothingItem } from './classifyItem';
@@ -81,10 +82,10 @@ export async function processClothingImage(
   originalObjectUrl: string,
 ): Promise<PipelineResult> {
   const totalStart = performance.now();
-  const hasReplicateKey = !!import.meta.env.VITE_REPLICATE_API_KEY;
+  const hasReplicate = hasReplicateKey();
 
   // ── FALLBACK: Claude-only detection ───────────────────────────────────────
-  if (!hasReplicateKey) {
+  if (!hasReplicate) {
     console.log('[Pipeline] No Replicate API key — falling back to Claude-only detection');
     return fallbackClaudeOnly(base64Image, mimeType, originalObjectUrl, totalStart);
   }
