@@ -2,9 +2,9 @@ import { useState, useRef } from 'react';
 import { Plus, Search, X, Trash2, Check, Sparkles } from 'lucide-react';
 import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, fileToBase64, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
-import { detectClothingItems } from '../api';
 import type { RawDetection } from '../api';
 import { cropImage } from '../utils/cropImage';
+import { processClothingImage } from '../pipeline/clothingPipeline';
 import MultiItemReview from '../components/MultiItemReview';
 import PageHeader from '../components/PageHeader';
 
@@ -410,17 +410,15 @@ export default function Wardrobe() {
       setAddProgress(`Analysing photo ${i + 1} of ${files.length}…`);
 
       try {
-        let rawItems: RawDetection[];
-
         if (hasApiKey) {
           const base64 = await fileToBase64(file);
-          rawItems = await detectClothingItems(base64, file.type || 'image/jpeg');
+          const result = await processClothingImage(base64, file.type || 'image/jpeg', originalImageUrl);
+          allDetected.push(...result.items);
+          console.log(`[Wardrobe] Photo ${i + 1} pipeline timing:`, result.timing);
         } else {
+          // Demo fallback when no API keys are set
           await new Promise(r => setTimeout(r, 600));
-          rawItems = [DEMO_DETECTIONS[i % DEMO_DETECTIONS.length]];
-        }
-
-        for (const raw of rawItems) {
+          const raw = DEMO_DETECTIONS[i % DEMO_DETECTIONS.length];
           let croppedImageUrl = originalImageUrl;
           try {
             croppedImageUrl = await cropImage(originalImageUrl, raw.boundingBox);
