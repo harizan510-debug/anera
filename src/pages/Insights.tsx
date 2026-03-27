@@ -100,15 +100,16 @@ export default function Insights() {
 
   // ── Shared tab bar ─────────────────────────────────────────────────────────
   const TabBar = () => (
-    <div className="flex gap-1 mb-5 p-1 rounded-2xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+    <div className="flex gap-2 mb-5">
       {(['insights', 'declutter'] as const).map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
-          className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all capitalize"
+          className="px-5 py-2 rounded-full text-xs font-semibold transition-all capitalize"
           style={{
             background: activeTab === tab ? 'var(--accent)' : 'transparent',
             color: activeTab === tab ? 'white' : 'var(--text-secondary)',
+            border: activeTab === tab ? '1px solid var(--accent)' : '1px solid rgba(43,43,43,0.12)',
           }}
         >
           {tab === 'insights' ? '📊 Insights' : '🧹 Declutter'}
@@ -173,9 +174,9 @@ export default function Insights() {
             { label: 'Unworn',      value: unwornCount   },
           ].map(s => (
             <div key={s.label} className="rounded-2xl px-3 py-4 text-center"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
-              <p className="text-[10px] mt-1" style={{ color: 'var(--text-secondary)' }}>{s.label}</p>
+              style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+              <p className="text-2xl font-semibold" style={{ color: '#2B2B2B' }}>{s.value}</p>
+              <p className="mt-1" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -183,7 +184,7 @@ export default function Insights() {
         {/* Dormant alert */}
         {dormantCount > 0 && (
           <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-3"
-            style={{ background: '#FEF3C7', border: '1px solid #FDE68A' }}>
+            style={{ background: '#FEF3C7', border: '1px solid rgba(217,119,6,0.15)' }}>
             <AlertCircle size={18} style={{ color: '#D97706', flexShrink: 0, marginTop: '1px' }} />
             <p className="text-sm" style={{ color: '#92400E' }}>
               <strong>{dormantCount} item{dormantCount > 1 ? 's' : ''}</strong> haven't been worn in 90+ days.{' '}
@@ -198,11 +199,11 @@ export default function Insights() {
         {/* Sustainability score */}
         <div className="rounded-2xl px-5 py-4 mb-4"
           style={{ background: naturalPct >= 70 ? '#F0FDF4' : '#FFFBEB',
-                   border: `1px solid ${naturalPct >= 70 ? '#BBF7D0' : '#FDE68A'}` }}>
+                   border: `1px solid ${naturalPct >= 70 ? 'rgba(22,163,74,0.15)' : 'rgba(217,119,6,0.15)'}` }}>
           <div className="flex items-center gap-2 mb-3">
             <Leaf size={14} style={{ color: naturalPct >= 70 ? '#15803D' : '#CA8A04' }} />
-            <p className="font-semibold text-sm"
-              style={{ color: naturalPct >= 70 ? '#15803D' : '#92400E' }}>
+            <p className="text-sm"
+              style={{ color: naturalPct >= 70 ? '#15803D' : '#92400E', fontWeight: 700, letterSpacing: '-0.3px' }}>
               Wardrobe sustainability
             </p>
             <span className="ml-auto text-xs font-bold"
@@ -229,13 +230,13 @@ export default function Insights() {
 
         {/* Category breakdown */}
         <div className="rounded-2xl px-5 py-4 mb-4"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <p className="font-semibold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Wardrobe breakdown</p>
+          style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+          <p className="text-sm mb-4" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
           <div className="space-y-3">
             {catCounts.map(({ label, count }) => (
               <div key={label}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs capitalize" style={{ color: 'var(--text-secondary)' }}>{label}s</span>
+                  <span className="capitalize" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.4px' }}>{label}s</span>
                   <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{count}</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
@@ -250,10 +251,10 @@ export default function Insights() {
         {/* Most worn */}
         {mostWorn.length > 0 && mostWorn[0].wearCount > 0 && (
           <div className="rounded-2xl px-5 py-4 mb-4"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp size={15} style={{ color: 'var(--accent)' }} />
-              <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Most worn</p>
+              <p className="text-sm" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn</p>
             </div>
             <div className="flex gap-3">
               {mostWorn.filter(i => i.wearCount > 0).map(item => (
@@ -276,7 +277,7 @@ export default function Insights() {
         {/* Best CPW */}
         {bestCPW && (
           <div className="rounded-2xl px-5 py-4 mb-4 flex items-center gap-4"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
             <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
               {bestCPW.item.imageUrl ? <img src={bestCPW.item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
             </div>
@@ -298,8 +299,8 @@ export default function Insights() {
         {/* Gathering dust */}
         {leastWorn.length > 0 && (
           <div className="rounded-2xl px-5 py-4"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <p className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>Gathering dust</p>
+            style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+            <p className="text-sm mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Gathering dust</p>
             <div className="space-y-3">
               {leastWorn.map(item => (
                 <div key={item.id} className="flex items-center gap-3">
@@ -354,7 +355,7 @@ export default function Insights() {
         className="w-full rounded-2xl px-4 py-4 mb-4 flex items-center gap-3 text-left transition-all"
         style={{
           background: filter === 'plastic' ? '#DCFCE7' : '#F0FDF4',
-          border: `1.5px solid ${filter === 'plastic' ? '#16A34A' : '#BBF7D0'}`,
+          border: `1px solid ${filter === 'plastic' ? '#16A34A' : '#BBF7D0'}`,
         }}
       >
         <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -362,7 +363,7 @@ export default function Insights() {
           <Leaf size={18} color={filter === 'plastic' ? 'white' : '#15803D'} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold" style={{ color: '#15803D' }}>
+          <p className="text-sm" style={{ color: '#15803D', fontWeight: 700, letterSpacing: '-0.3px' }}>
             {filter === 'plastic' ? '🌿 Showing plastic items' : '🌿 Make my wardrobe green'}
           </p>
           <p className="text-xs mt-0.5" style={{ color: '#166534' }}>
@@ -372,8 +373,8 @@ export default function Insights() {
           </p>
         </div>
         {filter === 'plastic' && (
-          <span className="text-xs font-medium px-2 py-1 rounded-full"
-            style={{ background: '#16A34A', color: 'white' }}>
+          <span className="font-semibold px-2 py-1 rounded-full"
+            style={{ background: '#16A34A', color: 'white', fontSize: '11px' }}>
             Active
           </span>
         )}
@@ -389,11 +390,12 @@ export default function Insights() {
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className="px-3 py-1.5 rounded-full text-xs font-medium"
+            className="px-3 py-1.5 rounded-full font-semibold"
             style={{
-              background: filter === f.id ? 'var(--accent)' : 'var(--surface)',
+              fontSize: '11px',
+              background: filter === f.id ? 'var(--accent)' : 'transparent',
               color:      filter === f.id ? 'white'         : 'var(--text-secondary)',
-              border: `1px solid ${filter === f.id ? 'var(--accent)' : 'var(--border)'}`,
+              border: filter === f.id ? '1px solid var(--accent)' : '1px solid rgba(43,43,43,0.12)',
             }}
           >
             {f.label}
@@ -404,7 +406,7 @@ export default function Insights() {
       {/* Plastic-mode info banner */}
       {filter === 'plastic' && (
         <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-2"
-          style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+          style={{ background: '#F0FDF4', border: '1px solid rgba(22,163,74,0.15)' }}>
           <span className="text-base flex-shrink-0">🌊</span>
           <p className="text-xs leading-relaxed" style={{ color: '#166534' }}>
             Synthetic fabrics shed <strong>microplastics</strong> every time you wash them, ending up in oceans and food chains.
@@ -438,7 +440,7 @@ export default function Insights() {
 
             return (
               <div key={item.id} className="rounded-2xl overflow-hidden"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
 
                 {/* Header */}
                 <div className="flex items-center gap-3 p-4">
@@ -446,7 +448,7 @@ export default function Insights() {
                     {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm capitalize truncate" style={{ color: 'var(--text-primary)' }}>
+                    <p className="text-sm capitalize truncate" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>
                       {item.color} {item.subcategory}
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
@@ -495,7 +497,7 @@ export default function Insights() {
                       <button
                         key={btn.id}
                         onClick={() => setAction(item.id, btn.id)}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
                         style={{ background: btn.bg, color: btn.color }}
                       >
                         <btn.Icon size={13} />
@@ -504,8 +506,8 @@ export default function Insights() {
                     ))}
                     <button
                       onClick={() => dismiss(item.id)}
-                      className="px-3 py-2.5 rounded-xl text-xs font-medium"
-                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+                      className="px-3 py-2.5 rounded-xl text-xs font-semibold"
+                      style={{ background: 'var(--bg)', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-secondary)' }}
                     >
                       Keep
                     </button>
@@ -513,7 +515,7 @@ export default function Insights() {
                 ) : (
                   <div className="px-4 pb-4">
                     <div className="rounded-xl px-4 py-3 flex items-center justify-between"
-                      style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                      style={{ background: 'var(--bg)', border: '1px solid rgba(43,43,43,0.06)' }}>
                       <div>
                         <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
                           {state.action === 'sell' ? '🏷️ List for sale' : state.action === 'donate' ? '❤️ Donate' : '✂️ Restyle'}
@@ -529,14 +531,14 @@ export default function Insights() {
                       <div className="flex gap-2 ml-3">
                         {state.action !== 'restyle' && (
                           <button onClick={() => confirmDelete(item.id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                            className="px-3 py-1.5 rounded-xl text-xs font-semibold"
                             style={{ background: '#DC2626', color: 'white' }}>
                             Remove
                           </button>
                         )}
                         <button onClick={() => dismiss(item.id)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold"
+                          style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-secondary)' }}>
                           Done
                         </button>
                       </div>

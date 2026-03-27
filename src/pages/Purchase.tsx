@@ -7,7 +7,7 @@ import {
 import { useUser, fileToBase64 } from '../store';
 import { analyzePurchase, detectFabricFromImage, detectFabricFromUrl } from '../api';
 import type { PurchaseAnalysis } from '../api';
-import PageHeader from '../components/PageHeader';
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,8 +78,16 @@ const PLASTIC = {
 
 const fieldStyle = {
   background: 'var(--surface)',
-  border: '1px solid var(--border)',
+  border: '1px solid rgba(43,43,43,0.12)',
   color: 'var(--text-primary)',
+} as const;
+
+const labelStyle = {
+  color: 'rgba(43,43,43,0.45)',
+  fontSize: '11px',
+  textTransform: 'uppercase' as const,
+  fontWeight: 700,
+  letterSpacing: '0.4px',
 } as const;
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -230,7 +238,14 @@ export default function Purchase() {
   if (!analysis) {
     return (
       <div className="px-4 pb-24">
-        <PageHeader title="Buy decision" subtitle="Should you buy it? Let Anera decide." />
+        <div className="mb-5 pt-4">
+          <h1 className="text-2xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
+            Buy decision
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
+            Should you buy it? Let Anera decide.
+          </p>
+        </div>
 
         {/* Method tabs */}
         <div className="flex gap-2 mb-5">
@@ -240,14 +255,14 @@ export default function Purchase() {
               <button
                 key={id}
                 onClick={() => setMethod(id)}
-                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-xs font-medium transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                 style={{
-                  background: active ? 'var(--accent-light)' : 'var(--surface)',
-                  border: `1.5px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
-                  color: active ? 'var(--accent-dark)' : 'var(--text-secondary)',
+                  background: active ? 'var(--accent)' : 'transparent',
+                  border: active ? '1px solid var(--accent)' : '1px solid rgba(43,43,43,0.12)',
+                  color: active ? '#fff' : 'var(--text-secondary)',
                 }}
               >
-                <Icon size={15} />
+                <Icon size={14} />
                 {label}
               </button>
             );
@@ -258,9 +273,9 @@ export default function Purchase() {
         {(method === 'photo' || method === 'scan') && (
           <div
             onClick={() => (method === 'photo' ? photoRef : scanRef).current?.click()}
-            className="w-full rounded-3xl cursor-pointer mb-5 overflow-hidden relative flex items-center justify-center"
+            className="w-full rounded-2xl cursor-pointer mb-5 overflow-hidden relative flex items-center justify-center"
             style={{
-              border: imagePreview ? 'none' : '1.5px dashed var(--border)',
+              border: imagePreview ? 'none' : '1.5px dashed rgba(43,43,43,0.12)',
               background: imagePreview ? 'transparent' : 'var(--surface)',
               minHeight: '200px',
             }}
@@ -269,7 +284,7 @@ export default function Purchase() {
               <>
                 <img
                   src={imagePreview}
-                  className="w-full object-cover rounded-3xl"
+                  className="w-full object-cover rounded-2xl"
                   style={{ maxHeight: '280px' }}
                   alt="Item preview"
                 />
@@ -313,7 +328,7 @@ export default function Purchase() {
         {method === 'link' && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              <label className="text-[11px] font-bold uppercase" style={labelStyle}>
                 Product URL
               </label>
               {fabricLoading && (
@@ -333,9 +348,9 @@ export default function Purchase() {
 
         {/* Item name */}
         <div className="mb-3">
-          <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+          <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>
             Item name{method !== 'manual' && (
-              <span style={{ fontWeight: 400 }}> (optional)</span>
+              <span style={{ fontWeight: 400, textTransform: 'none' as const }}> (optional)</span>
             )}
           </label>
           <input
@@ -349,7 +364,7 @@ export default function Purchase() {
         {/* Price row */}
         <div className="flex gap-2 mb-4">
           <div className="w-20">
-            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Currency</label>
+            <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>Currency</label>
             <select
               value={currency} onChange={e => setCurrency(e.target.value)}
               className="w-full px-3 py-3 rounded-xl text-sm outline-none"
@@ -359,7 +374,7 @@ export default function Purchase() {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Price</label>
+            <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>Price</label>
             <input
               type="number" value={price} onChange={e => setPrice(e.target.value)}
               placeholder="0.00" min="0"
@@ -372,7 +387,7 @@ export default function Purchase() {
         {/* Fabric composition — auto-detected */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <label className="text-[11px] font-bold uppercase" style={labelStyle}>
               Fabric composition
             </label>
             {fabricLoading && (
@@ -382,7 +397,7 @@ export default function Purchase() {
             )}
             {!fabricLoading && fabricSource && fabric && (
               <span
-                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ background: '#DCFCE7', color: '#15803D' }}
               >
                 <Sparkles size={9} />
@@ -404,7 +419,7 @@ export default function Purchase() {
               className="w-full px-4 py-3 rounded-xl text-sm outline-none"
               style={{
                 ...fieldStyle,
-                borderColor: (fabricSource && fabric) ? '#86EFAC' : 'var(--border)',
+                borderColor: (fabricSource && fabric) ? '#86EFAC' : 'rgba(43,43,43,0.12)',
                 paddingRight: fabricLoading ? '2.5rem' : undefined,
               }}
             />
@@ -418,8 +433,8 @@ export default function Purchase() {
 
         {/* Estimated wears — optional */}
         <div className="mb-5">
-          <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-            Estimated number of wears <span style={{ fontWeight: 400 }}>(optional)</span>
+          <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>
+            Estimated wears <span style={{ fontWeight: 400, textTransform: 'none' as const }}>(optional)</span>
           </label>
           <input
             type="number" value={estimatedWears} onChange={e => setEstWears(e.target.value)}
@@ -439,7 +454,7 @@ export default function Purchase() {
         <button
           onClick={analyse}
           disabled={loading}
-          className="w-full py-4 rounded-2xl font-semibold text-white flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2"
           style={{ background: 'var(--accent)' }}
         >
           {loading
@@ -457,27 +472,29 @@ export default function Purchase() {
 
   return (
     <div className="pb-28">
-      <div className="px-4">
-        <PageHeader
-          title="Buy decision"
-          subtitle={analysis.itemName.length > 42 ? analysis.itemName.slice(0, 42) + '…' : analysis.itemName}
-        />
+      <div className="px-4 mb-5 pt-4">
+        <h1 className="text-2xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
+          Buy decision
+        </h1>
+        <p className="text-sm mt-0.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
+          {analysis.itemName.length > 42 ? analysis.itemName.slice(0, 42) + '…' : analysis.itemName}
+        </p>
       </div>
 
       {/* ── 1. Hero image ── */}
       <div className="px-4 mb-6">
         <div
-          className="w-full rounded-3xl overflow-hidden flex items-center justify-center"
+          className="w-full rounded-2xl overflow-hidden flex items-center justify-center"
           style={{
             background: analysis.imageUrl ? 'transparent' : '#F8F8F8',
-            border: analysis.imageUrl ? 'none' : '1px solid var(--border)',
+            border: analysis.imageUrl ? 'none' : '1px solid rgba(43,43,43,0.06)',
             minHeight: '220px',
           }}
         >
           {analysis.imageUrl ? (
             <img
               src={analysis.imageUrl}
-              className="w-full object-cover rounded-3xl"
+              className="w-full object-cover rounded-2xl"
               style={{ maxHeight: '300px' }}
               alt={analysis.itemName}
             />
@@ -515,7 +532,7 @@ export default function Purchase() {
         <p
           className="text-xs mt-2.5"
           style={{
-            color: 'var(--text-secondary)',
+            color: 'rgba(43,43,43,0.45)',
             animation: badgeReady ? 'fade-up 0.4s ease 0.3s both' : 'none',
           }}
         >
@@ -536,21 +553,21 @@ export default function Purchase() {
           <div
             key={stat.label}
             className="rounded-2xl px-3 py-4 text-center"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+            style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}
           >
             <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>{stat.label}</p>
+            <p className="text-[11px] font-semibold mt-0.5 uppercase" style={{ color: 'rgba(43,43,43,0.45)', letterSpacing: '0.3px' }}>{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* ── 4. Plastic impact bar ── */}
       <div className="px-4 mb-5">
-        <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
           <div className="flex items-center gap-2 mb-3">
             <Leaf size={14} style={{ color: '#16A34A' }} />
-            <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>Plastic impact</span>
-            <span className="ml-auto text-xs font-semibold" style={{ color: plastic.dot }}>{plastic.label}</span>
+            <span className="text-xs font-semibold" style={{ color: '#2B2B2B' }}>Plastic impact</span>
+            <span className="ml-auto text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style={{ color: plastic.dot, background: `${plastic.dot}14` }}>{plastic.label}</span>
           </div>
           <div
             className="relative h-3 rounded-full mb-2"
@@ -582,7 +599,7 @@ export default function Purchase() {
 
       {/* ── 5. Investment insight ── */}
       <div className="px-4 mb-5">
-        <div className="rounded-2xl px-4 py-4" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+        <div className="rounded-2xl px-4 py-4" style={{ background: '#F0FDF4', border: '1px solid rgba(43,43,43,0.06)' }}>
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#DCFCE7' }}>
               <TrendingUp size={15} style={{ color: '#15803D' }} />
@@ -603,8 +620,8 @@ export default function Purchase() {
 
       {/* ── 6. Reasoning ── */}
       <div className="px-4 mb-6">
-        <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{analysis.reasoning}</p>
+        <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+          <p className="text-sm leading-relaxed" style={{ color: '#2B2B2B' }}>{analysis.reasoning}</p>
         </div>
       </div>
 
@@ -612,11 +629,11 @@ export default function Purchase() {
       <div className="px-4 flex gap-3">
         <button
           onClick={() => setWished(v => !v)}
-          className="flex-1 py-3.5 rounded-2xl font-medium text-sm flex items-center justify-center gap-2 transition-all"
+          className="flex-1 py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
           style={{
             background: wished ? '#FEE2E2' : 'var(--surface)',
-            border: `1.5px solid ${wished ? '#FECACA' : 'var(--border)'}`,
-            color: wished ? '#DC2626' : 'var(--text-primary)',
+            border: `1px solid ${wished ? '#FECACA' : 'rgba(43,43,43,0.12)'}`,
+            color: wished ? '#DC2626' : '#2B2B2B',
           }}
         >
           <Heart size={15} fill={wished ? '#DC2626' : 'none'} strokeWidth={wished ? 0 : 2} />
@@ -624,8 +641,8 @@ export default function Purchase() {
         </button>
         <button
           onClick={reset}
-          className="flex-1 py-3.5 rounded-2xl font-medium text-sm flex items-center justify-center gap-2"
-          style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', color: 'var(--text-primary)' }}
+          className="flex-1 py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+          style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.12)', color: '#2B2B2B' }}
         >
           <RefreshCw size={15} />
           Compare another

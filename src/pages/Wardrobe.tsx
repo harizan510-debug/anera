@@ -572,7 +572,7 @@ export default function Wardrobe() {
 
       {/* Loading progress */}
       {addLoading && addProgress && (
-        <div className="mb-3 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2"
+        <div className="mb-3 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2"
           style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}>
           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
           {addProgress}
@@ -581,14 +581,14 @@ export default function Wardrobe() {
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }} />
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.35)' }} />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by colour, type, tag…"
           className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+          style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-primary)' }}
         />
       </div>
 
@@ -598,11 +598,11 @@ export default function Wardrobe() {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
             style={{
-              background: activeCategory === cat ? 'var(--accent)' : 'var(--surface)',
+              background: activeCategory === cat ? 'var(--accent)' : 'transparent',
               color: activeCategory === cat ? 'white' : 'var(--text-secondary)',
-              border: `1px solid ${activeCategory === cat ? 'var(--accent)' : 'var(--border)'}`,
+              border: `1px solid ${activeCategory === cat ? 'var(--accent)' : 'rgba(43,43,43,0.12)'}`,
             }}
           >
             {cat === 'all' ? 'All' : categoryLabel[cat]} {counts[cat] > 0 && `(${counts[cat]})`}
@@ -614,13 +614,13 @@ export default function Wardrobe() {
       {filtered.length === 0 ? (
         <div
           className="rounded-2xl flex flex-col items-center justify-center py-16 text-center"
-          style={{ border: '1.5px dashed var(--border)', background: 'var(--surface)' }}
+          style={{ border: '1.5px dashed rgba(43,43,43,0.12)', background: 'var(--surface)' }}
         >
           <div className="text-4xl mb-3">👗</div>
-          <p className="font-medium text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
+          <p className="font-bold text-sm mb-1" style={{ color: '#2B2B2B', letterSpacing: '-0.5px' }}>
             {search ? 'No items match your search' : 'Your wardrobe is empty'}
           </p>
-          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-xs" style={{ color: 'rgba(43,43,43,0.5)' }}>
             {search ? 'Try a different keyword' : 'Tap + to add your first item'}
           </p>
         </div>
@@ -631,9 +631,9 @@ export default function Wardrobe() {
               key={item.id}
               onClick={() => setEditModal({ item: { ...item } })}
               className="rounded-2xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
-              style={{ background: CATEGORY_COLORS[item.category] || 'var(--accent-light)' }}
+              style={{ background: CATEGORY_COLORS[item.category] || 'var(--accent-light)', border: '1px solid rgba(43,43,43,0.06)' }}
             >
-              <div className="aspect-square w-full overflow-hidden">
+              <div className="aspect-square w-full rounded-xl overflow-hidden">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} />
                 ) : (
@@ -641,10 +641,10 @@ export default function Wardrobe() {
                 )}
               </div>
               <div className="px-2 py-2">
-                <p className="text-xs font-medium capitalize truncate" style={{ color: 'var(--text-primary)' }}>
+                <p className="text-xs font-semibold capitalize truncate" style={{ color: '#2B2B2B' }}>
                   {item.color} {item.subcategory}
                 </p>
-                <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-[10px]" style={{ color: 'rgba(43,43,43,0.5)' }}>
                   worn {item.wearCount}×
                 </p>
               </div>
@@ -657,18 +657,18 @@ export default function Wardrobe() {
       <div className="mt-8 mb-2">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles size={15} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-sm font-bold" style={{ color: '#2B2B2B', letterSpacing: '-0.5px' }}>
             Basics you may already own
           </h2>
         </div>
-        <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-xs mb-4" style={{ color: 'rgba(43,43,43,0.5)' }}>
           Tap + to add common pieces without uploading a photo. Tap × to remove.
         </p>
 
         <div className="space-y-5">
           {BASICS_BY_CATEGORY.map(({ category, label, items: basics }) => (
             <div key={category}>
-              <p className="text-xs font-medium uppercase tracking-widest mb-2.5" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
                 {label}
               </p>
               <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
@@ -714,7 +714,7 @@ export default function Wardrobe() {
           onClick={e => { if (e.target === e.currentTarget) setEditModal(null); }}
         >
           <div
-            className="w-full rounded-t-3xl pt-6 px-6 pb-6"
+            className="w-full rounded-t-3xl pt-6 px-6 pb-6 shadow-sm"
             style={{ background: 'var(--surface)', maxHeight: 'calc(90vh - 4rem)', overflowY: 'auto' }}
           >
             <div className="flex items-start gap-4 mb-5">
@@ -726,10 +726,10 @@ export default function Wardrobe() {
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: 'rgba(43,43,43,0.45)' }}>
                   Edit Item
                 </p>
-                <h3 className="font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
+                <h3 className="font-bold capitalize" style={{ color: '#2B2B2B', letterSpacing: '-0.5px' }}>
                   {editModal.item.color} {editModal.item.subcategory}
                 </h3>
               </div>
@@ -738,7 +738,7 @@ export default function Wardrobe() {
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3" style={{ borderTop: '1px solid rgba(43,43,43,0.06)', paddingTop: '16px' }}>
               <FieldRow label="Subcategory">
                 <input
                   value={editModal.item.subcategory}
@@ -752,7 +752,7 @@ export default function Wardrobe() {
                   value={editModal.item.category}
                   onChange={e => setEditModal(m => m && ({ ...m, item: { ...m.item, category: e.target.value as WardrobeItem['category'] } }))}
                   style={fieldStyle}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none appearance-none"
                 >
                   {CATEGORIES.map(c => <option key={c} value={c}>{categoryLabel[c]}</option>)}
                 </select>
@@ -785,17 +785,17 @@ export default function Wardrobe() {
               </FieldRow>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 mt-6" style={{ borderTop: '1px solid rgba(43,43,43,0.06)', paddingTop: '16px' }}>
               <button
                 onClick={() => handleDelete(editModal.item.id)}
-                className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
+                className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{ background: '#FEE2E2', color: '#DC2626' }}
               >
                 <Trash2 size={18} />
               </button>
               <button
                 onClick={saveEdit}
-                className="flex-1 py-3 rounded-2xl font-medium text-white flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2"
                 style={{ background: 'var(--accent)' }}
               >
                 <Check size={18} /> Save changes
@@ -811,7 +811,7 @@ export default function Wardrobe() {
 const fieldStyle: React.CSSProperties = {
   width: '100%',
   background: 'var(--bg)',
-  border: '1px solid var(--border)',
+  border: '1px solid rgba(43,43,43,0.12)',
   borderRadius: '12px',
   padding: '10px 12px',
   fontSize: '14px',
@@ -841,7 +841,7 @@ function BasicCard({
       {/* Illustration area */}
       <div
         className="relative w-[80px] h-[100px] rounded-2xl overflow-hidden mb-1.5 active:scale-95 transition-transform"
-        style={{ background: 'white', cursor: added ? 'default' : 'pointer', border: '1px solid rgba(0,0,0,0.06)' }}
+        style={{ background: 'white', cursor: added ? 'default' : 'pointer', border: '1px solid rgba(43,43,43,0.06)' }}
         onClick={added ? undefined : onAdd}
       >
         <img
@@ -890,8 +890,8 @@ function BasicCard({
 
       {/* Label */}
       <p
-        className="text-[10px] text-center capitalize leading-tight px-0.5"
-        style={{ color: 'var(--text-primary)' }}
+        className="text-[10px] text-center capitalize leading-tight px-0.5 font-medium"
+        style={{ color: '#2B2B2B' }}
       >
         {basic.color} {basic.subcategory}
       </p>
@@ -902,7 +902,7 @@ function BasicCard({
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+      <label className="block text-[11px] font-bold uppercase mb-1.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
         {label}
       </label>
       {children}

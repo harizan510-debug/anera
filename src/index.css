@@ -1,13 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,300;1,14..32,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
 :root {
   --bg: #FFFFFF;
   --surface: #FFFFFF;
-  --border: #EBEBEB;
-  --text-primary: #18181B;
-  --text-secondary: #71717A;
+  --border: rgba(43, 43, 43, 0.08);
+  --text-primary: #2B2B2B;
+  --text-secondary: rgba(43, 43, 43, 0.5);
+  --radius: 12px;
+  --radius-full: 9999px;
   --accent: #5B9BD5;
   --accent-dark: #2F72B3;
   --accent-light: #E1EFFA;
@@ -22,7 +24,7 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   background-color: var(--bg);
   color: var(--text-primary);
   margin: 0;
@@ -51,4 +53,13 @@ input, textarea, button { font-family: inherit; }
 @keyframes fade-up {
   from { transform: translateY(14px); opacity: 0; }
   to   { transform: translateY(0px);  opacity: 1; }
+}
+
+/* ── Hausfinde-inspired label style ───────────────────────── */
+.label-style {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
 }

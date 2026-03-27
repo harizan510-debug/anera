@@ -10,7 +10,7 @@ import type { WardrobeItem } from '../types';
 import { generateOutfitRecommendations } from '../api';
 import { supabase, isSupabaseConfigured, getCityWeather } from '../supabase';
 import type { WeatherInfo } from '../supabase';
-import PageHeader from '../components/PageHeader';
+
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -293,21 +293,28 @@ export default function Outfits() {
 
   return (
     <div className="pb-4">
-      <div className="px-4">
-        <PageHeader title="Outfits" subtitle="Plan, dress, and get inspired" />
+      <div className="px-4 flex items-start justify-between mb-5 pt-4">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#2B2B2B', letterSpacing: '-0.5px' }}>
+            Outfits
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
+            Plan, dress, and get inspired
+          </p>
+        </div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1.5 px-4 mb-4">
+      <div className="flex gap-2 px-4 mb-5">
         {(['outfits', 'trips', 'moodboard'] as OutfitsTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className="flex-1 py-2 rounded-2xl text-xs font-semibold transition-all"
+            className="flex-1 py-2 rounded-full text-xs font-semibold transition-all"
             style={{
-              background: tab === t ? 'var(--accent)' : 'var(--surface)',
-              color:      tab === t ? 'white' : 'var(--text-secondary)',
-              border:     `1px solid ${tab === t ? 'var(--accent)' : 'var(--border)'}`,
+              background: tab === t ? 'var(--accent)' : 'transparent',
+              color:      tab === t ? 'white' : '#2B2B2B',
+              border:     `1.5px solid ${tab === t ? 'var(--accent)' : 'rgba(43,43,43,0.12)'}`,
             }}
           >
             {t === 'outfits' ? 'Outfits' : t === 'trips' ? 'My Trips' : 'Moodboard'}
@@ -323,7 +330,7 @@ export default function Outfits() {
           {weatherInfo && (
             <div
               className="px-4 py-3 rounded-2xl flex items-start gap-3"
-              style={{ background: weatherInfo.isRainy ? '#EFF6FF' : 'var(--accent-light)', border: `1px solid ${weatherInfo.isRainy ? '#BFDBFE' : 'var(--border)'}` }}
+              style={{ background: weatherInfo.isRainy ? '#EFF6FF' : 'var(--accent-light)', border: `1px solid ${weatherInfo.isRainy ? '#BFDBFE' : 'rgba(43,43,43,0.06)'}` }}
             >
               <span className="text-xl flex-shrink-0">{weatherInfo.icon}</span>
               <div className="flex-1 min-w-0">
@@ -337,31 +344,31 @@ export default function Outfits() {
           )}
 
           {/* ── Calendar ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-              <button onClick={prevMonth} className="p-1 rounded-lg" style={{ color: 'var(--text-secondary)' }}>
-                <ChevronLeft size={18} />
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(43,43,43,0.06)' }}>
+              <button onClick={prevMonth} className="p-1.5 rounded-xl" style={{ color: 'rgba(43,43,43,0.45)' }}>
+                <ChevronLeft size={16} />
               </button>
               <div className="flex items-center gap-2">
                 <CalendarDays size={14} style={{ color: 'var(--accent)' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <span className="text-sm font-semibold" style={{ color: '#2B2B2B', letterSpacing: '-0.3px' }}>
                   {MONTH_NAMES[calMonth]} {calYear}
                 </span>
               </div>
-              <button onClick={nextMonth} className="p-1 rounded-lg" style={{ color: 'var(--text-secondary)' }}>
-                <ChevronRight size={18} />
+              <button onClick={nextMonth} className="p-1.5 rounded-xl" style={{ color: 'rgba(43,43,43,0.45)' }}>
+                <ChevronRight size={16} />
               </button>
             </div>
 
             {/* Day headings */}
-            <div className="grid grid-cols-7 px-2 pt-2">
+            <div className="grid grid-cols-7 px-3 pt-3">
               {['S','M','T','W','T','F','S'].map((d, i) => (
-                <div key={i} className="text-center text-[10px] font-medium pb-1" style={{ color: 'var(--text-secondary)' }}>{d}</div>
+                <div key={i} className="text-center text-[10px] font-semibold uppercase pb-2" style={{ color: 'rgba(43,43,43,0.45)', letterSpacing: '0.5px' }}>{d}</div>
               ))}
             </div>
 
             {/* Day cells */}
-            <div className="grid grid-cols-7 px-2 pb-2 gap-y-0.5">
+            <div className="grid grid-cols-7 px-3 pb-3 gap-y-1">
               {Array.from({ length: firstDow }).map((_, i) => <div key={`e${i}`} />)}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const d   = i + 1;
@@ -373,20 +380,19 @@ export default function Outfits() {
                   <button
                     key={d}
                     onClick={() => openDay(ds)}
-                    className="flex flex-col items-center py-1 rounded-xl transition-all active:scale-95"
+                    className="flex flex-col items-center py-1.5 rounded-full transition-all active:scale-95"
                     style={{
-                      background: isToday ? 'var(--accent-light)' : 'transparent',
-                      border: `1.5px solid ${isToday ? 'var(--accent)' : 'transparent'}`,
+                      background: isToday ? 'var(--accent)' : 'transparent',
                     }}
                   >
-                    <span className="text-[11px] font-medium leading-none mb-0.5"
-                      style={{ color: isToday ? 'var(--accent)' : 'var(--text-primary)' }}>
+                    <span className={`text-[11px] leading-none mb-0.5 ${isToday ? 'font-semibold' : 'font-medium'}`}
+                      style={{ color: isToday ? 'white' : '#2B2B2B' }}>
                       {d}
                     </span>
-                    <div className="flex gap-0.5 justify-center min-h-[8px]">
-                      {hasLog && <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#34D399' }} />}
+                    <div className="flex gap-0.5 justify-center min-h-[6px]">
+                      {hasLog && <span className="w-1.5 h-1.5 rounded-full" style={{ background: isToday ? 'white' : '#34D399' }} />}
                       {evts.slice(0, 2).map(e => (
-                        <span key={e.id} className="w-1.5 h-1.5 rounded-full" style={{ background: e.color }} />
+                        <span key={e.id} className="w-1.5 h-1.5 rounded-full" style={{ background: isToday ? 'white' : e.color }} />
                       ))}
                     </div>
                   </button>
@@ -395,21 +401,21 @@ export default function Outfits() {
             </div>
 
             {/* Legend */}
-            <div className="flex gap-4 px-4 pb-3 pt-1" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="flex gap-4 px-4 pb-3 pt-2" style={{ borderTop: '1px solid rgba(43,43,43,0.06)' }}>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: '#34D399' }} />
-                <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Outfit logged</span>
+                <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Outfit logged</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)' }} />
-                <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Event</span>
+                <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Event</span>
               </div>
             </div>
           </div>
 
           {/* ── Dress me ── */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>
+            <p className="font-bold uppercase mb-3" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
               Dress me
             </p>
 
@@ -432,7 +438,7 @@ export default function Outfits() {
                   <div
                     key={slot}
                     className="flex items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer active:scale-[0.98] transition-transform"
-                    style={{ border: '1.5px solid var(--border)', background: 'var(--surface)' }}
+                    style={{ border: '1px solid rgba(43,43,43,0.06)', background: 'var(--surface)' }}
                     onClick={() => setPickingSlot(slot)}
                   >
                     {item ? (
@@ -469,38 +475,38 @@ export default function Outfits() {
             </div>
 
             {/* Occasion */}
-            <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Occasion</p>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Occasion</p>
+            <div className="flex flex-wrap gap-2 mb-4">
               {OCCASIONS.map(occ => (
                 <button key={occ} onClick={() => setOccasion(occ)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                   style={{
-                    background: occasion === occ ? 'var(--accent)' : 'var(--surface)',
-                    color:      occasion === occ ? 'white' : 'var(--text-secondary)',
-                    border:     `1px solid ${occasion === occ ? 'var(--accent)' : 'var(--border)'}`,
+                    background: occasion === occ ? 'var(--accent)' : 'transparent',
+                    color:      occasion === occ ? 'white' : '#2B2B2B',
+                    border:     `1.5px solid ${occasion === occ ? 'var(--accent)' : 'rgba(43,43,43,0.12)'}`,
                   }}>{occ}</button>
               ))}
             </div>
 
             {/* Weather */}
-            <p className="text-xs font-medium mb-2 flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-              <CloudSun size={12} /> Weather
+            <p className="font-bold uppercase mb-2 flex items-center gap-1.5" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
+              <CloudSun size={11} /> Weather
             </p>
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-5">
               {WEATHERS.map(w => (
                 <button key={w} onClick={() => setWeather(w)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                   style={{
-                    background: weather === w ? '#5B9BD5' : 'var(--surface)',
-                    color:      weather === w ? 'white' : 'var(--text-secondary)',
-                    border:     `1px solid ${weather === w ? '#5B9BD5' : 'var(--border)'}`,
+                    background: weather === w ? '#5B9BD5' : 'transparent',
+                    color:      weather === w ? 'white' : '#2B2B2B',
+                    border:     `1.5px solid ${weather === w ? '#5B9BD5' : 'rgba(43,43,43,0.12)'}`,
                   }}>{w}</button>
               ))}
             </div>
 
             {/* Dress me button */}
             <button onClick={generate} disabled={loading}
-              className="w-full py-4 rounded-2xl font-semibold text-white flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               style={{ background: 'var(--accent)' }}>
               {loading
                 ? <><Loader2 size={18} className="animate-spin" /> Styling…</>
@@ -514,20 +520,20 @@ export default function Outfits() {
 
           {wardrobeItems.length === 0 && !loading && (
             <div className="rounded-2xl px-5 py-8 flex flex-col items-center text-center"
-              style={{ border: '1.5px dashed var(--border)' }}>
+              style={{ border: '1.5px dashed rgba(43,43,43,0.12)' }}>
               <div className="text-4xl mb-3">👗</div>
-              <p className="font-medium text-sm mb-1" style={{ color: 'var(--text-primary)' }}>Your wardrobe is empty</p>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add items to your wardrobe first.</p>
+              <p className="font-semibold text-sm mb-1" style={{ color: '#2B2B2B' }}>Your wardrobe is empty</p>
+              <p className="text-xs" style={{ color: 'rgba(43,43,43,0.45)' }}>Add items to your wardrobe first.</p>
             </div>
           )}
 
           {/* Generated outfits */}
           {outfits.map((outfit, idx) => (
             <div key={idx} className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
-                <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Look {idx + 1}</p>
-                <span className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(43,43,43,0.06)' }}>
+                <p className="font-semibold text-sm" style={{ color: '#2B2B2B', letterSpacing: '-0.2px' }}>Look {idx + 1}</p>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
                   style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}>{occasion}</span>
               </div>
               <div className="flex gap-2 p-3">
@@ -552,8 +558,8 @@ export default function Outfits() {
 
           {/* Ask Anera CTA */}
           <button onClick={() => navigate('/ask')}
-            className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 font-medium text-sm"
-            style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)', border: '1px solid var(--border)' }}>
+            className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-[0.98]"
+            style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)', border: '1.5px solid rgba(43,43,43,0.06)' }}>
             <MessageCircle size={16} /> Ask Anera anything about style
           </button>
         </div>
@@ -563,11 +569,11 @@ export default function Outfits() {
       {tab === 'trips' && (
         <div className="px-4 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+            <p className="font-bold uppercase" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
               Your trips
             </p>
             <button onClick={() => setShowAddTrip(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-white"
+              className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white transition-all active:scale-[0.97]"
               style={{ background: 'var(--accent)' }}>
               <Plus size={12} /> Add trip
             </button>
@@ -575,7 +581,7 @@ export default function Outfits() {
 
           {trips.length === 0 && (
             <div className="rounded-2xl py-12 flex flex-col items-center text-center"
-              style={{ border: '1.5px dashed var(--border)' }}>
+              style={{ border: '1.5px dashed rgba(43,43,43,0.12)' }}>
               <div className="text-4xl mb-3">✈️</div>
               <p className="font-medium text-sm mb-1" style={{ color: 'var(--text-primary)' }}>No trips yet</p>
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add a trip to see what you wore.</p>
@@ -586,12 +592,12 @@ export default function Outfits() {
             const items = tripItems(trip);
             return (
               <div key={trip.id} className="rounded-2xl overflow-hidden"
-                style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+                style={{ border: '1px solid rgba(43,43,43,0.06)', background: 'var(--surface)' }}>
                 <div className="px-4 pt-4 pb-3 flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <MapPin size={13} style={{ color: 'var(--accent)' }} />
-                      <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{trip.destination}</p>
+                      <p className="font-semibold text-sm" style={{ color: '#2B2B2B', letterSpacing: '-0.2px' }}>{trip.destination}</p>
                     </div>
                     <p className="text-xs pl-5" style={{ color: 'var(--text-secondary)' }}>
                       {fmtShortDate(trip.startDate)} – {fmtShortDate(trip.endDate)}
@@ -604,13 +610,13 @@ export default function Outfits() {
                 </div>
                 {items.length > 0 ? (
                   <div className="px-4 pb-4">
-                    <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
                       What you wore in {trip.destination}
                     </p>
                     <div className="flex gap-2 overflow-x-auto no-scrollbar">
                       {items.slice(0, 8).map(item => (
                         <div key={item.id} className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden"
-                          style={{ border: '1px solid var(--border)' }}>
+                          style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
                           {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-lg opacity-40">👕</div>}
                         </div>
                       ))}
@@ -633,40 +639,40 @@ export default function Outfits() {
           {/* Folder chips */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 mb-4">
             <button onClick={() => setActiveFolder('all')}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all"
               style={{
-                background: activeFolder === 'all' ? 'var(--accent)' : 'var(--surface)',
-                color:      activeFolder === 'all' ? 'white' : 'var(--text-secondary)',
-                border:     `1px solid ${activeFolder === 'all' ? 'var(--accent)' : 'var(--border)'}`,
+                background: activeFolder === 'all' ? 'var(--accent)' : 'transparent',
+                color:      activeFolder === 'all' ? 'white' : '#2B2B2B',
+                border:     `1.5px solid ${activeFolder === 'all' ? 'var(--accent)' : 'rgba(43,43,43,0.12)'}`,
               }}>All</button>
 
             {folders.map(f => (
               <button key={f.id} onClick={() => setActiveFolder(f.id)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                 style={{
-                  background: activeFolder === f.id ? f.color : 'var(--surface)',
-                  color:      activeFolder === f.id ? 'white' : 'var(--text-secondary)',
-                  border:     `1px solid ${activeFolder === f.id ? f.color : 'var(--border)'}`,
+                  background: activeFolder === f.id ? f.color : 'transparent',
+                  color:      activeFolder === f.id ? 'white' : '#2B2B2B',
+                  border:     `1.5px solid ${activeFolder === f.id ? f.color : 'rgba(43,43,43,0.12)'}`,
                 }}>
                 <FolderOpen size={11} /> {f.name}
               </button>
             ))}
 
             <button onClick={() => setShowAddFolder(true)}
-              className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ border: '1.5px dashed var(--border)', color: 'var(--text-secondary)', background: 'transparent' }}>
+              className="flex-shrink-0 flex items-center gap-1 px-3.5 py-1.5 rounded-full text-[11px] font-semibold"
+              style={{ border: '1.5px dashed rgba(43,43,43,0.12)', color: 'rgba(43,43,43,0.45)', background: 'transparent' }}>
               <Plus size={11} /> Folder
             </button>
           </div>
 
           {visiblePins.length === 0 ? (
             <div className="rounded-2xl py-12 flex flex-col items-center text-center"
-              style={{ border: '1.5px dashed var(--border)' }}>
+              style={{ border: '1.5px dashed rgba(43,43,43,0.12)' }}>
               <div className="text-4xl mb-3">📌</div>
-              <p className="font-medium text-sm mb-1" style={{ color: 'var(--text-primary)' }}>No pins yet</p>
-              <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>Save outfit inspiration to your moodboard</p>
+              <p className="font-semibold text-sm mb-1" style={{ color: '#2B2B2B' }}>No pins yet</p>
+              <p className="text-xs mb-4" style={{ color: 'rgba(43,43,43,0.45)' }}>Save outfit inspiration to your moodboard</p>
               <button onClick={() => setShowAddPin(true)}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-white"
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.97]"
                 style={{ background: 'var(--accent)' }}>Add your first pin</button>
             </div>
           ) : (
@@ -675,7 +681,7 @@ export default function Outfits() {
                 const f = folders.find(x => x.id === pin.folderId);
                 return (
                   <div key={pin.id} className="break-inside-avoid mb-3 rounded-2xl overflow-hidden relative"
-                    style={{ border: '1px solid var(--border)' }}>
+                    style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
                     <img src={pin.imageUrl} className="w-full object-cover"
                       alt={pin.note || 'Inspiration'}
                       onError={e => { e.currentTarget.style.display = 'none'; }} />
@@ -685,7 +691,7 @@ export default function Outfits() {
                       </div>
                     )}
                     {f && (
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium text-white"
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
                         style={{ background: f.color + 'CC' }}>{f.name}</div>
                     )}
                     <button onClick={() => setPins(prev => prev.filter(p => p.id !== pin.id))}
@@ -701,7 +707,7 @@ export default function Outfits() {
 
           {/* FAB */}
           <button onClick={() => setShowAddPin(true)}
-            className="fixed z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
+            className="fixed z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-sm transition-all active:scale-95"
             style={{ bottom: '88px', right: '16px', background: 'var(--accent)', color: 'white' }}>
             <Plus size={20} />
           </button>
@@ -718,13 +724,13 @@ export default function Outfits() {
         >
           {/* Outfit log */}
           <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--text-secondary)' }}>Outfit</p>
+            <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Outfit</p>
             <div className="flex flex-wrap gap-2 mb-2">
               {dayItemIds.map(id => {
                 const item = wardrobeItems.find(w => w.id === id);
                 return item ? (
                   <div key={id} className="relative w-14 h-14 rounded-xl overflow-hidden"
-                    style={{ border: '1px solid var(--border)' }}>
+                    style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
                     {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-lg opacity-40">👕</div>}
                     <button onClick={() => setDayItemIds(prev => prev.filter(x => x !== id))}
                       className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
@@ -736,17 +742,17 @@ export default function Outfits() {
               })}
               <button onClick={() => setShowItemPicker(p => !p)}
                 className="w-14 h-14 rounded-xl flex items-center justify-center"
-                style={{ border: '1.5px dashed var(--border)', color: 'var(--text-secondary)' }}>
+                style={{ border: '1.5px dashed rgba(43,43,43,0.12)', color: 'rgba(43,43,43,0.45)' }}>
                 <Plus size={18} />
               </button>
             </div>
             {showItemPicker && (
-              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)', maxHeight: '180px', overflowY: 'auto' }}>
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(43,43,43,0.06)', maxHeight: '180px', overflowY: 'auto' }}>
                 {wardrobeItems.map(item => (
                   <button key={item.id}
                     onClick={() => setDayItemIds(prev => prev.includes(item.id) ? prev.filter(x => x !== item.id) : [...prev, item.id])}
                     className="w-full flex items-center gap-3 px-3 py-2"
-                    style={{ borderBottom: '1px solid var(--border)' }}>
+                    style={{ borderBottom: '1px solid rgba(43,43,43,0.06)' }}>
                     <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
                       {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xs opacity-40">👕</div>}
                     </div>
@@ -763,7 +769,7 @@ export default function Outfits() {
           {/* Events */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Events</p>
+              <p className="font-bold uppercase" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Events</p>
               <button onClick={() => setShowAddEvent(p => !p)}
                 className="flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--accent)' }}>
                 <Plus size={12} /> Add
@@ -786,7 +792,7 @@ export default function Outfits() {
                 <input value={newEventTitle} onChange={e => setNewEventTitle(e.target.value)}
                   placeholder="Event name"
                   className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                  style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
                 <div className="flex gap-2">
                   {EVENT_COLORS.map(c => (
                     <button key={c} onClick={() => setNewEventColor(c)}
@@ -796,12 +802,12 @@ export default function Outfits() {
                     </button>
                   ))}
                 </div>
-                <button onClick={addCalEvent} className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+                <button onClick={addCalEvent} className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98]"
                   style={{ background: 'var(--accent)' }}>Save event</button>
                 <button
                   onClick={() => alert('Google Calendar sync coming soon! 🗓️')}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
-                  style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  style={{ border: '1.5px solid rgba(43,43,43,0.12)', color: '#2B2B2B' }}>
                   <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -813,7 +819,7 @@ export default function Outfits() {
               </div>
             )}
           </div>
-          <button onClick={saveDayLog} className="w-full py-3.5 rounded-2xl font-semibold text-white"
+          <button onClick={saveDayLog} className="w-full py-3.5 rounded-xl font-semibold text-white transition-all active:scale-[0.98]"
             style={{ background: 'var(--accent)' }}>Save</button>
         </ModalSheet>
       )}
@@ -830,8 +836,8 @@ export default function Outfits() {
               <div className="space-y-2">
                 {slotPool(pickingSlot).map(item => (
                   <button key={item.id} onClick={() => pickSlot(item)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-2xl active:scale-[0.98] transition-transform"
-                    style={{ border: '1px solid var(--border)' }}>
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl active:scale-[0.98] transition-transform"
+                    style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
                     <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
                       {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
                     </div>
@@ -856,22 +862,22 @@ export default function Outfits() {
             <input value={tripDest} onChange={e => setTripDest(e.target.value)}
               placeholder="Destination (e.g. New York)"
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+              style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>From</label>
+                <label className="font-bold uppercase block mb-1" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>From</label>
                 <input type="date" value={tripStart} onChange={e => setTripStart(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                  style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
               </div>
               <div className="flex-1">
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>To</label>
+                <label className="font-bold uppercase block mb-1" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>To</label>
                 <input type="date" value={tripEnd} onChange={e => setTripEnd(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                  style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
               </div>
             </div>
-            <button onClick={addTrip} className="w-full py-3.5 rounded-2xl font-semibold text-white"
+            <button onClick={addTrip} className="w-full py-3.5 rounded-xl font-semibold text-white transition-all active:scale-[0.98]"
               style={{ background: 'var(--accent)' }}>Save trip</button>
           </div>
         </ModalSheet>
@@ -884,26 +890,26 @@ export default function Outfits() {
             <input value={pinUrl} onChange={e => setPinUrl(e.target.value)}
               placeholder="Paste image URL"
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+              style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
             <input value={pinNote} onChange={e => setPinNote(e.target.value)}
               placeholder="Note (optional)"
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+              style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
             <div>
-              <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Save to folder</p>
+              <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Save to folder</p>
               <div className="flex gap-2 flex-wrap">
                 {folders.map(f => (
                   <button key={f.id} onClick={() => setPinFolder(f.id)}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium"
+                    className="px-3 py-1.5 rounded-full text-[11px] font-semibold"
                     style={{
-                      background: pinFolder === f.id ? f.color : 'var(--surface)',
-                      color:      pinFolder === f.id ? 'white' : 'var(--text-secondary)',
-                      border:     `1px solid ${pinFolder === f.id ? f.color : 'var(--border)'}`,
+                      background: pinFolder === f.id ? f.color : 'transparent',
+                      color:      pinFolder === f.id ? 'white' : '#2B2B2B',
+                      border:     `1.5px solid ${pinFolder === f.id ? f.color : 'rgba(43,43,43,0.12)'}`,
                     }}>{f.name}</button>
                 ))}
               </div>
             </div>
-            <button onClick={addPin} className="w-full py-3.5 rounded-2xl font-semibold text-white"
+            <button onClick={addPin} className="w-full py-3.5 rounded-xl font-semibold text-white transition-all active:scale-[0.98]"
               style={{ background: 'var(--accent)' }}>Pin it</button>
           </div>
         </ModalSheet>
@@ -916,7 +922,7 @@ export default function Outfits() {
             <input value={folderName} onChange={e => setFolderName(e.target.value)}
               placeholder="Folder name"
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }} />
+              style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
             <div className="flex gap-2">
               {EVENT_COLORS.map(c => (
                 <button key={c} onClick={() => setFolderColor(c)}
@@ -926,7 +932,7 @@ export default function Outfits() {
                 </button>
               ))}
             </div>
-            <button onClick={addFolder} className="w-full py-3.5 rounded-2xl font-semibold text-white"
+            <button onClick={addFolder} className="w-full py-3.5 rounded-xl font-semibold text-white transition-all active:scale-[0.98]"
               style={{ background: 'var(--accent)' }}>Create folder</button>
           </div>
         </ModalSheet>
@@ -941,16 +947,16 @@ function ModalSheet({ onClose, title, children }: { onClose: () => void; title: 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end pb-16"
-      style={{ background: 'rgba(0,0,0,0.4)' }}
+      style={{ background: 'rgba(0,0,0,0.35)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         className="w-full rounded-t-3xl pt-5 px-5 pb-6"
         style={{ background: 'var(--surface)', maxHeight: 'calc(90vh - 4rem)', overflowY: 'auto' }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{title}</p>
-          <button onClick={onClose}><X size={20} style={{ color: 'var(--text-secondary)' }} /></button>
+        <div className="flex items-center justify-between mb-5">
+          <p className="font-bold text-base" style={{ color: '#2B2B2B', letterSpacing: '-0.3px' }}>{title}</p>
+          <button onClick={onClose} className="p-1 rounded-full" style={{ color: 'rgba(43,43,43,0.45)' }}><X size={18} /></button>
         </div>
         {children}
       </div>

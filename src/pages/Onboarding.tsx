@@ -140,11 +140,11 @@ export default function Onboarding() {
 
       {/* Header */}
       <div className="px-6 pt-14 pb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
             <Shirt size={16} color="white" />
           </div>
-          <span className="font-semibold tracking-wide text-lg" style={{ color: 'var(--text-primary)' }}>
+          <span className="text-lg" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
             anera
           </span>
         </div>
@@ -156,19 +156,19 @@ export default function Onboarding() {
         {step === 'welcome' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
             <div className="mb-10">
-              <p className="text-sm font-medium mb-3" style={{ color: 'var(--accent)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--accent)' }}>
                 Your personal AI stylist
               </p>
-              <h1 className="text-4xl font-light mb-4" style={{ color: 'var(--text-primary)', lineHeight: '1.15', letterSpacing: '-0.5px' }}>
+              <h1 className="text-4xl mb-4" style={{ color: '#2B2B2B', fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.5px' }}>
                 Meet Anera,<br />your wardrobe<br />intelligence.
               </h1>
-              <p className="text-base" style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              <p className="text-base" style={{ color: 'rgba(43,43,43,0.5)', lineHeight: '1.6' }}>
                 Upload your outfits. Anera learns your style, curates daily looks, and tells you exactly what to wear — or buy.
               </p>
             </div>
             <button
               onClick={() => setStep('name')}
-              className="w-full py-4 rounded-2xl font-medium text-white text-base flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl font-semibold text-white text-base flex items-center justify-center gap-2"
               style={{ background: 'var(--accent)' }}
             >
               Get started <ArrowRight size={18} />
@@ -178,26 +178,29 @@ export default function Onboarding() {
 
         {step === 'name' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
-            <h2 className="text-3xl font-light mb-2" style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+            <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               What should I call you?
             </h2>
-            <p className="mb-8 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="mb-8 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
               Just your first name is fine.
             </p>
+            <label className="block mb-2 font-bold uppercase" style={{ fontSize: '11px', color: 'rgba(43,43,43,0.45)', letterSpacing: '0.05em' }}>
+              Your name
+            </label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder="e.g. Sarah"
               autoFocus
-              className="w-full px-4 py-4 rounded-2xl text-lg outline-none mb-6"
-              style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', color: 'var(--text-primary)' }}
+              className="w-full px-4 py-3.5 rounded-xl text-base outline-none mb-6"
+              style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.12)', color: '#2B2B2B' }}
               onKeyDown={e => e.key === 'Enter' && name.trim() && setStep('upload')}
             />
             <button
               onClick={() => setStep('upload')}
               disabled={!name.trim()}
-              className="w-full py-4 rounded-2xl font-medium text-white text-base flex items-center justify-center gap-2 disabled:opacity-40"
+              className="w-full py-4 rounded-xl font-semibold text-white text-base flex items-center justify-center gap-2 disabled:opacity-40"
               style={{ background: 'var(--accent)' }}
             >
               Continue <ArrowRight size={18} />
@@ -207,10 +210,10 @@ export default function Onboarding() {
 
         {step === 'upload' && (
           <div>
-            <h2 className="text-3xl font-light mb-2 mt-2" style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+            <h2 className="text-3xl mb-2 mt-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Upload your outfits,<br />{name}.
             </h2>
-            <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="mb-6 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
               Photos of individual items or full OOTDs work great. Anera can detect multiple garments from a single photo.
             </p>
 
@@ -220,16 +223,16 @@ export default function Onboarding() {
               onDragOver={e => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
               className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer mb-5"
-              style={{ border: '1.5px dashed var(--border)', background: 'var(--surface)', padding: '32px 20px' }}
+              style={{ border: '1.5px dashed rgba(43,43,43,0.12)', background: 'var(--surface)', padding: '32px 20px' }}
             >
               <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
                 <Upload size={22} style={{ color: 'var(--accent)' }} />
               </div>
               <div className="text-center">
-                <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+                <p className="font-semibold text-sm" style={{ color: '#2B2B2B' }}>
                   Tap to upload photos
                 </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-xs mt-1" style={{ color: 'rgba(43,43,43,0.45)' }}>
                   or drag & drop — JPEG, PNG, HEIC
                 </p>
               </div>
@@ -245,14 +248,14 @@ export default function Onboarding() {
 
             {/* Photo grid */}
             {photos.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 mb-6">
+              <div className="grid grid-cols-3 gap-2.5 mb-6">
                 {photos.map((photo, i) => (
-                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden">
+                  <div key={i} className="relative aspect-square rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
                     <img src={photo.previewUrl} className="w-full h-full object-cover" alt="" />
                     <button
                       onClick={() => removePhoto(i)}
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(0,0,0,0.55)' }}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ background: 'rgba(0,0,0,0.5)' }}
                     >
                       <X size={12} color="white" />
                     </button>
@@ -262,7 +265,7 @@ export default function Onboarding() {
             )}
 
             {photos.length > 0 && (
-              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-xs font-semibold mb-4" style={{ color: 'rgba(43,43,43,0.45)' }}>
                 {photos.length} photo{photos.length > 1 ? 's' : ''} selected
               </p>
             )}
@@ -270,15 +273,15 @@ export default function Onboarding() {
             <button
               onClick={processPhotos}
               disabled={photos.length === 0}
-              className="w-full py-4 rounded-2xl font-medium text-white text-base flex items-center justify-center gap-2 disabled:opacity-40 mb-3"
+              className="w-full py-4 rounded-xl font-semibold text-white text-base flex items-center justify-center gap-2 disabled:opacity-40 mb-3"
               style={{ background: 'var(--accent)' }}
             >
               Build my wardrobe <ArrowRight size={18} />
             </button>
             <button
               onClick={() => { completeOnboarding(name || 'You', []); navigate('/wardrobe'); }}
-              className="w-full py-3 text-sm text-center"
-              style={{ color: 'var(--text-secondary)' }}
+              className="w-full py-3 text-sm font-medium text-center"
+              style={{ color: 'rgba(43,43,43,0.45)' }}
             >
               Skip for now, I'll add items manually
             </button>
@@ -290,10 +293,10 @@ export default function Onboarding() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'var(--accent-light)' }}>
               <Loader2 size={32} style={{ color: 'var(--accent)' }} className="animate-spin" />
             </div>
-            <h2 className="text-2xl font-light mb-3" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Scanning your wardrobe…
             </h2>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
               {progressMsg || 'Detecting clothing items…'}
             </p>
           </div>
@@ -304,16 +307,16 @@ export default function Onboarding() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'var(--accent-light)' }}>
               <CheckCircle size={32} style={{ color: 'var(--accent)' }} />
             </div>
-            <h2 className="text-3xl font-light mb-3" style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+            <h2 className="text-3xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Wardrobe ready!<br />
               <span style={{ color: 'var(--accent)' }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
             </h2>
-            <p className="text-sm mb-10" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm mb-10" style={{ color: 'rgba(43,43,43,0.5)' }}>
               Let's start styling, {name}.
             </p>
             <button
               onClick={() => navigate('/wardrobe')}
-              className="px-8 py-4 rounded-2xl font-medium text-white text-base flex items-center gap-2"
+              className="px-8 py-4 rounded-xl font-semibold text-white text-base flex items-center gap-2"
               style={{ background: 'var(--accent)' }}
             >
               View my wardrobe <ArrowRight size={18} />

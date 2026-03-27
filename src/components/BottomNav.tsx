@@ -44,7 +44,7 @@ const navItems = [
 export default function BottomNav() {
   return (
     <nav
-      style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+      style={{ borderTop: '1px solid rgba(43,43,43,0.06)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
       className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-1 safe-area-bottom"
     >
       {navItems.map(({ to, icon: Icon, label, color, bg }) => (
@@ -60,7 +60,7 @@ export default function BottomNav() {
                 style={
                   isActive
                     ? { background: bg, color }
-                    : { color: 'var(--text-secondary)' }
+                    : { color: 'rgba(43,43,43,0.35)' }
                 }
               >
                 <Icon
@@ -70,8 +70,8 @@ export default function BottomNav() {
                 />
               </div>
               <span
-                className="text-[10px] font-medium tracking-wide transition-colors duration-150"
-                style={{ color: isActive ? color : 'var(--text-secondary)' }}
+                className="text-[10px] font-semibold tracking-wider uppercase transition-colors duration-150"
+                style={{ color: isActive ? color : 'rgba(43,43,43,0.35)' }}
               >
                 {label}
               </span>

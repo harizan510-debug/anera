@@ -8,7 +8,7 @@ export default function PageHeader({ title, subtitle, action }: PageHeaderProps)
   return (
     <div className="flex items-start justify-between mb-5 pt-4">
       <div>
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+        <h1 className="text-2xl" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
           {title}
         </h1>
         {subtitle && (
