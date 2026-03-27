@@ -216,12 +216,11 @@ export default function Purchase() {
           if (res.fabric) { setFabric(res.fabric); setFabricSource('inferred'); }
           if (res.itemName && !itemName) setItemName(res.itemName);
           // Auto-populate price if detected and not already filled
-          const detected = res as unknown as Record<string, unknown>;
-          if (detected.price && Number(detected.price) > 0 && !price) {
-            setPrice(String(detected.price));
+          if (res.price && res.price > 0 && !price) {
+            setPrice(String(res.price));
           }
-          if (detected.currency && !price) {
-            setCurrency(String(detected.currency));
+          if (res.currency && !price) {
+            setCurrency(res.currency);
           }
         } else {
           // Demo: keyword match on URL

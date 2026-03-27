@@ -411,6 +411,8 @@ export interface FabricDetection {
   fabric: string;      // e.g. "80% cotton, 20% polyester"
   itemName: string;    // e.g. "white linen shirt"
   source: 'label' | 'inferred'; // whether a visible care label was read
+  price?: number;      // detected price from product page
+  currency?: string;   // detected currency (£, $, €, etc.)
 }
 
 export async function detectFabricFromImage(base64Image: string): Promise<FabricDetection> {
