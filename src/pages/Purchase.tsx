@@ -216,7 +216,7 @@ export default function Purchase() {
           if (res.fabric) { setFabric(res.fabric); setFabricSource('inferred'); }
           if (res.itemName && !itemName) setItemName(res.itemName);
           // Auto-populate price if detected and not already filled
-          const detected = res as Record<string, unknown>;
+          const detected = res as unknown as Record<string, unknown>;
           if (detected.price && Number(detected.price) > 0 && !price) {
             setPrice(String(detected.price));
           }
