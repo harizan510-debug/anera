@@ -28,14 +28,15 @@ export async function claudeMessage(params: ClaudeParams): Promise<Anthropic.Mes
     if (res.ok) return await res.json();
     // If 404, server route doesn't exist (local dev) — fall through to SDK
     if (res.status !== 404) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error((err as Record<string, string>).error || `Server API error ${res.status}`);
+      const err = await res.json().catch(() => ({})) as Record<string, unknown>;
+      // Anthropic API returns { error: { type, message } }
+      const nested = err.error as Record<string, string> | undefined;
+      const msg = (typeof nested === 'object' && nested?.message) || (typeof err.error === 'string' && err.error) || `Server API error ${res.status}`;
+      throw new Error(String(msg));
     }
   } catch (e) {
-    // Network error or explicit throw — only fall through for 404/network issues
-    if (e instanceof Error && !e.message.includes('Server API error')) {
-      // Network error or 404 — fall through to client SDK
-    } else {
+    // Only fall through to client SDK for network errors / 404
+    if (e instanceof Error && e.message !== 'Failed to fetch') {
       throw e;
     }
   }
