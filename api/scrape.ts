@@ -133,6 +133,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .replace(/\s+/g, ' ')
       .trim();
 
+    // Extract product image URL from multiple sources (in priority order)
+    let imageUrl = '';
+
+    // 1. Try JSON-LD structured data first (most reliable)
+    if (structuredData) {
+      try {
+        const parsed = JSON.parse(structuredData);
+        const product = parsed['@type'] === 'Product'
+          ? parsed
+          : (Array.isArray(parsed['@graph']) ? parsed['@graph'].find((i: Record<string, string>) => i['@type'] === 'Product') : null);
+        if (product) {
+          const img = product.image;
+          if (typeof img === 'string') imageUrl = img;
+          else if (Array.isArray(img) && img.length > 0) imageUrl = typeof img[0] === 'string' ? img[0] : (img[0] as Record<string, string>).url || '';
+          else if (img && typeof img === 'object') imageUrl = (img as Record<string, string>).url || '';
+        }
+      } catch { /* ignore */ }
+    }
+
+    // 2. Try og:image meta tag
+    if (!imageUrl && ogImageMatch) {
+      imageUrl = ogImageMatch[1];
+    }
+
+    // 3. Try twitter:image meta tag
+    if (!imageUrl) {
+      const twitterImageMatch = html.match(/<meta[^>]*(?:name|property)=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+      if (twitterImageMatch) imageUrl = twitterImageMatch[1];
+    }
+
+    // 4. Try first large product image from HTML
+    if (!imageUrl) {
+      const imgMatches = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*/gi);
+      if (imgMatches) {
+        for (const imgTag of imgMatches) {
+          const srcMatch = imgTag.match(/src=["']([^"']+)["']/i);
+          if (srcMatch) {
+            const src = srcMatch[1];
+            // Look for product-like image URLs (skip icons, logos, SVGs, tracking pixels)
+            if (src.match(/\.(jpg|jpeg|png|webp)/i) &&
+                !src.match(/(icon|logo|sprite|pixel|tracking|1x1|badge|flag)/i) &&
+                (src.includes('product') || src.includes('media') || src.includes('image') || src.includes('photo') || src.length > 60)) {
+              imageUrl = src;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Make relative URLs absolute
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      try {
+        imageUrl = new URL(imageUrl, url).href;
+      } catch { /* keep as-is */ }
+    }
+
     // Prepend meta info to text for better extraction
     if (metaInfo) {
       text = `META TAGS: ${metaInfo}\n\n${text}`;
@@ -144,7 +201,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (text.length > maxTextLen) text = text.slice(0, maxTextLen) + '…';
     if (structuredData.length > maxStructuredLen) structuredData = structuredData.slice(0, maxStructuredLen) + '…';
 
-    return res.status(200).json({ text, structuredData: structuredData || undefined });
+    return res.status(200).json({ text, structuredData: structuredData || undefined, imageUrl: imageUrl || undefined });
   } catch (err) {
     return res.status(200).json({ text: '', error: String(err) });
   }

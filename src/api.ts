@@ -573,10 +573,12 @@ export async function detectItemFromUrl(url: string): Promise<UrlItemDetection> 
   // Step 1: Scrape the page
   let pageText = '';
   let structuredData = '';
+  let scrapedImageUrl = '';
   try {
     const scraped = await scrapeUrl(url);
     pageText = scraped.text || '';
     structuredData = scraped.structuredData || '';
+    scrapedImageUrl = scraped.imageUrl || '';
   } catch { /* will infer from URL alone */ }
 
   const hasPage = pageText.length > 50;
@@ -638,7 +640,7 @@ For confidence: use 0.9+ if extracted from page, 0.6-0.8 if inferred from URL/br
       pattern: String(parsed.pattern || 'plain'),
       fit: String(parsed.fit || 'regular'),
       tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
-      imageUrl: String(parsed.imageUrl || ''),
+      imageUrl: scrapedImageUrl || String(parsed.imageUrl || ''),
       price: Number(parsed.price) || 0,
       currency: String(parsed.currency || '£'),
     };
@@ -649,7 +651,7 @@ For confidence: use 0.9+ if extracted from page, 0.6-0.8 if inferred from URL/br
       color: 'unknown', colorConfidence: 0.5,
       brand: '', brandConfidence: 0.3,
       pattern: 'plain', fit: 'regular', tags: [],
-      imageUrl: '', price: 0, currency: '£',
+      imageUrl: scrapedImageUrl, price: 0, currency: '£',
     };
   }
 }

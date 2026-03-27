@@ -156,6 +156,7 @@ export function hasReplicateKey(): boolean {
 export interface ScrapeResult {
   text: string;
   structuredData?: string;
+  imageUrl?: string;
   error?: string;
 }
 
