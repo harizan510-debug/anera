@@ -186,7 +186,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
 
   // ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--bg)' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: 'var(--bg)' }}>
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
@@ -381,7 +381,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
       </div>
 
       {/* ── Sticky CTA ── */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 pb-8 pt-3"
+      <div className="fixed bottom-0 left-0 right-0 z-[61] px-4 pb-8 pt-3 safe-area-bottom"
         style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)' }}>
         <button
           onClick={handleConfirm}

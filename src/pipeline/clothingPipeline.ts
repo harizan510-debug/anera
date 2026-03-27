@@ -16,6 +16,7 @@ import { detectWithGroundingDINO } from './replicateDetect';
 import type { GroundingDINOBox } from './replicateDetect';
 import { classifyClothingItem } from './classifyItem';
 import { cropImage } from '../utils/cropImage';
+import { removeBackground } from '../utils/removeBackground';
 import { detectClothingItems } from '../api';
 import type { RawDetection } from '../api';
 import { genId } from '../store';
@@ -140,17 +141,21 @@ export async function processClothingImage(
   }
   const cropMs = performance.now() - cropStart;
 
-  // ── STEP 3: Classify each cropped item with Claude Vision ─────────────────
+  // ── STEP 3: Remove backgrounds + Classify in parallel ──────────────────────
   const classificationStart = performance.now();
 
-  // Run all classifications in parallel for speed
-  const classificationPromises = croppedItems.map(item =>
-    classifyClothingItem(item.croppedBase64, item.dinoLabel).catch(err => {
-      console.error(`[Pipeline] Classification failed for "${item.dinoLabel}":`, err);
-      return null;
-    }),
-  );
-  const classifications = await Promise.all(classificationPromises);
+  // Run background removal and classification in parallel for each item
+  const processingPromises = croppedItems.map(async (item) => {
+    const [noBgImage, classification] = await Promise.all([
+      removeBackground(item.croppedBase64).catch(() => item.croppedBase64),
+      classifyClothingItem(item.croppedBase64, item.dinoLabel).catch(err => {
+        console.error(`[Pipeline] Classification failed for "${item.dinoLabel}":`, err);
+        return null;
+      }),
+    ]);
+    return { noBgImage, classification };
+  });
+  const processingResults = await Promise.all(processingPromises);
 
   const classificationMs = performance.now() - classificationStart;
 
@@ -159,13 +164,13 @@ export async function processClothingImage(
 
   for (let i = 0; i < croppedItems.length; i++) {
     const cropped = croppedItems[i];
-    const classification = classifications[i];
+    const { noBgImage, classification } = processingResults[i];
 
     if (!classification) continue; // skip items that failed classification
 
     detectedItems.push({
       tempId: genId(),
-      croppedImageUrl: cropped.croppedBase64,
+      croppedImageUrl: noBgImage,
       originalImageUrl: originalObjectUrl,
       category: classification.category,
       categoryConfidence: classification.categoryConfidence,
@@ -223,6 +228,13 @@ async function fallbackClaudeOnly(
       croppedImageUrl = await cropImage(originalObjectUrl, raw.boundingBox);
     } catch {
       // fallback: use full photo
+    }
+
+    // Remove background from cropped image
+    try {
+      croppedImageUrl = await removeBackground(croppedImageUrl);
+    } catch {
+      // keep cropped image as-is
     }
 
     detectedItems.push({
