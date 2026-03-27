@@ -39,12 +39,71 @@ const URL_FABRIC_HINTS: [string, string][] = [
   ['wool',      '100% wool'],
   ['denim',     '98% cotton, 2% elastane'],
   ['polyester', '100% polyester'],
+  ['polyamide', '100% polyamide'],
+  ['nylon',     '100% nylon'],
   ['viscose',   '100% viscose'],
   ['velvet',    '80% polyester, 20% viscose'],
   ['satin',     '95% polyester, 5% elastane'],
   ['jersey',    '95% cotton, 5% elastane'],
   ['knit',      '60% acrylic, 40% wool'],
+  ['lycra',     '90% nylon, 10% lycra'],
+  ['modal',     '100% modal'],
+  ['tencel',    '100% tencel'],
+  ['lyocell',   '100% lyocell'],
+  ['rayon',     '100% rayon'],
 ];
+
+/** All synthetic / plastic-derived fibre names */
+const SYNTHETIC_FIBRES = [
+  'polyester', 'nylon', 'elastane', 'spandex', 'acrylic',
+  'polyamide', 'microfibre', 'microfiber', 'lycra', 'lurex',
+  'polypropylene', 'polyurethane', 'pvc', 'vinyl',
+  'modacrylic', 'aramid', 'olefin',
+];
+
+/** Infer synthetic % from item name when fabric composition is unknown */
+function inferSyntheticFromItem(name: string): number {
+  const n = name.toLowerCase();
+  // Denim / jeans → typically 98-100% cotton
+  if (/\bjeans\b|\bdenim\b/.test(n)) return 2;
+  // Cotton basics
+  if (/\bcotton\b|\blinen\b|\bsilk\b|\bwool\b|\bcashmere\b/.test(n)) return 0;
+  // Activewear / sportswear → high synthetic
+  if (/\bsport|\bactive|\bgym|\byoga|\blegging/.test(n)) return 75;
+  // Knitwear — varies, assume moderate blend
+  if (/\bknit|\bsweater|\bcardigan|\bjumper/.test(n)) return 30;
+  // Blouse / shirt → usually natural or minimal synthetic
+  if (/\bblouse\b|\bshirt\b/.test(n)) return 5;
+  // Dress → moderate default
+  if (/\bdress\b/.test(n)) return 20;
+  // Outerwear / coats — moderate
+  if (/\bjacket\b|\bcoat\b|\bblazer\b/.test(n)) return 25;
+  // Shoes / boots — mixed
+  if (/\bshoe|\bboot|\bsneaker|\bheel|\bsandal/.test(n)) return 40;
+  // Default unknown item
+  return 20;
+}
+
+/** Infer realistic lifetime in years from item type + price */
+function inferLifetime(name: string, priceNum: number): number {
+  const n = name.toLowerCase();
+  // Jeans — very durable
+  if (/\bjeans\b|\bdenim\b/.test(n)) return priceNum > 100 ? 6 : priceNum > 50 ? 4 : 3;
+  // Coats / outerwear — long-lasting
+  if (/\bcoat\b|\bjacket\b|\bblazer\b|\bparka\b/.test(n)) return priceNum > 200 ? 7 : priceNum > 80 ? 5 : 3;
+  // Shoes / boots
+  if (/\bboot|\bshoe|\bsneaker/.test(n)) return priceNum > 150 ? 5 : priceNum > 60 ? 3 : 2;
+  // Blouses / shirts
+  if (/\bblouse\b|\bshirt\b/.test(n)) return priceNum > 100 ? 5 : priceNum > 40 ? 3 : 2;
+  // Knitwear
+  if (/\bsweater\b|\bcardigan\b|\bjumper\b|\bknit/.test(n)) return priceNum > 100 ? 5 : priceNum > 40 ? 3 : 2;
+  // Dresses
+  if (/\bdress\b/.test(n)) return priceNum > 150 ? 5 : priceNum > 60 ? 3 : 2;
+  // T-shirts / basics — shorter
+  if (/\bt-shirt\b|\btee\b|\btank\b|\bvest\b/.test(n)) return priceNum > 50 ? 3 : 1.5;
+  // Generic fallback
+  return priceNum > 150 ? 5 : priceNum > 60 ? 3 : 2;
+}
 
 const REC = {
   'no brainer': {
@@ -145,6 +204,14 @@ export default function Purchase() {
           const res = await detectFabricFromUrl(link);
           if (res.fabric) { setFabric(res.fabric); setFabricSource('inferred'); }
           if (res.itemName && !itemName) setItemName(res.itemName);
+          // Auto-populate price if detected and not already filled
+          const detected = res as Record<string, unknown>;
+          if (detected.price && Number(detected.price) > 0 && !price) {
+            setPrice(String(detected.price));
+          }
+          if (detected.currency && !price) {
+            setCurrency(String(detected.currency));
+          }
         } else {
           // Demo: keyword match on URL
           const lower = link.toLowerCase();
@@ -203,14 +270,33 @@ export default function Purchase() {
         await new Promise(r => setTimeout(r, 1500));
         const ew = estimatedWears ? parseInt(estimatedWears) : priceNum > 100 ? 40 : 20;
         const cpw = Math.round((priceNum / ew) * 100) / 100;
-        const plastic = fabric
-          ? (['polyester','nylon','elastane','spandex','acrylic'].some(s => fabric.toLowerCase().includes(s)) ? 55 : 8)
-          : 22;
+
+        // Compute synthetic % — check provided fabric against the full list, or infer from item type
+        let plastic: number;
+        if (fabric) {
+          const fabricLower = fabric.toLowerCase();
+          const syntheticMatch = SYNTHETIC_FIBRES.some(s => fabricLower.includes(s));
+          if (syntheticMatch) {
+            // Try to extract actual percentage from fabric string (e.g. "30% polyester")
+            let synPct = 0;
+            for (const fib of SYNTHETIC_FIBRES) {
+              const pctMatch = fabricLower.match(new RegExp(`(\\d+)\\s*%\\s*${fib}`));
+              if (pctMatch) synPct += parseInt(pctMatch[1]);
+            }
+            plastic = synPct > 0 ? synPct : 55; // if we found fibres but no %, assume 55%
+          } else {
+            plastic = 0; // fabric provided and no synthetics detected
+          }
+        } else {
+          // No fabric provided — infer from item name/description
+          plastic = inferSyntheticFromItem(description);
+        }
+
         const impact: PurchaseAnalysis['plastic_impact'] =
           plastic <= 0 ? 'plastic-free' : plastic <= 30 ? 'low' : plastic <= 70 ? 'medium' : 'high';
         const impactCol: PurchaseAnalysis['impact_colour'] =
           plastic <= 0 ? 'green' : plastic <= 30 ? 'yellow' : plastic <= 70 ? 'orange' : 'red';
-        const lifetime = priceNum > 150 ? 4 : priceNum > 60 ? 2.5 : 1.5;
+        const lifetime = inferLifetime(description, priceNum);
         const fv = Math.round(priceNum * Math.pow(1.07, lifetime) * 100) / 100;
         const rec: PurchaseAnalysis['recommendation'] =
           cpw < 8 ? 'no brainer' : cpw < 25 ? 'why not' : 'maybe consider if you need it';

@@ -294,15 +294,28 @@ INSTRUCTIONS:
    If wears not provided, infer: daily staples ~80–120/yr, smart-casual ~30–50, occasional ~10–20, special <10.
 
 2. PLASTIC IMPACT
-   Synthetic = plastic: polyester, nylon, acrylic, elastane, spandex, polyamide, microfibre.
-   plastic_percentage: 0–100
+   Synthetic = plastic. ALL of these are synthetic fibres: polyester, nylon, polyamide, acrylic, elastane, spandex, microfibre, microfiber, lycra, lurex, modacrylic, polypropylene, polyurethane, aramid, olefin.
+   IMPORTANT: Polyamide IS nylon — it is 100% synthetic/plastic.
+   Natural fibres (NOT synthetic): cotton, linen, silk, wool, cashmere, hemp, jute, ramie, bamboo (viscose from bamboo is semi-synthetic).
+   Semi-synthetic (count as ~30% synthetic): viscose, rayon, modal, lyocell, tencel, cupro, acetate.
+   plastic_percentage: 0–100 (sum of all synthetic fibre percentages in the composition)
    plastic_impact: 0% → "plastic-free", 1–30% → "low", 31–70% → "medium", 71–100% → "high"
    impact_colour: "green" | "yellow" | "orange" | "red"
-   If fabric unknown, infer from item type (activewear ~70%, denim ~2%, knitwear ~20–80%).
+   If fabric unknown, infer from item type: jeans/denim ~2%, cotton shirts ~0-5%, activewear ~70-90%, knitwear ~20-60%.
+   CRITICAL: If the user says "100% cotton" the plastic_percentage MUST be 0. Do NOT invent synthetic content.
 
 3. OPPORTUNITY COST
    7% annual return assumption.
-   Lifetime: high quality 3–5 yrs, medium 2–3, low 1–2. Infer from price + materials.
+   Lifetime estimates by item type (IMPORTANT — be realistic):
+   - Jeans/denim: 3–6 years (very durable)
+   - Coats/jackets/blazers: 3–7 years
+   - Blouses/shirts: 2–5 years
+   - Knitwear/sweaters: 2–5 years
+   - Dresses: 2–5 years
+   - T-shirts/basics: 1.5–3 years
+   - Shoes/boots: 2–5 years
+   - Activewear: 1–2 years
+   Higher-priced items from quality brands last longer. Never give less than 2 years for jeans, coats, or blouses.
    future_value_if_invested = price × (1.07 ^ estimated_lifetime_years), rounded to 2 dp.
 
 4. RECOMMENDATION — use EXACTLY one of these strings:
@@ -342,18 +355,43 @@ Return ONLY valid JSON (no markdown, no extra text):
   } catch {
     const ew = estimatedWears ?? (price > 100 ? 40 : 20);
     const cpw = Math.round((price / ew) * 100) / 100;
-    const lifetime = price > 150 ? 4 : price > 60 ? 2.5 : 1.5;
+    // Smarter lifetime: infer from item description
+    const desc = itemDescription.toLowerCase();
+    let lifetime: number;
+    if (/jeans|denim/.test(desc)) lifetime = price > 100 ? 5 : 3;
+    else if (/coat|jacket|blazer/.test(desc)) lifetime = price > 150 ? 6 : 4;
+    else if (/blouse|shirt/.test(desc)) lifetime = price > 80 ? 4 : 3;
+    else if (/sweater|cardigan|knit/.test(desc)) lifetime = price > 80 ? 4 : 3;
+    else if (/dress/.test(desc)) lifetime = price > 100 ? 4 : 3;
+    else if (/boot|shoe|sneaker/.test(desc)) lifetime = price > 120 ? 4 : 2.5;
+    else lifetime = price > 150 ? 5 : price > 60 ? 3 : 2;
     const fv = Math.round(price * Math.pow(1.07, lifetime) * 100) / 100;
+    // Smarter plastic %: check fabric if provided
+    let plastic = 20;
+    if (fabricComposition) {
+      const fl = fabricComposition.toLowerCase();
+      const synthetics = ['polyester','nylon','polyamide','acrylic','elastane','spandex','microfibre','lycra','lurex','modacrylic'];
+      let synPct = 0;
+      for (const fib of synthetics) {
+        const m = fl.match(new RegExp(`(\\d+)\\s*%\\s*${fib}`));
+        if (m) synPct += parseInt(m[1]);
+      }
+      plastic = synPct > 0 ? synPct : (synthetics.some(s => fl.includes(s)) ? 50 : 0);
+    }
+    const plasticImpact: PurchaseAnalysis['plastic_impact'] =
+      plastic <= 0 ? 'plastic-free' : plastic <= 30 ? 'low' : plastic <= 70 ? 'medium' : 'high';
+    const impactColour: PurchaseAnalysis['impact_colour'] =
+      plastic <= 0 ? 'green' : plastic <= 30 ? 'yellow' : plastic <= 70 ? 'orange' : 'red';
     return {
       cost_per_wear: cpw,
       estimated_wears: ew,
-      plastic_percentage: 25,
-      plastic_impact: 'low',
-      impact_colour: 'yellow',
+      plastic_percentage: plastic,
+      plastic_impact: plasticImpact,
+      impact_colour: impactColour,
       estimated_lifetime_years: lifetime,
       future_value_if_invested: fv,
       recommendation: cpw < 8 ? 'no brainer' : cpw < 25 ? 'why not' : 'maybe consider if you need it',
-      reasoning: `At ${currency}${cpw.toFixed(2)} per wear over ~${ew} wears, this piece ${cpw < 8 ? 'is a solid investment for your wardrobe' : cpw < 25 ? 'could be a great addition if you love the style' : 'is worth weighing up carefully before buying'}. Fabric assumed ~25% synthetic. If invested instead, ${currency}${price} could grow to approximately ${currency}${fv} over ${lifetime} years.`,
+      reasoning: `At ${currency}${cpw.toFixed(2)} per wear over ~${ew} wears, this piece ${cpw < 8 ? 'is a solid investment for your wardrobe' : cpw < 25 ? 'could be a great addition if you love the style' : 'is worth weighing up carefully before buying'}. Fabric estimated ~${plastic}% synthetic. If invested instead, ${currency}${price} could grow to approximately ${currency}${fv} over ${lifetime} years.`,
     };
   }
 }
@@ -412,24 +450,31 @@ Return ONLY JSON (no markdown):
 export async function detectFabricFromUrl(url: string): Promise<FabricDetection> {
   const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
-    max_tokens: 200,
+    max_tokens: 300,
     messages: [{
       role: 'user',
-      content: `Based on this product URL, infer the most likely fabric composition and item type.
+      content: `Based on this product URL, infer the most likely fabric composition, item type, and price.
 
 URL: ${url}
 
 Consider:
 - Brand name (Zara → often synthetic blends; COS/Arket → natural fibres; Uniqlo → quality basics; Shein → high synthetic)
-- Keywords in the URL slug (linen, cotton, silk, wool, cashmere, polyester, knit, denim, jersey, satin, velvet)
+- Keywords in the URL slug (linen, cotton, silk, wool, cashmere, polyester, polyamide, nylon, knit, denim, jersey, satin, velvet)
 - Price signals if present in URL
+- Common price ranges for the brand and item type
+- Recognise ALL synthetic fibres: polyester, nylon, polyamide, acrylic, elastane, spandex, microfibre, lycra, lurex, modacrylic
 
 Return ONLY JSON (no markdown):
 {
   "fabric": "e.g. 78% viscose, 22% polyester",
   "itemName": "inferred item name",
-  "source": "inferred"
-}`,
+  "source": "inferred",
+  "price": 0,
+  "currency": "£"
+}
+
+For price: infer from the URL or brand's typical pricing. Use 0 if completely unknown.
+For currency: use the currency most likely for the brand/region (£, $, €, ¥).`,
     }],
   });
 
