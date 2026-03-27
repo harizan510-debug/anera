@@ -16,45 +16,73 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-GB,en;q=0.9',
-      },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(8000), // 8s timeout
-    });
+    // Try multiple fetch strategies to handle anti-bot redirects
+    let html = '';
 
-    if (!response.ok) {
-      return res.status(200).json({ text: '', error: `HTTP ${response.status}` });
+    // Strategy 1: Standard fetch with redirect follow
+    const strategies = [
+      // Standard browser-like request
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'identity',
+          'Cache-Control': 'no-cache',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Upgrade-Insecure-Requests': '1',
+        },
+        redirect: 'follow' as RequestRedirect,
+      },
+      // Simpler request (some sites block complex headers)
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+          'Accept': 'text/html',
+        },
+        redirect: 'follow' as RequestRedirect,
+      },
+    ];
+
+    for (const opts of strategies) {
+      try {
+        const response = await fetch(url, {
+          ...opts,
+          signal: AbortSignal.timeout(10000),
+        });
+
+        // Handle manual redirect if needed
+        if (response.status >= 300 && response.status < 400) {
+          const redirectUrl = response.headers.get('location');
+          if (redirectUrl) {
+            const fullUrl = redirectUrl.startsWith('http') ? redirectUrl : new URL(redirectUrl, url).href;
+            const redirectResponse = await fetch(fullUrl, {
+              ...opts,
+              signal: AbortSignal.timeout(8000),
+            });
+            if (redirectResponse.ok) {
+              html = await redirectResponse.text();
+              break;
+            }
+          }
+          continue;
+        }
+
+        if (response.ok) {
+          html = await response.text();
+          break;
+        }
+      } catch { /* try next strategy */ }
     }
 
-    const html = await response.text();
+    if (!html) {
+      return res.status(200).json({ text: '', error: 'Could not fetch page (blocked or timeout)' });
+    }
 
-    // Extract useful text from HTML — strip scripts, styles, and tags
-    let text = html
-      // Remove script and style blocks
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
-      // Remove HTML comments
-      .replace(/<!--[\s\S]*?-->/g, '')
-      // Replace tags with spaces
-      .replace(/<[^>]+>/g, ' ')
-      // Decode common HTML entities
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#\d+;/g, ' ')
-      // Collapse whitespace
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // Also try to extract JSON-LD structured data (many retail sites use this)
+    // Extract JSON-LD structured data BEFORE stripping HTML
     const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
     let structuredData = '';
     if (jsonLdMatches) {
@@ -62,8 +90,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const jsonContent = match.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
         try {
           const parsed = JSON.parse(jsonContent);
-          // Look for Product schema
-          if (parsed['@type'] === 'Product' || (Array.isArray(parsed['@graph']) && parsed['@graph'].some((item: Record<string,string>) => item['@type'] === 'Product'))) {
+          // Look for Product schema (direct or in @graph)
+          if (parsed['@type'] === 'Product' ||
+              (Array.isArray(parsed['@graph']) && parsed['@graph'].some((item: Record<string, string>) => item['@type'] === 'Product'))) {
             structuredData = jsonContent;
             break;
           }
@@ -71,7 +100,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Truncate to keep within reasonable token limits (~4000 chars of text + structured data)
+    // Also extract meta tags for price/product info (many sites use Open Graph or meta tags)
+    const metaPriceMatch = html.match(/<meta[^>]*property=["']product:price:amount["'][^>]*content=["']([^"']+)["']/i);
+    const metaCurrencyMatch = html.match(/<meta[^>]*property=["']product:price:currency["'][^>]*content=["']([^"']+)["']/i);
+    const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
+    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+
+    let metaInfo = '';
+    if (metaPriceMatch || ogTitleMatch) {
+      const parts: string[] = [];
+      if (ogTitleMatch) parts.push(`Product: ${ogTitleMatch[1]}`);
+      if (metaPriceMatch) parts.push(`Price: ${metaPriceMatch[1]}`);
+      if (metaCurrencyMatch) parts.push(`Currency: ${metaCurrencyMatch[1]}`);
+      if (ogImageMatch) parts.push(`Image: ${ogImageMatch[1]}`);
+      metaInfo = parts.join(' | ');
+    }
+
+    // Extract useful text from HTML — strip scripts, styles, and tags
+    let text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&#\d+;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Prepend meta info to text for better extraction
+    if (metaInfo) {
+      text = `META TAGS: ${metaInfo}\n\n${text}`;
+    }
+
+    // Truncate to keep within reasonable token limits
     const maxTextLen = 3000;
     const maxStructuredLen = 2000;
     if (text.length > maxTextLen) text = text.slice(0, maxTextLen) + '…';

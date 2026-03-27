@@ -503,11 +503,20 @@ For price: use the actual price from the page. Use 0 only if completely missing.
 
 URL: ${url}
 
-Consider:
-- Brand name (Zara → often synthetic blends; COS/Arket → natural fibres; Uniqlo → quality basics; Shein → high synthetic)
+IMPORTANT PRICE GUIDELINES:
+- Look at the domain (.co.uk = £, .com = $, .de/.fr/.it = €)
+- Ralph Lauren UK shirts: typically £150-250. Polos: £100-150. Outerwear: £300-600
+- Zara: tops £15-35, dresses £25-60, coats £60-120
+- H&M: tops £8-25, dresses £15-40
+- COS: tops £35-65, dresses £69-135
+- Massimo Dutti: tops £30-60, coats £100-200
+- Reiss: tops £60-120, dresses £120-250
+- If you see a product ID/SKU in the URL, DO NOT confuse it with the price
+- If unsure, use 0 rather than guessing wrong
+
+Consider also:
+- Brand name for fabric inference (Zara → often synthetic blends; COS/Arket → natural fibres; Shein → high synthetic)
 - Keywords in the URL slug (linen, cotton, silk, wool, cashmere, polyester, polyamide, nylon, knit, denim, jersey, satin, velvet)
-- Price signals if present in URL
-- Common price ranges for the brand and item type
 - Recognise ALL synthetic fibres: polyester, nylon, polyamide, acrylic, elastane, spandex, microfibre, lycra, lurex, modacrylic
 
 Return ONLY JSON (no markdown):
@@ -519,8 +528,8 @@ Return ONLY JSON (no markdown):
   "currency": "£"
 }
 
-For price: infer from the URL or brand's typical pricing. Use 0 if completely unknown.
-For currency: use the currency most likely for the brand/region (£, $, €, ¥).`;
+For price: infer from the brand's CURRENT typical pricing for this item type. Use 0 if unknown.
+For currency: use the currency from the domain (.co.uk=£, .com=$, .de/.fr/.it=€).`;
 
   const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
