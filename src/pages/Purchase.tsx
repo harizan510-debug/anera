@@ -233,8 +233,9 @@ export default function Purchase() {
         else { setUrlError('API key not configured. Please fill in details manually.'); }
       }
     } catch (e) {
-      console.error('[Purchase] URL detection failed:', e);
-      setUrlError('Detection failed. Please fill in details manually or try again.');
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('[Purchase] URL detection failed:', msg);
+      setUrlError(`Detection failed: ${msg.length > 80 ? msg.slice(0, 80) + '…' : msg}`);
     }
     setFabricLoading(false);
     setUrlDetecting(false);
