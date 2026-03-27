@@ -1,5 +1,5 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages.mjs';
-import { claudeMessage } from './apiHelper';
+import { claudeMessage, scrapeUrl } from './apiHelper';
 import type { WardrobeItem, BoundingBox } from './types';
 
 export interface RawDetection {
@@ -306,16 +306,22 @@ INSTRUCTIONS:
 
 3. OPPORTUNITY COST
    7% annual return assumption.
-   Lifetime estimates by item type (IMPORTANT — be realistic):
-   - Jeans/denim: 3–6 years (very durable)
-   - Coats/jackets/blazers: 3–7 years
-   - Blouses/shirts: 2–5 years
-   - Knitwear/sweaters: 2–5 years
-   - Dresses: 2–5 years
-   - T-shirts/basics: 1.5–3 years
-   - Shoes/boots: 2–5 years
-   - Activewear: 1–2 years
-   Higher-priced items from quality brands last longer. Never give less than 2 years for jeans, coats, or blouses.
+   Lifetime estimates by item type — PRICE IS A MAJOR FACTOR (higher price = quality = lasts longer):
+   - Jeans/denim: 3–8 years (budget 3, mid 5–6, premium 7–8)
+   - Coats/jackets/blazers: 3–10 years (budget 3, mid 5–7, premium 8–10)
+   - Leather goods: 5–10+ years
+   - Blouses/shirts: 2.5–6 years (budget 2.5, mid 3.5–4.5, premium 5–6)
+   - Knitwear/sweaters: 2.5–7 years (budget 2.5, mid 4–5, premium 6–7)
+   - Dresses: 2.5–7 years (budget 2.5, mid 3.5–5, premium 6–7)
+   - Trousers/skirts: 3–5 years
+   - T-shirts/basics: 1.5–4 years
+   - Shoes/boots: 2–8 years (budget 2, mid 4–5, premium 6–8)
+   - Sneakers: 2–4 years
+   - Bags: 3–10+ years (budget 3, premium 8–10+)
+   - Scarves/hats/belts: 3–6 years
+   - Activewear: 1.5–3 years
+   IMPORTANT: Price strongly correlates with quality and longevity. A £200 coat should have 7+ year lifetime, not 3.
+   Never give less than 3 years for jeans, coats, or good-quality blouses.
    future_value_if_invested = price × (1.07 ^ estimated_lifetime_years), rounded to 2 dp.
 
 4. RECOMMENDATION — use EXACTLY one of these strings:
@@ -355,16 +361,20 @@ Return ONLY valid JSON (no markdown, no extra text):
   } catch {
     const ew = estimatedWears ?? (price > 100 ? 40 : 20);
     const cpw = Math.round((price / ew) * 100) / 100;
-    // Smarter lifetime: infer from item description
+    // Smarter lifetime: infer from item description — price is a major factor
     const desc = itemDescription.toLowerCase();
     let lifetime: number;
-    if (/jeans|denim/.test(desc)) lifetime = price > 100 ? 5 : 3;
-    else if (/coat|jacket|blazer/.test(desc)) lifetime = price > 150 ? 6 : 4;
-    else if (/blouse|shirt/.test(desc)) lifetime = price > 80 ? 4 : 3;
-    else if (/sweater|cardigan|knit/.test(desc)) lifetime = price > 80 ? 4 : 3;
-    else if (/dress/.test(desc)) lifetime = price > 100 ? 4 : 3;
-    else if (/boot|shoe|sneaker/.test(desc)) lifetime = price > 120 ? 4 : 2.5;
-    else lifetime = price > 150 ? 5 : price > 60 ? 3 : 2;
+    if (/jeans|denim/.test(desc)) lifetime = price > 150 ? 8 : price > 80 ? 6 : price > 40 ? 4 : 3;
+    else if (/coat|jacket|blazer|parka|trench/.test(desc)) lifetime = price > 300 ? 10 : price > 150 ? 7 : price > 70 ? 5 : 3;
+    else if (/leather/.test(desc)) lifetime = price > 200 ? 10 : price > 100 ? 7 : 5;
+    else if (/blouse|shirt/.test(desc)) lifetime = price > 150 ? 6 : price > 80 ? 4.5 : price > 40 ? 3.5 : 2.5;
+    else if (/sweater|cardigan|knit|jumper/.test(desc)) lifetime = price > 150 ? 7 : price > 80 ? 5 : price > 40 ? 3.5 : 2.5;
+    else if (/dress/.test(desc)) lifetime = price > 200 ? 7 : price > 100 ? 5 : price > 50 ? 3.5 : 2.5;
+    else if (/boot|shoe/.test(desc)) lifetime = price > 200 ? 8 : price > 100 ? 5 : price > 50 ? 3.5 : 2;
+    else if (/sneaker|trainer/.test(desc)) lifetime = price > 150 ? 4 : price > 80 ? 3 : 2;
+    else if (/bag|tote|purse|backpack/.test(desc)) lifetime = price > 200 ? 10 : price > 80 ? 6 : 3;
+    else if (/t-shirt|tee|tank|vest/.test(desc)) lifetime = price > 60 ? 4 : price > 30 ? 2.5 : 1.5;
+    else lifetime = price > 200 ? 7 : price > 100 ? 5 : price > 50 ? 3.5 : 2.5;
     const fv = Math.round(price * Math.pow(1.07, lifetime) * 100) / 100;
     // Smarter plastic %: check fabric if provided
     let plastic = 20;
@@ -448,12 +458,46 @@ Return ONLY JSON (no markdown):
 
 // ── Auto-detect fabric from a product URL ────────────────────────────────────
 export async function detectFabricFromUrl(url: string): Promise<FabricDetection> {
-  const response = await claudeMessage({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 300,
-    messages: [{
-      role: 'user',
-      content: `Based on this product URL, infer the most likely fabric composition, item type, and price.
+  // Step 1: Try to scrape the actual page content (via server-side proxy)
+  let pageText = '';
+  let structuredData = '';
+  try {
+    const scraped = await scrapeUrl(url);
+    pageText = scraped.text || '';
+    structuredData = scraped.structuredData || '';
+  } catch { /* scraping failed — will infer from URL alone */ }
+
+  const hasPageContent = pageText.length > 50;
+
+  const prompt = hasPageContent
+    ? `Analyze this product page content and extract the fabric composition, item name, and price.
+
+URL: ${url}
+
+${structuredData ? `STRUCTURED DATA (JSON-LD):\n${structuredData}\n\n` : ''}PAGE CONTENT:
+${pageText}
+
+INSTRUCTIONS:
+- Extract the EXACT fabric/material composition if listed on the page (e.g. "98% cotton, 2% elastane")
+- Extract the exact product name
+- Extract the exact price and currency as shown on the page
+- Recognise ALL synthetic fibres: polyester, nylon, polyamide, acrylic, elastane, spandex, microfibre, lycra, lurex, modacrylic
+- Polyamide IS nylon — it is 100% synthetic
+- If fabric not on page, infer from item type and brand
+- Look for terms like "composition", "material", "fabric", "made of", "content" on the page
+
+Return ONLY JSON (no markdown):
+{
+  "fabric": "exact composition e.g. 78% viscose, 22% polyester",
+  "itemName": "product name from page",
+  "source": "label",
+  "price": 0,
+  "currency": "£"
+}
+
+Use source "label" if you found the actual composition on the page, "inferred" if you had to guess.
+For price: use the actual price from the page. Use 0 only if completely missing.`
+    : `Based on this product URL, infer the most likely fabric composition, item type, and price.
 
 URL: ${url}
 
@@ -474,8 +518,12 @@ Return ONLY JSON (no markdown):
 }
 
 For price: infer from the URL or brand's typical pricing. Use 0 if completely unknown.
-For currency: use the currency most likely for the brand/region (£, $, €, ¥).`,
-    }],
+For currency: use the currency most likely for the brand/region (£, $, €, ¥).`;
+
+  const response = await claudeMessage({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 300,
+    messages: [{ role: 'user', content: prompt }],
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';

@@ -84,25 +84,36 @@ function inferSyntheticFromItem(name: string): number {
   return 20;
 }
 
-/** Infer realistic lifetime in years from item type + price */
-function inferLifetime(name: string, priceNum: number): number {
+/** Infer realistic lifetime in years from item type + price.
+ *  Price is a major factor — higher quality items last significantly longer. */
+function inferLifetime(name: string, p: number): number {
   const n = name.toLowerCase();
-  // Jeans — very durable
-  if (/\bjeans\b|\bdenim\b/.test(n)) return priceNum > 100 ? 6 : priceNum > 50 ? 4 : 3;
-  // Coats / outerwear — long-lasting
-  if (/\bcoat\b|\bjacket\b|\bblazer\b|\bparka\b/.test(n)) return priceNum > 200 ? 7 : priceNum > 80 ? 5 : 3;
+  // Jeans / denim — extremely durable
+  if (/\bjeans\b|\bdenim\b/.test(n)) return p > 150 ? 8 : p > 80 ? 6 : p > 40 ? 4 : 3;
+  // Coats / outerwear — built to last
+  if (/\bcoat\b|\bjacket\b|\bblazer\b|\bparka\b|\btrench/.test(n)) return p > 300 ? 10 : p > 150 ? 7 : p > 70 ? 5 : 3;
+  // Leather goods — very long-lasting
+  if (/\bleather\b/.test(n)) return p > 200 ? 10 : p > 100 ? 7 : 5;
   // Shoes / boots
-  if (/\bboot|\bshoe|\bsneaker/.test(n)) return priceNum > 150 ? 5 : priceNum > 60 ? 3 : 2;
+  if (/\bboot|\bshoe/.test(n)) return p > 200 ? 8 : p > 100 ? 5 : p > 50 ? 3.5 : 2;
+  // Sneakers — wear faster
+  if (/\bsneaker|\btrainer/.test(n)) return p > 150 ? 4 : p > 80 ? 3 : 2;
   // Blouses / shirts
-  if (/\bblouse\b|\bshirt\b/.test(n)) return priceNum > 100 ? 5 : priceNum > 40 ? 3 : 2;
-  // Knitwear
-  if (/\bsweater\b|\bcardigan\b|\bjumper\b|\bknit/.test(n)) return priceNum > 100 ? 5 : priceNum > 40 ? 3 : 2;
+  if (/\bblouse\b|\bshirt\b/.test(n)) return p > 150 ? 6 : p > 80 ? 4.5 : p > 40 ? 3.5 : 2.5;
+  // Knitwear — good quality lasts ages
+  if (/\bsweater\b|\bcardigan\b|\bjumper\b|\bknit/.test(n)) return p > 150 ? 7 : p > 80 ? 5 : p > 40 ? 3.5 : 2.5;
   // Dresses
-  if (/\bdress\b/.test(n)) return priceNum > 150 ? 5 : priceNum > 60 ? 3 : 2;
-  // T-shirts / basics — shorter
-  if (/\bt-shirt\b|\btee\b|\btank\b|\bvest\b/.test(n)) return priceNum > 50 ? 3 : 1.5;
-  // Generic fallback
-  return priceNum > 150 ? 5 : priceNum > 60 ? 3 : 2;
+  if (/\bdress\b/.test(n)) return p > 200 ? 7 : p > 100 ? 5 : p > 50 ? 3.5 : 2.5;
+  // Skirts / trousers
+  if (/\bskirt\b|\btrouser\b|\bpant\b|\bchino/.test(n)) return p > 100 ? 5 : p > 50 ? 4 : 3;
+  // T-shirts / basics — shorter lifespan
+  if (/\bt-shirt\b|\btee\b|\btank\b|\bvest\b|\bcami/.test(n)) return p > 60 ? 4 : p > 30 ? 2.5 : 1.5;
+  // Bags — very durable
+  if (/\bbag\b|\btote\b|\bpurse\b|\bbackpack/.test(n)) return p > 200 ? 10 : p > 80 ? 6 : 3;
+  // Accessories / scarves
+  if (/\bscarf\b|\bhat\b|\bbelt\b|\bglove/.test(n)) return p > 80 ? 6 : p > 30 ? 4 : 2.5;
+  // Generic fallback — price-sensitive
+  return p > 200 ? 7 : p > 100 ? 5 : p > 50 ? 3.5 : 2.5;
 }
 
 const REC = {

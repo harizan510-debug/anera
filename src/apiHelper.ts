@@ -149,3 +149,27 @@ export async function replicatePoll(url: string): Promise<Record<string, unknown
 export function hasReplicateKey(): boolean {
   return !!import.meta.env.VITE_REPLICATE_API_KEY || !!import.meta.env.PROD;
 }
+
+// ── URL Scraper ─────────────────────────────────────────────────────────────
+
+export interface ScrapeResult {
+  text: string;
+  structuredData?: string;
+  error?: string;
+}
+
+/**
+ * Scrape a product URL for text content. Tries the server-side /api/scrape proxy.
+ * Returns empty text if unavailable (e.g. local dev without server routes).
+ */
+export async function scrapeUrl(url: string): Promise<ScrapeResult> {
+  try {
+    const res = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (res.ok) return await res.json();
+  } catch { /* fall through */ }
+  return { text: '' };
+}
