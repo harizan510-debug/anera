@@ -230,11 +230,16 @@ async function fallbackClaudeOnly(
       // fallback: use full photo
     }
 
-    // Remove background from cropped image
+    // Remove background from cropped image (keep original crop as fallback)
+    const croppedFallback = croppedImageUrl;
     try {
-      croppedImageUrl = await removeBackground(croppedImageUrl);
+      const noBg = await removeBackground(croppedImageUrl);
+      // Only use bg-removed image if it's a valid data URI and not too small
+      if (noBg && noBg.length > 100 && noBg !== croppedImageUrl) {
+        croppedImageUrl = noBg;
+      }
     } catch {
-      // keep cropped image as-is
+      croppedImageUrl = croppedFallback;
     }
 
     detectedItems.push({
