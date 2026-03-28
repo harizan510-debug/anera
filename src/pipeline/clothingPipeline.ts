@@ -1,17 +1,16 @@
 /**
  * Multi-step clothing image processing pipeline.
  *
- * Step 1: Grounding DINO (via Replicate) — detect bounding boxes
- * Step 2: Canvas crop — extract each item with padding
- * Step 3: Claude Vision — classify each cropped item individually
- * Step 4: Assemble — combine into DetectedItem[] for MultiItemReview
+ * PRIMARY: Grounded SAM (detection + segmentation in one call)
+ * FALLBACK 1: Grounding DINO → crop → rembg (if Grounded SAM fails)
+ * FALLBACK 2: Claude Vision only (if no Replicate key)
  *
- * Falls back to the existing single-call Claude detection when Replicate
- * API key is not configured.
+ * After segmentation, each item is classified with Claude Vision.
  */
 
 import type { DetectedItem, BoundingBox } from '../types';
 import { hasReplicateKey } from '../apiHelper';
+import { detectAndSegment } from './groundedSamDetect';
 import { detectWithGroundingDINO } from './replicateDetect';
 import type { GroundingDINOBox } from './replicateDetect';
 import { classifyClothingItem } from './classifyItem';
@@ -54,28 +53,19 @@ function dinoBoxToNormalized(
   padding = 0.08,
 ): BoundingBox {
   const [x1, y1, x2, y2] = box.bbox;
-
-  // Normalise pixel coords to 0-1
   const nx = x1 / imgWidth;
   const ny = y1 / imgHeight;
   const nw = (x2 - x1) / imgWidth;
   const nh = (y2 - y1) / imgHeight;
-
-  // Add padding
   const px = Math.max(0, nx - padding);
   const py = Math.max(0, ny - padding);
   const pw = Math.min(1 - px, nw + padding * 2);
   const ph = Math.min(1 - py, nh + padding * 2);
-
   return { x: px, y: py, width: pw, height: ph };
 }
 
 /**
  * Main entry point: process a clothing image through the multi-step pipeline.
- *
- * @param base64Image - base64 data URI of the image
- * @param mimeType - MIME type of the image
- * @param originalObjectUrl - object URL for the original image (used for cropping on canvas)
  */
 export async function processClothingImage(
   base64Image: string,
@@ -85,66 +75,144 @@ export async function processClothingImage(
   const totalStart = performance.now();
   const hasReplicate = hasReplicateKey();
 
-  // ── FALLBACK: Claude-only detection ───────────────────────────────────────
+  // ── NO REPLICATE → Claude-only ──────────────────────────────────────────
   if (!hasReplicate) {
     console.log('[Pipeline] No Replicate API key — falling back to Claude-only detection');
     return fallbackClaudeOnly(base64Image, mimeType, originalObjectUrl, totalStart);
   }
 
-  // ── STEP 1: Detection with Grounding DINO ─────────────────────────────────
-  let dinoBoxes: GroundingDINOBox[];
-  const detectionStart = performance.now();
+  // ── PRIMARY: Grounded SAM (detection + segmentation) ────────────────────
   try {
-    dinoBoxes = await detectWithGroundingDINO(base64Image);
+    return await groundedSamPipeline(base64Image, originalObjectUrl, totalStart);
   } catch (err) {
-    console.error('[Pipeline] Grounding DINO failed, falling back to Claude-only:', err);
-    return fallbackClaudeOnly(base64Image, mimeType, originalObjectUrl, totalStart);
+    console.warn('[Pipeline] Grounded SAM failed, trying DINO + rembg fallback:', err);
   }
+
+  // ── FALLBACK 1: Grounding DINO → crop → rembg ──────────────────────────
+  try {
+    return await dinoPipeline(base64Image, mimeType, originalObjectUrl, totalStart);
+  } catch (err) {
+    console.warn('[Pipeline] DINO pipeline also failed, using Claude-only:', err);
+  }
+
+  // ── FALLBACK 2: Claude Vision only ─────────────────────────────────────
+  return fallbackClaudeOnly(base64Image, mimeType, originalObjectUrl, totalStart);
+}
+
+// ── Grounded SAM pipeline ────────────────────────────────────────────────────
+
+async function groundedSamPipeline(
+  base64Image: string,
+  originalObjectUrl: string,
+  totalStart: number,
+): Promise<PipelineResult> {
+  const detectionStart = performance.now();
+  const samResults = await detectAndSegment(base64Image);
+  const detectionMs = performance.now() - detectionStart;
+
+  if (samResults.length === 0) {
+    throw new Error('Grounded SAM detected 0 items');
+  }
+
+  console.log(`[Pipeline] Grounded SAM: ${samResults.length} items in ${Math.round(detectionMs)}ms`);
+
+  // Classify each segmented item in parallel
+  const classStart = performance.now();
+  const classPromises = samResults.map(async (seg) => {
+    try {
+      return await classifyClothingItem(seg.segmentedBase64, seg.label);
+    } catch (err) {
+      console.error(`[Pipeline] Classification failed for "${seg.label}":`, err);
+      return null;
+    }
+  });
+  const classifications = await Promise.all(classPromises);
+  const classMs = performance.now() - classStart;
+
+  // Assemble results
+  const items: DetectedItem[] = [];
+  for (let i = 0; i < samResults.length; i++) {
+    const cls = classifications[i];
+    if (!cls) continue;
+
+    items.push({
+      tempId: genId(),
+      croppedImageUrl: samResults[i].segmentedBase64,
+      originalImageUrl: originalObjectUrl,
+      category: cls.category,
+      categoryConfidence: cls.categoryConfidence,
+      subcategory: cls.subcategory,
+      subcategoryConfidence: cls.subcategoryConfidence,
+      color: cls.color,
+      colorConfidence: cls.colorConfidence,
+      brand: cls.brand,
+      brandConfidence: cls.brandConfidence,
+      pattern: cls.pattern,
+      fit: cls.fit,
+      tags: cls.tags,
+      boundingBox: samResults[i].boundingBox,
+    });
+  }
+
+  const totalMs = performance.now() - totalStart;
+  console.log(
+    `[Pipeline] Grounded SAM complete: ${items.length} items | ` +
+    `detection+seg=${Math.round(detectionMs)}ms, classification=${Math.round(classMs)}ms, total=${Math.round(totalMs)}ms`,
+  );
+
+  return {
+    items,
+    timing: {
+      detection_ms: Math.round(detectionMs),
+      crop_ms: 0, // Segmentation is included in detection_ms
+      classification_ms: Math.round(classMs),
+      total_ms: Math.round(totalMs),
+    },
+  };
+}
+
+// ── DINO + rembg fallback pipeline ───────────────────────────────────────────
+
+async function dinoPipeline(
+  base64Image: string,
+  _mimeType: string,
+  originalObjectUrl: string,
+  totalStart: number,
+): Promise<PipelineResult> {
+  // Step 1: Detection with Grounding DINO
+  const detectionStart = performance.now();
+  const dinoBoxes: GroundingDINOBox[] = await detectWithGroundingDINO(base64Image);
   const detectionMs = performance.now() - detectionStart;
 
   if (dinoBoxes.length === 0) {
-    console.warn('[Pipeline] Grounding DINO detected 0 items, falling back to Claude-only');
-    return fallbackClaudeOnly(base64Image, mimeType, originalObjectUrl, totalStart);
+    throw new Error('Grounding DINO detected 0 items');
   }
 
-  console.log(`[Pipeline] Grounding DINO detected ${dinoBoxes.length} items in ${Math.round(detectionMs)}ms`);
+  console.log(`[Pipeline] DINO detected ${dinoBoxes.length} items in ${Math.round(detectionMs)}ms`);
 
-  // ── STEP 2: Crop each detected item ───────────────────────────────────────
+  // Step 2: Crop each detected item
   const cropStart = performance.now();
-
-  // Get image dimensions for normalising DINO boxes
   const imgDims = await getImageDimensions(originalObjectUrl);
-
   const croppedItems: Array<{
     croppedBase64: string;
     boundingBox: BoundingBox;
     dinoLabel: string;
-    dinoConfidence: number;
   }> = [];
 
   for (const box of dinoBoxes) {
     const normalizedBox = dinoBoxToNormalized(box, imgDims.width, imgDims.height);
     let croppedBase64: string;
     try {
-      // cropImage already adds its own padding, so pass 0 extra since we added 8% in dinoBoxToNormalized
       croppedBase64 = await cropImage(originalObjectUrl, normalizedBox, 0);
     } catch {
-      // If cropping fails, use the full image
-      croppedBase64 = base64Image;
+      croppedBase64 = `data:image/jpeg;base64,${base64Image}`;
     }
-    croppedItems.push({
-      croppedBase64,
-      boundingBox: normalizedBox,
-      dinoLabel: box.label,
-      dinoConfidence: box.confidence,
-    });
+    croppedItems.push({ croppedBase64, boundingBox: normalizedBox, dinoLabel: box.label });
   }
   const cropMs = performance.now() - cropStart;
 
-  // ── STEP 3: Remove backgrounds + Classify in parallel ──────────────────────
-  const classificationStart = performance.now();
-
-  // Run background removal and classification in parallel for each item
+  // Step 3: Remove backgrounds + classify in parallel
+  const classStart = performance.now();
   const processingPromises = croppedItems.map(async (item) => {
     const [noBgImage, classification] = await Promise.all([
       removeBackground(item.croppedBase64).catch(() => item.croppedBase64),
@@ -155,20 +223,16 @@ export async function processClothingImage(
     ]);
     return { noBgImage, classification };
   });
-  const processingResults = await Promise.all(processingPromises);
+  const results = await Promise.all(processingPromises);
+  const classMs = performance.now() - classStart;
 
-  const classificationMs = performance.now() - classificationStart;
-
-  // ── STEP 4: Assemble DetectedItem[] ───────────────────────────────────────
-  const detectedItems: DetectedItem[] = [];
-
+  // Assemble
+  const items: DetectedItem[] = [];
   for (let i = 0; i < croppedItems.length; i++) {
-    const cropped = croppedItems[i];
-    const { noBgImage, classification } = processingResults[i];
+    const { noBgImage, classification } = results[i];
+    if (!classification) continue;
 
-    if (!classification) continue; // skip items that failed classification
-
-    detectedItems.push({
+    items.push({
       tempId: genId(),
       croppedImageUrl: noBgImage,
       originalImageUrl: originalObjectUrl,
@@ -183,32 +247,30 @@ export async function processClothingImage(
       pattern: classification.pattern,
       fit: classification.fit,
       tags: classification.tags,
-      boundingBox: cropped.boundingBox,
+      boundingBox: croppedItems[i].boundingBox,
     });
   }
 
   const totalMs = performance.now() - totalStart;
-
   console.log(
-    `[Pipeline] Complete: ${detectedItems.length} items | ` +
+    `[Pipeline] DINO+rembg complete: ${items.length} items | ` +
     `detection=${Math.round(detectionMs)}ms, crop=${Math.round(cropMs)}ms, ` +
-    `classification=${Math.round(classificationMs)}ms, total=${Math.round(totalMs)}ms`,
+    `classification=${Math.round(classMs)}ms, total=${Math.round(totalMs)}ms`,
   );
 
   return {
-    items: detectedItems,
+    items,
     timing: {
       detection_ms: Math.round(detectionMs),
       crop_ms: Math.round(cropMs),
-      classification_ms: Math.round(classificationMs),
+      classification_ms: Math.round(classMs),
       total_ms: Math.round(totalMs),
     },
   };
 }
 
-/**
- * Fallback: use the existing single-call Claude detection pipeline.
- */
+// ── Claude-only fallback ─────────────────────────────────────────────────────
+
 async function fallbackClaudeOnly(
   base64Image: string,
   mimeType: string,
@@ -230,11 +292,10 @@ async function fallbackClaudeOnly(
       // fallback: use full photo
     }
 
-    // Remove background from cropped image (keep original crop as fallback)
+    // Remove background from cropped image
     const croppedFallback = croppedImageUrl;
     try {
       const noBg = await removeBackground(croppedImageUrl);
-      // Only use bg-removed image if it's a valid data URI and not too small
       if (noBg && noBg.length > 100 && noBg !== croppedImageUrl) {
         croppedImageUrl = noBg;
       }

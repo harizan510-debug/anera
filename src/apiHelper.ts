@@ -79,12 +79,17 @@ export async function replicateCreate(params: ReplicateCreateParams): Promise<Re
     });
     if (res.ok) return await res.json();
     if (res.status !== 404) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error((err as Record<string, string>).error || `Server API error ${res.status}`);
+      const err = await res.json().catch(() => ({})) as Record<string, unknown>;
+      // Surface Replicate-specific errors clearly
+      const detail = (err.detail as string) || (err.error as string) || `Server API error ${res.status}`;
+      if (res.status === 402 || String(detail).toLowerCase().includes('credit')) {
+        throw new Error('Replicate credits exhausted — add credits at replicate.com/account/billing');
+      }
+      throw new Error(detail);
     }
   } catch (e) {
-    if (e instanceof Error && !e.message.includes('Server API error')) {
-      // fall through
+    if (e instanceof Error && !e.message.includes('Server API error') && !e.message.includes('Replicate credits')) {
+      // fall through to client SDK
     } else {
       throw e;
     }
