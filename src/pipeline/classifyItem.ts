@@ -35,9 +35,19 @@ export async function classifyClothingItem(
   croppedBase64: string,
   hint?: string,
 ): Promise<ClassificationResult> {
-  const imageData = croppedBase64.includes(',')
-    ? croppedBase64.split(',')[1]
-    : croppedBase64;
+  // Detect the actual media type from the data URI prefix
+  let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
+  let imageData: string;
+
+  if (croppedBase64.includes(',')) {
+    const prefix = croppedBase64.split(',')[0]; // e.g. "data:image/png;base64"
+    if (prefix.includes('image/png')) mediaType = 'image/png';
+    else if (prefix.includes('image/webp')) mediaType = 'image/webp';
+    else if (prefix.includes('image/gif')) mediaType = 'image/gif';
+    imageData = croppedBase64.split(',')[1];
+  } else {
+    imageData = croppedBase64;
+  }
 
   const hintText = hint ? `\nHint from object detector: this item was detected as "${hint}". Use this as a starting point but override if clearly wrong.` : '';
 
@@ -52,7 +62,7 @@ export async function classifyClothingItem(
             type: 'image',
             source: {
               type: 'base64',
-              media_type: 'image/jpeg',
+              media_type: mediaType,
               data: imageData,
             },
           },

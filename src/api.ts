@@ -2,6 +2,17 @@ import type { MessageParam } from '@anthropic-ai/sdk/resources/messages.mjs';
 import { claudeMessage, scrapeUrl } from './apiHelper';
 import type { WardrobeItem, BoundingBox } from './types';
 
+/** Detect image media type from a data URI or default to JPEG */
+function detectMediaType(dataUri: string): 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' {
+  if (dataUri.startsWith('data:')) {
+    const prefix = dataUri.split(',')[0];
+    if (prefix.includes('image/png')) return 'image/png';
+    if (prefix.includes('image/webp')) return 'image/webp';
+    if (prefix.includes('image/gif')) return 'image/gif';
+  }
+  return 'image/jpeg';
+}
+
 export interface RawDetection {
   category: WardrobeItem['category'];
   categoryConfidence: number;
@@ -267,7 +278,7 @@ export async function analyzePurchase(
       type: 'image',
       source: {
         type: 'base64',
-        media_type: 'image/jpeg',
+        media_type: detectMediaType(imageBase64),
         data: imageBase64.split(',')[1] || imageBase64,
       },
     });
@@ -426,7 +437,7 @@ export async function detectFabricFromImage(base64Image: string): Promise<Fabric
           type: 'image',
           source: {
             type: 'base64',
-            media_type: 'image/jpeg',
+            media_type: detectMediaType(base64Image),
             data: base64Image.split(',')[1] || base64Image,
           },
         },
