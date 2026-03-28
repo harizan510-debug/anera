@@ -72,8 +72,10 @@ export async function processClothingImage(
   mimeType: string,
   originalObjectUrl: string,
 ): Promise<PipelineResult> {
+  console.log(`[Pipeline] START processClothingImage (image=${Math.round(base64Image.length / 1024)}KB, mime=${mimeType})`);
   const totalStart = performance.now();
   const hasReplicate = hasReplicateKey();
+  console.log(`[Pipeline] hasReplicate=${hasReplicate}`);
 
   // ── NO REPLICATE → Claude-only ──────────────────────────────────────────
   if (!hasReplicate) {

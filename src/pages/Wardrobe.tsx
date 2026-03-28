@@ -10,6 +10,39 @@ import { processClothingImage } from '../pipeline/clothingPipeline';
 import MultiItemReview from '../components/MultiItemReview';
 import PageHeader from '../components/PageHeader';
 
+/**
+ * Compress a File (image) down to maxDim before converting to base64.
+ * Uses createImageBitmap → canvas which is much more memory-efficient than
+ * FileReader → data URL → Image → canvas (avoids holding the full-res bitmap + base64 simultaneously).
+ */
+async function compressFileToBase64(file: File, maxDim: number): Promise<string> {
+  // Use createImageBitmap — browser-native, doesn't create a data URI in memory
+  const bitmap = await createImageBitmap(file);
+  let w = bitmap.width;
+  let h = bitmap.height;
+  console.log(`[compress] Original: ${w}×${h}`);
+
+  if (w > maxDim || h > maxDim) {
+    const scale = maxDim / Math.max(w, h);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Cannot create canvas for compression');
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close(); // Free the bitmap memory immediately
+
+  const dataUri = canvas.toDataURL('image/jpeg', 0.80);
+  canvas.width = 0;
+  canvas.height = 0;
+  console.log(`[compress] Compressed to ${w}×${h} (${Math.round(dataUri.length / 1024)}KB)`);
+  return dataUri;
+}
+
 const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery'];
 
 const categoryLabel: Record<WardrobeItem['category'], string> = {
@@ -417,7 +450,10 @@ export default function Wardrobe() {
 
       try {
         if (hasApiKey) {
-          const base64 = await fileToBase64(file);
+          console.log(`[Wardrobe] Photo ${i + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB, ${file.type})`);
+          // Compress BEFORE base64 conversion to avoid holding huge strings in memory
+          const base64 = await compressFileToBase64(file, 800);
+          console.log(`[Wardrobe] Photo ${i + 1}: compressed to ${Math.round(base64.length / 1024)}KB base64`);
           // Show progress updates during long pipeline runs
           const progressTimer = setInterval(() => {
             setAddProgress(p => {

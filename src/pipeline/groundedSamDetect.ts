@@ -465,15 +465,19 @@ async function fetchAndLoadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Compress large images before sending to Replicate.
+ * Ensure image is a proper data URI and compress if still too large.
+ * Usually the caller (Wardrobe.tsx) already compressed to 800px,
+ * so this is mostly a pass-through.
  */
 async function compressForUpload(base64Image: string): Promise<string> {
   const dataUri = base64Image.startsWith('data:')
     ? base64Image
     : `data:image/jpeg;base64,${base64Image}`;
 
-  if (dataUri.length < 300_000) return dataUri;
+  // Already small enough — skip compression
+  if (dataUri.length < 600_000) return dataUri;
 
+  console.log(`[GroundedSAM] Image still large (${Math.round(dataUri.length / 1024)}KB), compressing...`);
   const img = await loadImage(dataUri);
 
   let { naturalWidth: w, naturalHeight: h } = img;
@@ -490,8 +494,8 @@ async function compressForUpload(base64Image: string): Promise<string> {
   if (!ctx) throw new Error('Cannot create canvas for compression');
   ctx.drawImage(img, 0, 0, w, h);
 
-  const result = canvas.toDataURL('image/jpeg', 0.80);
+  const result = canvas.toDataURL('image/jpeg', 0.75);
   canvas.width = 0; canvas.height = 0;
-  console.log(`[GroundedSAM] Compressed ${Math.round(dataUri.length / 1024)}KB → ${Math.round(result.length / 1024)}KB (${w}×${h})`);
+  console.log(`[GroundedSAM] Compressed to ${Math.round(result.length / 1024)}KB (${w}×${h})`);
   return result;
 }
