@@ -71,12 +71,15 @@ export async function detectAndSegment(
 
 /**
  * Process Grounded SAM output.
- * The model returns an array of image URLs — typically:
- *  [0] = annotated overview image (bboxes drawn on original)
- *  [1..N] = individual mask images (white=object, black=background)
  *
- * We apply each mask to the original image on canvas to create
- * transparent-background items.
+ * The model always returns exactly 4 images:
+ *  [0] = annotated_picture_mask.jpg — original with positive mask overlay
+ *  [1] = neg_annotated_picture_mask.jpg — original with negative mask overlay
+ *  [2] = mask.jpg — binary mask (WHITE = detected clothing, BLACK = background)
+ *  [3] = inverted_mask.jpg — inverted binary mask
+ *
+ * We use mask.jpg [2] and apply it to the original image on canvas
+ * to create a transparent-background clothing cutout.
  */
 async function processOutput(
   output: unknown,
@@ -90,42 +93,59 @@ async function processOutput(
   const outputUrls = output as string[];
   console.log(`[GroundedSAM] Got ${outputUrls.length} output images`);
 
-  // Skip the first image (annotated overview) — process masks only
-  // If there's only 1 output, it IS the mask
-  const maskUrls = outputUrls.length > 1 ? outputUrls.slice(1) : outputUrls;
+  // The mask is at index 2 (mask.jpg: white=clothing, black=background)
+  // If output has fewer than 3 items, use the last one as the mask
+  const maskUrl = outputUrls.length >= 3 ? outputUrls[2] : outputUrls[outputUrls.length - 1];
 
   // Load the original image for compositing
   const originalImg = await loadImage(originalDataUri);
   const width = originalImg.naturalWidth;
   const height = originalImg.naturalHeight;
 
-  const items: GroundedSAMItem[] = [];
+  try {
+    // Fetch mask image
+    const maskBase64 = await fetchImageAsBase64(maskUrl);
+    const maskImg = await loadImage(maskBase64);
 
-  for (let i = 0; i < maskUrls.length; i++) {
-    try {
-      // Fetch mask image as base64
-      const maskBase64 = await fetchImageAsBase64(maskUrls[i]);
-      const maskImg = await loadImage(maskBase64);
+    // The mask may contain multiple clothing items (e.g., shirt + pants).
+    // Split into connected components and create one item per component.
+    const components = splitMaskIntoComponents(maskImg, width, height);
+    console.log(`[GroundedSAM] Found ${components.length} connected components in mask`);
 
-      // Apply mask to original image
+    const items: GroundedSAMItem[] = [];
+
+    for (let i = 0; i < components.length; i++) {
+      const comp = components[i];
+      // Only keep components that are >2% of image area
+      if (comp.boundingBox.width * comp.boundingBox.height < 0.02) continue;
+
+      // Apply this component's mask to the original image
+      const { segmentedBase64 } = applyComponentMask(
+        originalImg, comp.mask, comp.pixelBounds, width, height,
+      );
+
+      items.push({
+        segmentedBase64,
+        boundingBox: comp.boundingBox,
+        label: `clothing_${i}`,
+      });
+    }
+
+    // If component splitting failed or found nothing, fall back to full mask
+    if (items.length === 0) {
       const { segmentedBase64, boundingBox } = applyMask(
         originalImg, maskImg, width, height,
       );
-
-      // Only keep items with reasonable bounding box size (>2% of image area)
       if (boundingBox.width * boundingBox.height > 0.02) {
-        items.push({
-          segmentedBase64,
-          boundingBox,
-          label: `clothing_${i}`, // Grounded SAM doesn't label individual masks
-        });
+        items.push({ segmentedBase64, boundingBox, label: 'clothing' });
       }
-    } catch (err) {
-      console.warn(`[GroundedSAM] Failed to process mask ${i}:`, err);
     }
-  }
 
-  return items;
+    return items;
+  } catch (err) {
+    console.warn('[GroundedSAM] Failed to process mask:', err);
+    return [];
+  }
 }
 
 /**
@@ -215,6 +235,143 @@ function applyMask(
   };
 
   return { segmentedBase64, boundingBox };
+}
+
+// ── Connected component splitting ────────────────────────────────────────────
+
+interface MaskComponent {
+  mask: boolean[]; // true = this pixel belongs to this component
+  boundingBox: BoundingBox;
+  pixelBounds: { minX: number; minY: number; maxX: number; maxY: number };
+  pixelCount: number;
+}
+
+/**
+ * Split a binary mask image into connected components using flood fill.
+ * Each component becomes a separate clothing item.
+ */
+function splitMaskIntoComponents(
+  maskImg: HTMLImageElement,
+  width: number,
+  height: number,
+): MaskComponent[] {
+  // Get mask pixel data
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(maskImg, 0, 0, width, height);
+  const data = ctx.getImageData(0, 0, width, height);
+
+  // Create binary mask (true = white = clothing)
+  const binary = new Uint8Array(width * height);
+  for (let i = 0; i < binary.length; i++) {
+    binary[i] = data.data[i * 4] > 128 ? 1 : 0;
+  }
+
+  // Track visited pixels
+  const visited = new Uint8Array(width * height);
+  const components: MaskComponent[] = [];
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x;
+      if (binary[idx] === 0 || visited[idx]) continue;
+
+      // Flood fill to find connected component
+      const compMask = new Array<boolean>(width * height).fill(false);
+      let minX = x, minY = y, maxX = x, maxY = y;
+      let count = 0;
+      const stack = [idx];
+
+      while (stack.length > 0) {
+        const ci = stack.pop()!;
+        if (visited[ci] || binary[ci] === 0) continue;
+        visited[ci] = 1;
+        compMask[ci] = true;
+        count++;
+
+        const cx = ci % width;
+        const cy = Math.floor(ci / width);
+        minX = Math.min(minX, cx);
+        minY = Math.min(minY, cy);
+        maxX = Math.max(maxX, cx);
+        maxY = Math.max(maxY, cy);
+
+        // 4-connected neighbours
+        if (cx > 0) stack.push(ci - 1);
+        if (cx < width - 1) stack.push(ci + 1);
+        if (cy > 0) stack.push(ci - width);
+        if (cy < height - 1) stack.push(ci + width);
+      }
+
+      // Skip tiny components (noise) — need at least 0.5% of image
+      if (count < width * height * 0.005) continue;
+
+      components.push({
+        mask: compMask,
+        boundingBox: {
+          x: minX / width,
+          y: minY / height,
+          width: (maxX - minX) / width,
+          height: (maxY - minY) / height,
+        },
+        pixelBounds: { minX, minY, maxX, maxY },
+        pixelCount: count,
+      });
+    }
+  }
+
+  // Sort by area (largest first)
+  components.sort((a, b) => b.pixelCount - a.pixelCount);
+
+  return components;
+}
+
+/**
+ * Apply a single component's boolean mask to the original image.
+ * Returns a cropped transparent-background image.
+ */
+function applyComponentMask(
+  originalImg: HTMLImageElement,
+  mask: boolean[],
+  pixelBounds: { minX: number; minY: number; maxX: number; maxY: number },
+  width: number,
+  height: number,
+): { segmentedBase64: string } {
+  // Draw original
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(originalImg, 0, 0, width, height);
+  const imgData = ctx.getImageData(0, 0, width, height);
+
+  // Apply mask: make non-component pixels transparent
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i]) {
+      imgData.data[i * 4 + 3] = 0; // Set alpha to 0
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Crop to bounding box with 5% padding
+  const { minX, minY, maxX, maxY } = pixelBounds;
+  const bw = maxX - minX;
+  const bh = maxY - minY;
+  const pad = 0.05;
+  const cropX = Math.max(0, Math.floor(minX - bw * pad));
+  const cropY = Math.max(0, Math.floor(minY - bh * pad));
+  const cropW = Math.min(width - cropX, Math.ceil(bw * (1 + pad * 2)));
+  const cropH = Math.min(height - cropY, Math.ceil(bh * (1 + pad * 2)));
+
+  const cropCanvas = document.createElement('canvas');
+  cropCanvas.width = cropW;
+  cropCanvas.height = cropH;
+  const cropCtx = cropCanvas.getContext('2d')!;
+  cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+  return { segmentedBase64: cropCanvas.toDataURL('image/png') };
 }
 
 // ── Utility helpers ──────────────────────────────────────────────────────────
