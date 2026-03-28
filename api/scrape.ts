@@ -271,6 +271,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       imageUrl = guessImageFromUrl(parsedUrl) || '';
     }
 
+    // 6. LAST RESORT: Use Microlink.io API (free tier, has headless browser)
+    // This handles sites with PerimeterX/Cloudflare bot protection that block direct fetches
+    if (!imageUrl || (!text && !structuredData)) {
+      try {
+        const mlRes = await fetch(
+          `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
+          { signal: AbortSignal.timeout(12000) }
+        );
+        if (mlRes.ok) {
+          const mlData = await mlRes.json() as Record<string, unknown>;
+          if (mlData.status === 'success' && mlData.data) {
+            const d = mlData.data as Record<string, unknown>;
+            // Extract image
+            if (!imageUrl) {
+              const mlImg = d.image as Record<string, string> | undefined;
+              if (mlImg?.url) imageUrl = mlImg.url;
+            }
+            // Extract text info if we have nothing
+            if (!text && !structuredData) {
+              const parts: string[] = [];
+              if (d.title) parts.push(`Product: ${d.title}`);
+              if (d.description) parts.push(`Description: ${d.description}`);
+              if (d.author) parts.push(`Brand: ${d.author}`);
+              if (d.publisher) parts.push(`Publisher: ${d.publisher}`);
+              if (parts.length > 0) {
+                text = `META TAGS: ${parts.join(' | ')}`;
+              }
+            }
+          }
+        }
+      } catch { /* microlink unavailable — continue without */ }
+    }
+
     // Make relative URLs absolute
     if (imageUrl && !imageUrl.startsWith('http')) {
       try {
