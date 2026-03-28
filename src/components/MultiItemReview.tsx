@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Check, X, Pencil, ChevronUp } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Check, X, Pencil, ChevronUp, ImagePlus } from 'lucide-react';
 import type { DetectedItem, WardrobeItem } from '../types';
-import { genId } from '../store';
+import { genId, fileToBase64 } from '../store';
 
 const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery'];
 const CAT_LABELS: Record<WardrobeItem['category'], string> = {
@@ -120,6 +120,9 @@ interface MultiItemReviewProps {
 export default function MultiItemReview({ items: initialItems, onConfirm, onCancel }: MultiItemReviewProps) {
   const [editItems, setEditItems] = useState<DetectedItem[]>(initialItems);
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({});
+  const [imageUrlInputs, setImageUrlInputs] = useState<Record<string, string>>({});
+  const [showImageInput, setShowImageInput] = useState<Record<string, boolean>>({});
+  const imgFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Auto-expand cards that have any field with low confidence
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
@@ -235,14 +238,29 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
 
               {/* ── Compact row (always visible) ── */}
               <div className="flex gap-3 p-3 items-start">
-                {/* Crop thumbnail */}
+                {/* Crop thumbnail — or add-image prompt when missing */}
                 <div className="flex-shrink-0 rounded-xl overflow-hidden"
-                  style={{ width: 64, height: 64, background: 'var(--accent-light)' }}>
-                  <img
-                    src={item.croppedImageUrl || item.originalImageUrl}
-                    alt={item.subcategory}
-                    className="w-full h-full object-cover"
-                  />
+                  style={{ width: 64, height: 64, background: '#F2F2F4' }}>
+                  {(item.croppedImageUrl || item.originalImageUrl) ? (
+                    <img
+                      src={item.croppedImageUrl || item.originalImageUrl}
+                      alt={item.subcategory}
+                      className="w-full h-full object-contain p-1"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowImageInput(p => ({ ...p, [item.tempId]: true }));
+                        if (!expandedIds.has(item.tempId)) toggleExpand(item.tempId);
+                      }}
+                      className="w-full h-full flex flex-col items-center justify-center gap-0.5"
+                      style={{ color: 'var(--accent)' }}
+                      title="Add image"
+                    >
+                      <ImagePlus size={18} />
+                      <span style={{ fontSize: 8, fontWeight: 600 }}>Add</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Summary text */}
@@ -289,6 +307,65 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
               {/* ── Expanded edit form ── */}
               {expanded && (
                 <div className="px-3 pb-3 pt-1 space-y-3" style={{ borderTop: '1px solid var(--border)' }}>
+
+                  {/* Image upload (shown when no image or user clicks Add) */}
+                  {(!item.croppedImageUrl && !item.originalImageUrl) || showImageInput[item.tempId] ? (
+                    <div>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                        Product image
+                      </span>
+                      <div className="flex gap-2">
+                        <input
+                          value={imageUrlInputs[item.tempId] ?? ''}
+                          onChange={e => setImageUrlInputs(p => ({ ...p, [item.tempId]: e.target.value }))}
+                          onBlur={() => {
+                            const v = (imageUrlInputs[item.tempId] ?? '').trim();
+                            if (v && v.startsWith('http')) {
+                              update(item.tempId, 'croppedImageUrl', v);
+                              update(item.tempId, 'originalImageUrl', v);
+                              setShowImageInput(p => ({ ...p, [item.tempId]: false }));
+                            }
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              const v = (imageUrlInputs[item.tempId] ?? '').trim();
+                              if (v && v.startsWith('http')) {
+                                update(item.tempId, 'croppedImageUrl', v);
+                                update(item.tempId, 'originalImageUrl', v);
+                                setShowImageInput(p => ({ ...p, [item.tempId]: false }));
+                              }
+                            }
+                          }}
+                          placeholder="Paste image URL…"
+                          style={{ ...inputStyle, flex: 1 }}
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={el => { imgFileRefs.current[item.tempId] = el; }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const b64 = await fileToBase64(file);
+                            update(item.tempId, 'croppedImageUrl', b64);
+                            update(item.tempId, 'originalImageUrl', b64);
+                            setShowImageInput(p => ({ ...p, [item.tempId]: false }));
+                          }}
+                        />
+                        <button
+                          onClick={() => imgFileRefs.current[item.tempId]?.click()}
+                          className="px-3 py-2 rounded-xl text-xs font-medium flex-shrink-0"
+                          style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}
+                        >
+                          Upload
+                        </button>
+                      </div>
+                      <p className="text-[10px] mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        Tip: Right-click the product image on the website → "Copy image address" → paste here
+                      </p>
+                    </div>
+                  ) : null}
 
                   {/* Subcategory */}
                   <ConfidenceField label="Item type" confidence={item.subcategoryConfidence}>
