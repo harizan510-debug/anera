@@ -83,7 +83,14 @@ export async function processClothingImage(
 
   // ── PRIMARY: Grounded SAM (detection + segmentation) ────────────────────
   try {
-    return await groundedSamPipeline(base64Image, originalObjectUrl, totalStart);
+    // Wrap in a race with a 4-minute safety timeout (prevents infinite hang)
+    const samResult = await Promise.race([
+      groundedSamPipeline(base64Image, originalObjectUrl, totalStart),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Grounded SAM pipeline timed out (4 min safety limit)')), 240_000),
+      ),
+    ]);
+    return samResult;
   } catch (err) {
     console.warn('[Pipeline] Grounded SAM failed, trying DINO + rembg fallback:', err);
   }

@@ -21,6 +21,9 @@ const NEGATIVE_PROMPT = 'background, floor, wall, person, skin, body, face, hair
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 90; // 3 minutes max — Grounded SAM cold starts take ~2 min
 
+const MAX_DIM = 800; // Lower than before (was 1200) — cuts memory usage ~55%
+const MAX_COMPONENTS = 8; // Don't process more than 8 items from one photo
+
 export interface GroundedSAMItem {
   segmentedBase64: string; // Transparent-background image (data URI)
   boundingBox: BoundingBox; // Normalised 0-1 box derived from mask
@@ -100,58 +103,98 @@ async function processOutput(
   console.log(`[GroundedSAM] Got ${outputUrls.length} output images`);
 
   // The mask is at index 2 (mask.jpg: white=clothing, black=background)
-  // If output has fewer than 3 items, use the last one as the mask
   const maskUrl = outputUrls.length >= 3 ? outputUrls[2] : outputUrls[outputUrls.length - 1];
 
   // Load the original image for compositing
   const originalImg = await loadImage(originalDataUri);
   const width = originalImg.naturalWidth;
   const height = originalImg.naturalHeight;
+  console.log(`[GroundedSAM] Processing ${width}×${height} image`);
 
   try {
     // Fetch mask image
     const maskBase64 = await fetchImageAsBase64(maskUrl);
     const maskImg = await loadImage(maskBase64);
+    console.log(`[GroundedSAM] Mask loaded (${maskImg.naturalWidth}×${maskImg.naturalHeight})`);
 
     // The mask may contain multiple clothing items (e.g., shirt + pants).
     // Split into connected components and create one item per component.
     const { components, labels } = splitMaskIntoComponents(maskImg, width, height);
     console.log(`[GroundedSAM] Found ${components.length} connected components in mask`);
 
+    // Limit to MAX_COMPONENTS to avoid memory issues
+    const toProcess = components.slice(0, MAX_COMPONENTS);
     const items: GroundedSAMItem[] = [];
 
-    for (let i = 0; i < components.length; i++) {
-      const comp = components[i];
+    for (let i = 0; i < toProcess.length; i++) {
+      const comp = toProcess[i];
       // Only keep components that are >2% of image area
       if (comp.boundingBox.width * comp.boundingBox.height < 0.02) continue;
 
-      // Apply this component's mask to the original image
-      const { segmentedBase64 } = applyComponentMask(
-        originalImg, labels, comp.labelId, comp.pixelBounds, width, height,
-      );
+      try {
+        // Apply this component's mask to the original image
+        const { segmentedBase64 } = applyComponentMask(
+          originalImg, labels, comp.labelId, comp.pixelBounds, width, height,
+        );
 
-      items.push({
-        segmentedBase64,
-        boundingBox: comp.boundingBox,
-        label: `clothing_${i}`,
-      });
+        items.push({
+          segmentedBase64,
+          boundingBox: comp.boundingBox,
+          label: `clothing_${i}`,
+        });
+      } catch (compErr) {
+        console.warn(`[GroundedSAM] Failed to apply mask for component ${i}:`, compErr);
+      }
+
+      // Yield to main thread between components to prevent jank/crash
+      await yieldToMainThread();
     }
 
     // If component splitting failed or found nothing, fall back to full mask
     if (items.length === 0) {
-      const { segmentedBase64, boundingBox } = applyMask(
-        originalImg, maskImg, width, height,
-      );
-      if (boundingBox.width * boundingBox.height > 0.02) {
-        items.push({ segmentedBase64, boundingBox, label: 'clothing' });
+      console.log('[GroundedSAM] No components extracted, trying full mask fallback');
+      try {
+        const { segmentedBase64, boundingBox } = applyMask(
+          originalImg, maskImg, width, height,
+        );
+        if (boundingBox.width * boundingBox.height > 0.02) {
+          items.push({ segmentedBase64, boundingBox, label: 'clothing' });
+        }
+      } catch (maskErr) {
+        console.warn('[GroundedSAM] Full mask fallback also failed:', maskErr);
       }
     }
 
     return items;
   } catch (err) {
-    console.warn('[GroundedSAM] Failed to process mask:', err);
+    console.error('[GroundedSAM] Failed to process mask:', err);
     return [];
   }
+}
+
+/** Yield to the main thread to prevent the browser from killing the tab */
+function yieldToMainThread(): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
+/**
+ * Create a canvas with null-safe context. Throws descriptive error if 2d context unavailable.
+ */
+function createCanvas(w: number, h: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error(`Canvas 2D context unavailable (${w}×${h}) — browser may be out of memory`);
+  }
+  return { canvas, ctx };
+}
+
+/** Release canvas memory explicitly */
+function releaseCanvas(canvas: HTMLCanvasElement) {
+  canvas.width = 0;
+  canvas.height = 0;
 }
 
 /**
@@ -166,29 +209,23 @@ function applyMask(
   height: number,
 ): { segmentedBase64: string; boundingBox: BoundingBox } {
   // Draw original image
-  const origCanvas = document.createElement('canvas');
-  origCanvas.width = width;
-  origCanvas.height = height;
-  const origCtx = origCanvas.getContext('2d')!;
+  const { canvas: origCanvas, ctx: origCtx } = createCanvas(width, height);
   origCtx.drawImage(originalImg, 0, 0, width, height);
   const origData = origCtx.getImageData(0, 0, width, height);
 
   // Draw mask (scale to same size as original)
-  const maskCanvas = document.createElement('canvas');
-  maskCanvas.width = width;
-  maskCanvas.height = height;
-  const maskCtx = maskCanvas.getContext('2d')!;
+  const { canvas: maskCanvas, ctx: maskCtx } = createCanvas(width, height);
   maskCtx.drawImage(maskImg, 0, 0, width, height);
   const maskData = maskCtx.getImageData(0, 0, width, height);
+  releaseCanvas(maskCanvas); // done with mask canvas
 
   // Determine if mask is "normal" (white=keep) or "inverted" (black=keep)
-  // by checking average brightness — if mostly white, it's inverted (background = white)
   let brightSum = 0;
   for (let i = 0; i < maskData.data.length; i += 4) {
     brightSum += maskData.data[i]; // Red channel
   }
   const avgBrightness = brightSum / (width * height);
-  const inverted = avgBrightness > 128; // Mostly white = mask is inverted
+  const inverted = avgBrightness > 128;
 
   // Apply mask: set alpha based on mask brightness
   let minX = width, minY = height, maxX = 0, maxY = 0;
@@ -198,7 +235,6 @@ function applyMask(
     const keep = inverted ? maskVal < 128 : maskVal > 128;
 
     if (keep) {
-      // Keep this pixel, track bounding box
       const pixelIdx = i / 4;
       const px = pixelIdx % width;
       const py = Math.floor(pixelIdx / width);
@@ -207,7 +243,6 @@ function applyMask(
       maxX = Math.max(maxX, px);
       maxY = Math.max(maxY, py);
     } else {
-      // Make transparent
       origData.data[i + 3] = 0;
     }
   }
@@ -224,15 +259,13 @@ function applyMask(
   const cropH = Math.min(height - cropY, Math.ceil(bh * (1 + pad * 2)));
 
   // Create cropped canvas
-  const cropCanvas = document.createElement('canvas');
-  cropCanvas.width = cropW;
-  cropCanvas.height = cropH;
-  const cropCtx = cropCanvas.getContext('2d')!;
+  const { canvas: cropCanvas, ctx: cropCtx } = createCanvas(cropW, cropH);
   cropCtx.drawImage(origCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+  releaseCanvas(origCanvas); // done with full-size canvas
 
   const segmentedBase64 = cropCanvas.toDataURL('image/png');
+  releaseCanvas(cropCanvas);
 
-  // Normalised bounding box (0-1)
   const boundingBox: BoundingBox = {
     x: minX / width,
     y: minY / height,
@@ -254,7 +287,7 @@ interface MaskComponent {
 
 /**
  * Split a binary mask into connected components using two-pass labeling.
- * Much more memory-efficient than flood fill for large images.
+ * Memory-efficient: uses typed arrays and limits label count.
  */
 function splitMaskIntoComponents(
   maskImg: HTMLImageElement,
@@ -262,35 +295,57 @@ function splitMaskIntoComponents(
   height: number,
 ): { components: MaskComponent[]; labels: Int32Array } {
   // Get mask pixel data
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
+  const { canvas, ctx } = createCanvas(width, height);
   ctx.drawImage(maskImg, 0, 0, width, height);
   const data = ctx.getImageData(0, 0, width, height);
+  releaseCanvas(canvas); // done — we have the pixel data
 
   const totalPixels = width * height;
 
-  // Create binary mask (1 = white = clothing, 0 = background)
+  // Detect if mask is inverted (mostly white = background is white)
+  let brightSum = 0;
+  for (let i = 0; i < totalPixels; i++) {
+    brightSum += data.data[i * 4];
+  }
+  const avgBrightness = brightSum / totalPixels;
+  const threshold = avgBrightness > 128 ? 128 : 128; // keep threshold at 128
+  const maskInverted = avgBrightness > 128;
+
+  // Create binary mask (1 = clothing, 0 = background)
   const binary = new Uint8Array(totalPixels);
   for (let i = 0; i < totalPixels; i++) {
-    binary[i] = data.data[i * 4] > 128 ? 1 : 0;
+    const val = data.data[i * 4];
+    binary[i] = maskInverted ? (val < threshold ? 1 : 0) : (val > threshold ? 1 : 0);
   }
 
-  // Two-pass connected component labeling (much faster than flood fill)
+  // Two-pass connected component labeling
   const labels = new Int32Array(totalPixels); // 0 = background, 1+ = component ID
-  const parent = new Int32Array(totalPixels + 1); // Union-Find parent
-  for (let i = 0; i < parent.length; i++) parent[i] = i;
+  // Parent array for union-find. Size is capped — in practice labels rarely exceed
+  // a few thousand, but in degenerate cases (noise) it could reach totalPixels.
+  // We use a Map for the union-find parent to avoid allocating a huge array.
+  const parentMap = new Map<number, number>();
   let nextLabel = 1;
 
-  // Find root with path compression
   function find(x: number): number {
-    while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; }
-    return x;
+    let root = x;
+    while (true) {
+      const p = parentMap.get(root);
+      if (p === undefined || p === root) break;
+      root = p;
+    }
+    // Path compression
+    let curr = x;
+    while (curr !== root) {
+      const p = parentMap.get(curr)!;
+      parentMap.set(curr, root);
+      curr = p;
+    }
+    return root;
   }
+
   function union(a: number, b: number) {
     const ra = find(a), rb = find(b);
-    if (ra !== rb) parent[ra] = rb;
+    if (ra !== rb) parentMap.set(ra, rb);
   }
 
   // Pass 1: Assign provisional labels
@@ -303,7 +358,9 @@ function splitMaskIntoComponents(
       const left = x > 0 ? labels[idx - 1] : 0;
 
       if (above === 0 && left === 0) {
-        labels[idx] = nextLabel++;
+        const lbl = nextLabel++;
+        labels[idx] = lbl;
+        parentMap.set(lbl, lbl);
       } else if (above !== 0 && left === 0) {
         labels[idx] = above;
       } else if (above === 0 && left !== 0) {
@@ -314,6 +371,8 @@ function splitMaskIntoComponents(
       }
     }
   }
+
+  console.log(`[GroundedSAM] CCL pass 1: ${nextLabel - 1} provisional labels`);
 
   // Pass 2: Resolve labels & collect stats
   const statsMap = new Map<number, { minX: number; minY: number; maxX: number; maxY: number; count: number }>();
@@ -355,6 +414,7 @@ function splitMaskIntoComponents(
   }
 
   components.sort((a, b) => b.pixelCount - a.pixelCount);
+  console.log(`[GroundedSAM] CCL pass 2: ${components.length} components (filtered from ${statsMap.size})`);
   return { components, labels };
 }
 
@@ -381,10 +441,7 @@ function applyComponentMask(
   const cropH = Math.min(height - cropY, Math.ceil(bh * (1 + pad * 2)));
 
   // Draw original cropped region
-  const canvas = document.createElement('canvas');
-  canvas.width = cropW;
-  canvas.height = cropH;
-  const ctx = canvas.getContext('2d')!;
+  const { canvas, ctx } = createCanvas(cropW, cropH);
   ctx.drawImage(originalImg, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
   const imgData = ctx.getImageData(0, 0, cropW, cropH);
 
@@ -400,7 +457,9 @@ function applyComponentMask(
   }
   ctx.putImageData(imgData, 0, 0);
 
-  return { segmentedBase64: canvas.toDataURL('image/png') };
+  const segmentedBase64 = canvas.toDataURL('image/png');
+  releaseCanvas(canvas);
+  return { segmentedBase64 };
 }
 
 // ── Utility helpers ──────────────────────────────────────────────────────────
@@ -408,27 +467,29 @@ function applyComponentMask(
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Only set crossOrigin for http(s) URLs, not data URIs
+    if (src.startsWith('http')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => reject(new Error(`Failed to load image (${src.substring(0, 60)}...)`));
     img.src = src;
   });
 }
 
 /**
  * Compress large images before sending to Replicate.
- * Phone cameras produce 5-10MB images; Replicate works fine with ~1MP.
+ * Phone cameras produce 5-10MB images; Replicate works fine with ~0.6MP.
  */
 async function compressForUpload(base64Image: string): Promise<string> {
   const dataUri = base64Image.startsWith('data:')
     ? base64Image
     : `data:image/jpeg;base64,${base64Image}`;
 
-  // If already small enough (<500KB), use as-is
-  if (dataUri.length < 500_000) return dataUri;
+  // If already small enough (<300KB), use as-is
+  if (dataUri.length < 300_000) return dataUri;
 
   const img = await loadImage(dataUri);
-  const MAX_DIM = 1200; // Max width or height
 
   let { naturalWidth: w, naturalHeight: h } = img;
   if (w > MAX_DIM || h > MAX_DIM) {
@@ -437,22 +498,23 @@ async function compressForUpload(base64Image: string): Promise<string> {
     h = Math.round(h * scale);
   }
 
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d')!;
+  const { canvas, ctx } = createCanvas(w, h);
   ctx.drawImage(img, 0, 0, w, h);
 
-  return canvas.toDataURL('image/jpeg', 0.85);
+  const result = canvas.toDataURL('image/jpeg', 0.80);
+  releaseCanvas(canvas);
+  console.log(`[GroundedSAM] Compressed ${Math.round(dataUri.length / 1024)}KB → ${Math.round(result.length / 1024)}KB (${w}×${h})`);
+  return result;
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {
   const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch mask image: ${res.status}`);
   const blob = await res.blob();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('FileReader failed'));
     reader.readAsDataURL(blob);
   });
 }
