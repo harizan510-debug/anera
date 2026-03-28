@@ -17,8 +17,8 @@ const REPLICATE_MODEL_VERSION =
 const TEXT_PROMPT =
   'clothing . shirt . pants . shoes . jacket . dress . bag . hat . accessory . skirt . coat . sweater . jeans . boots . sneakers . blazer . cardigan . hoodie . shorts . sandals . heels . flats . necklace . bracelet . ring . earring . scarf . belt';
 
-const POLL_INTERVAL_MS = 1500;
-const MAX_POLL_ATTEMPTS = 40; // 60 seconds max
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 75; // 2.5 minutes — cold starts can be long
 
 /**
  * Create a prediction on Replicate and poll until it completes.

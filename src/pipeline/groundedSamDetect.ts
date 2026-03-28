@@ -18,8 +18,8 @@ const MASK_PROMPT =
 
 const NEGATIVE_PROMPT = 'background, floor, wall, person, skin, body, face, hair, furniture';
 
-const POLL_INTERVAL_MS = 1500;
-const MAX_POLL_ATTEMPTS = 40; // 60 seconds max
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 90; // 3 minutes max — Grounded SAM cold starts take ~2 min
 
 export interface GroundedSAMItem {
   segmentedBase64: string; // Transparent-background image (data URI)
@@ -34,9 +34,9 @@ export interface GroundedSAMItem {
 export async function detectAndSegment(
   base64Image: string,
 ): Promise<GroundedSAMItem[]> {
-  const dataUri = base64Image.startsWith('data:')
-    ? base64Image
-    : `data:image/jpeg;base64,${base64Image}`;
+  // Compress large images to avoid Replicate payload limits and speed up upload
+  const dataUri = await compressForUpload(base64Image);
+  console.log(`[GroundedSAM] Sending image (${Math.round(dataUri.length / 1024)}KB)`);
 
   // Create prediction
   const prediction = await replicateCreate({
@@ -52,7 +52,7 @@ export async function detectAndSegment(
   const pollUrl: string = (prediction.urls as Record<string, string>)?.get;
   if (!pollUrl) throw new Error('Grounded SAM: no poll URL in response');
 
-  // Poll for completion
+  // Poll for completion — cold starts can take 2+ minutes
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
     const result = await replicatePoll(pollUrl);
@@ -62,11 +62,17 @@ export async function detectAndSegment(
     }
 
     if (result.status === 'succeeded') {
+      console.log(`[GroundedSAM] Prediction succeeded after ${attempt + 1} polls (~${Math.round((attempt + 1) * POLL_INTERVAL_MS / 1000)}s)`);
       return processOutput(result.output, dataUri);
+    }
+
+    // Log progress every 10 polls
+    if (attempt > 0 && attempt % 10 === 0) {
+      console.log(`[GroundedSAM] Still waiting... poll ${attempt}/${MAX_POLL_ATTEMPTS} (status: ${result.status})`);
     }
   }
 
-  throw new Error('Grounded SAM: prediction timed out');
+  throw new Error('Grounded SAM: prediction timed out after 3 minutes');
 }
 
 /**
@@ -384,6 +390,37 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error('Failed to load image'));
     img.src = src;
   });
+}
+
+/**
+ * Compress large images before sending to Replicate.
+ * Phone cameras produce 5-10MB images; Replicate works fine with ~1MP.
+ */
+async function compressForUpload(base64Image: string): Promise<string> {
+  const dataUri = base64Image.startsWith('data:')
+    ? base64Image
+    : `data:image/jpeg;base64,${base64Image}`;
+
+  // If already small enough (<500KB), use as-is
+  if (dataUri.length < 500_000) return dataUri;
+
+  const img = await loadImage(dataUri);
+  const MAX_DIM = 1200; // Max width or height
+
+  let { naturalWidth: w, naturalHeight: h } = img;
+  if (w > MAX_DIM || h > MAX_DIM) {
+    const scale = MAX_DIM / Math.max(w, h);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0, w, h);
+
+  return canvas.toDataURL('image/jpeg', 0.85);
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {

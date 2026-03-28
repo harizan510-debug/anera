@@ -413,12 +413,20 @@ export default function Wardrobe() {
       const file = files[i];
       if (!file.type.startsWith('image/')) continue;
       const originalImageUrl = URL.createObjectURL(file);
-      setAddProgress(`Analysing photo ${i + 1} of ${files.length}…`);
+      setAddProgress(`Analysing photo ${i + 1} of ${files.length}… (this may take 1-2 min on first use)`);
 
       try {
         if (hasApiKey) {
           const base64 = await fileToBase64(file);
+          // Show progress updates during long pipeline runs
+          const progressTimer = setInterval(() => {
+            setAddProgress(p => {
+              if (p.includes('Segmenting')) return p;
+              return `Segmenting clothing items… (AI model warming up, please wait)`;
+            });
+          }, 8000);
           const result = await processClothingImage(base64, file.type || 'image/jpeg', originalImageUrl);
+          clearInterval(progressTimer);
           allDetected.push(...result.items);
           console.log(`[Wardrobe] Photo ${i + 1} pipeline timing:`, result.timing);
         } else {
