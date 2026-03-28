@@ -266,13 +266,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // 5. FALLBACK: construct from known e-commerce URL patterns
-    if (!imageUrl) {
-      imageUrl = guessImageFromUrl(parsedUrl) || '';
+    // 5. FALLBACK: Try site-specific AJAX/API endpoints that bypass anti-bot
+    // These endpoints are used by the site's own JS and often aren't behind PerimeterX
+    if (!imageUrl || !text) {
+      const ajaxResult = await tryAjaxEndpoints(parsedUrl, url);
+      if (ajaxResult.imageUrl && !imageUrl) imageUrl = ajaxResult.imageUrl;
+      if (ajaxResult.html && !text) {
+        // Extract text from AJAX HTML
+        const ajaxText = ajaxResult.html
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ').trim();
+        if (ajaxText.length > 100) text = ajaxText.slice(0, 3000);
+        // Also try extracting JSON-LD from AJAX response
+        if (!structuredData && ajaxResult.html) {
+          const jsonLdM = ajaxResult.html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+          if (jsonLdM) {
+            for (const m of jsonLdM) {
+              const jc = m.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+              try {
+                const p = JSON.parse(jc);
+                if (findProduct(p)) { structuredData = jc; break; }
+              } catch { /* skip */ }
+            }
+          }
+        }
+      }
     }
 
     // 6. LAST RESORT: Use Microlink.io API (free tier, has headless browser)
-    // This handles sites with PerimeterX/Cloudflare bot protection that block direct fetches
     if (!imageUrl || (!text && !structuredData)) {
       try {
         const mlRes = await fetch(
@@ -283,12 +307,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const mlData = await mlRes.json() as Record<string, unknown>;
           if (mlData.status === 'success' && mlData.data) {
             const d = mlData.data as Record<string, unknown>;
-            // Extract image
             if (!imageUrl) {
               const mlImg = d.image as Record<string, string> | undefined;
               if (mlImg?.url) imageUrl = mlImg.url;
             }
-            // Extract text info if we have nothing
             if (!text && !structuredData) {
               const parts: string[] = [];
               if (d.title) parts.push(`Product: ${d.title}`);
@@ -301,7 +323,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
           }
         }
-      } catch { /* microlink unavailable — continue without */ }
+      } catch { /* microlink unavailable */ }
     }
 
     // Make relative URLs absolute
@@ -394,26 +416,59 @@ function findProductImage(html: string): string | null {
   return null;
 }
 
-/** Last-resort: construct image URL from known e-commerce URL patterns */
-function guessImageFromUrl(parsedUrl: URL): string | null {
+/**
+ * Try site-specific AJAX/API endpoints that bypass anti-bot protections.
+ * These are the same endpoints the site's own JavaScript uses.
+ */
+async function tryAjaxEndpoints(parsedUrl: URL, originalUrl: string): Promise<{ imageUrl?: string; html?: string }> {
   const host = parsedUrl.hostname.toLowerCase();
   const path = parsedUrl.pathname;
 
-  // H&M
-  if (host.includes('hm.com')) {
-    const hmMatch = path.match(/(\d{10})\d{3}\.html/);
-    if (hmMatch) {
-      return `https://lp2.hm.com/hmgoepprod?set=source[/model/2024/${hmMatch[1]}001.jpg],origin[dam],type[DESCRIPTIVESTILLLIFE]&call=url[file:/product/main]`;
+  // Ralph Lauren (Salesforce Commerce Cloud / Demandware)
+  // AJAX endpoint bypasses PerimeterX bot protection
+  if (host.includes('ralphlauren')) {
+    // Extract product ID from URL: /en/slug-PRODUCTID.html or /en/slug.html?cgid=...
+    // Formats: /en/product-name-394189.html or /en/product-name-3616857218191.html
+    const pidMatch = path.match(/[-/](\d{4,})(?:\.html|$)/);
+    if (pidMatch) {
+      const pid = pidMatch[1];
+      // Determine the site ID from the domain
+      const siteMap: Record<string, string> = {
+        'co.uk': 'RalphLauren_GB',
+        'com': 'RalphLauren_US',
+        'fr': 'RalphLauren_FR',
+        'de': 'RalphLauren_DE',
+        'it': 'RalphLauren_IT',
+        'es': 'RalphLauren_ES',
+      };
+      const domainSuffix = host.replace(/^.*?ralphlauren\./, '');
+      const siteId = siteMap[domainSuffix] || 'RalphLauren_GB';
+
+      try {
+        const ajaxUrl = `https://${host}/on/demandware.store/Sites-${siteId}-Site/default/Product-Variation?pid=${pid}&format=ajax`;
+        const ajaxRes = await fetch(ajaxUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html',
+          },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (ajaxRes.ok) {
+          const ajaxHtml = await ajaxRes.text();
+          // Extract the main product image (alternate10 is the hero shot)
+          const imgMatch = ajaxHtml.match(/https:\/\/dtcralphlauren\.scene7\.com\/is\/image\/PoloGSI\/s7-[^"'\s)]*alternate10[^"'\s)]*/i);
+          const imageUrl = imgMatch ? imgMatch[0] : undefined;
+          return { imageUrl, html: ajaxHtml };
+        }
+      } catch { /* AJAX failed */ }
     }
   }
 
-  // ASOS
-  if (host.includes('asos.com')) {
-    const asosMatch = path.match(/\/prd\/(\d+)/);
-    if (asosMatch) {
-      return `https://images.asos-media.com/products/asos/${asosMatch[1]}-1-1.jpg`;
-    }
-  }
+  // Generic Demandware/SFCC sites (many fashion brands use this platform)
+  // Pattern: hostname + /on/demandware.store/Sites-XXX-Site/default/Product-Variation?pid=XXX
+  // We'd need to know the site ID, so skip for now
 
-  return null;
+  void originalUrl; // suppress unused param warning
+  return {};
 }
