@@ -129,9 +129,12 @@ async function processOutput(
 }
 
 /**
- * Apply mask using GPU-accelerated canvas compositing.
- * Uses 'destination-in' blend mode — the GPU does the work, not JS pixel loops.
- * Returns a PNG data URI with transparent background.
+ * Apply mask to original image using a single getImageData on the mask canvas.
+ * The mask is a JPEG (white=clothing, black=background) so we convert
+ * brightness → alpha, then use 'destination-in' compositing.
+ *
+ * Memory: one getImageData on 800×800 = ~2.5MB — safe on all devices.
+ * The OOM was from multiple simultaneous getImageData + typed arrays.
  */
 function applyMaskCompositing(
   originalImg: HTMLImageElement,
@@ -139,112 +142,53 @@ function applyMaskCompositing(
   width: number,
   height: number,
 ): string | null {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    console.error('[GroundedSAM] Cannot get canvas 2d context');
-    return null;
-  }
-
-  // Step 1: Draw the original image
-  ctx.drawImage(originalImg, 0, 0, width, height);
-
-  // Step 2: Use 'destination-in' — keeps original pixels only where mask is opaque/white
-  // The mask is white=clothing, black=background.
-  // 'destination-in' keeps destination (original) only where source (mask) has alpha.
-  // Since the mask is a JPEG (no alpha), we need a different approach:
-  // Draw mask, then use 'source-in' to keep only where mask is bright.
-
-  // Actually for a JPEG mask (white=keep, black=remove), the cleanest GPU approach is:
-  // 1. Draw original
-  // 2. Set globalCompositeOperation = 'destination-in'
-  // 3. Draw the mask — this keeps original pixels only where mask has opacity
-  //    But since the mask is opaque everywhere (JPEG), we need to convert it first.
-  //
-  // Simplest reliable approach: draw mask as luminance alpha.
-  // Create a temp canvas where we convert mask brightness → alpha:
-
+  // Step 1: Draw mask and convert brightness → alpha
   const maskCanvas = document.createElement('canvas');
   maskCanvas.width = width;
   maskCanvas.height = height;
   const maskCtx = maskCanvas.getContext('2d');
   if (!maskCtx) return null;
 
-  // Draw mask scaled to match original dimensions
   maskCtx.drawImage(maskImg, 0, 0, width, height);
+  const maskData = maskCtx.getImageData(0, 0, width, height); // ~2.5MB for 800×800
 
-  // Convert to alpha: use the mask as a luminance source
-  // Draw white over it with 'destination-in' won't work for JPEG...
-  // Instead, we'll use a small trick: globalCompositeOperation sequences
-
-  // Clear the main canvas and redo with proper compositing:
-  ctx.clearRect(0, 0, width, height);
-
-  // Draw the mask first (grayscale: white = clothing)
-  ctx.drawImage(maskImg, 0, 0, width, height);
-
-  // Now use 'source-in' — this means the NEXT draw will only appear
-  // where the CURRENT canvas has opacity. Since mask is a JPEG (fully opaque),
-  // this doesn't help directly.
-
-  // For JPEG masks, we need the ONE getImageData call — but on a TINY canvas.
-  // Downscale to 200px max for the alpha conversion, then upscale.
-
-  const THUMB = 200;
-  const thumbScale = Math.min(THUMB / width, THUMB / height, 1);
-  const tw = Math.round(width * thumbScale);
-  const th = Math.round(height * thumbScale);
-
-  const thumbCanvas = document.createElement('canvas');
-  thumbCanvas.width = tw;
-  thumbCanvas.height = th;
-  const thumbCtx = thumbCanvas.getContext('2d');
-  if (!thumbCtx) return null;
-
-  // Draw mask at thumbnail size
-  thumbCtx.drawImage(maskImg, 0, 0, tw, th);
-  const thumbData = thumbCtx.getImageData(0, 0, tw, th); // Only ~160KB for 200×200
-
-  // Check if mask is inverted (mostly white = inverted)
+  // Check if mask is inverted (mostly white = background is white)
   let brightSum = 0;
-  const pixCount = tw * th;
-  for (let i = 0; i < thumbData.data.length; i += 4) {
-    brightSum += thumbData.data[i];
+  const pixCount = width * height;
+  for (let i = 0; i < maskData.data.length; i += 4) {
+    brightSum += maskData.data[i];
   }
-  const inverted = (brightSum / pixCount) > 180;
-  console.log(`[GroundedSAM] Mask avg brightness: ${Math.round(brightSum / pixCount)}, inverted: ${inverted}`);
+  const avgBrightness = Math.round(brightSum / pixCount);
+  const inverted = avgBrightness > 180;
+  console.log(`[GroundedSAM] Mask avg brightness: ${avgBrightness}, inverted: ${inverted}`);
 
-  // Convert brightness → alpha on the thumbnail
-  for (let i = 0; i < thumbData.data.length; i += 4) {
-    const brightness = thumbData.data[i];
-    const alpha = inverted ? (255 - brightness) : brightness;
-    // Set all channels to white, alpha = mask value
-    thumbData.data[i] = 255;     // R
-    thumbData.data[i + 1] = 255; // G
-    thumbData.data[i + 2] = 255; // B
-    thumbData.data[i + 3] = alpha;
+  // Convert: set RGB to white, alpha = brightness (or inverted)
+  for (let i = 0; i < maskData.data.length; i += 4) {
+    const brightness = maskData.data[i];
+    maskData.data[i] = 255;     // R
+    maskData.data[i + 1] = 255; // G
+    maskData.data[i + 2] = 255; // B
+    maskData.data[i + 3] = inverted ? (255 - brightness) : brightness; // Alpha
   }
-  thumbCtx.putImageData(thumbData, 0, 0);
+  maskCtx.putImageData(maskData, 0, 0);
 
-  // Now composite: draw original, then use thumb-alpha-mask with destination-in
-  ctx.clearRect(0, 0, width, height);
+  // Step 2: Draw original, then apply alpha mask with 'destination-in'
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
   ctx.drawImage(originalImg, 0, 0, width, height);
   ctx.globalCompositeOperation = 'destination-in';
-  // Draw the thumbnail alpha mask scaled UP to full size
-  // Browser interpolation will smooth the edges (good enough for clothing)
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(thumbCanvas, 0, 0, width, height);
-  ctx.globalCompositeOperation = 'source-over'; // reset
+  ctx.drawImage(maskCanvas, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
 
-  // Clean up temp canvases
-  maskCanvas.width = 0; maskCanvas.height = 0;
-  thumbCanvas.width = 0; thumbCanvas.height = 0;
+  maskCanvas.width = 0; maskCanvas.height = 0; // release mask canvas
 
   const result = canvas.toDataURL('image/png');
   canvas.width = 0; canvas.height = 0; // release
+  console.log(`[GroundedSAM] Composited image: ${Math.round(result.length / 1024)}KB`);
 
   return result;
 }
@@ -363,7 +307,8 @@ function splitIntoItems(
 }
 
 /**
- * Crop a region from the masked image using compositing (no getImageData on full canvas).
+ * Crop a region from the masked image.
+ * Draws mask region, converts brightness→alpha, then composites with original.
  */
 function cropSegmented(
   originalImg: HTMLImageElement,
@@ -379,39 +324,33 @@ function cropSegmented(
 
   if (pw < 10 || ph < 10) return null;
 
-  // Use the same compositing approach but only for the crop region
-  // Step 1: Create thumbnail alpha mask for this region
-  const THUMB = 150;
-  const scale = Math.min(THUMB / pw, THUMB / ph, 1);
-  const tw = Math.max(1, Math.round(pw * scale));
-  const th = Math.max(1, Math.round(ph * scale));
+  // Draw mask for this crop region and convert brightness → alpha
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = pw;
+  maskCanvas.height = ph;
+  const maskCtx = maskCanvas.getContext('2d');
+  if (!maskCtx) return null;
 
-  const thumbCanvas = document.createElement('canvas');
-  thumbCanvas.width = tw;
-  thumbCanvas.height = th;
-  const thumbCtx = thumbCanvas.getContext('2d');
-  if (!thumbCtx) return null;
+  maskCtx.drawImage(maskImg, px, py, pw, ph, 0, 0, pw, ph);
+  const maskData = maskCtx.getImageData(0, 0, pw, ph);
 
-  // Draw just the mask region at thumbnail size
-  thumbCtx.drawImage(maskImg, px, py, pw, ph, 0, 0, tw, th);
-  const thumbData = thumbCtx.getImageData(0, 0, tw, th); // Small: ~90KB max
-
-  // Check brightness
+  // Check brightness to detect inversion
   let brightSum = 0;
-  for (let i = 0; i < thumbData.data.length; i += 4) brightSum += thumbData.data[i];
-  const inverted = (brightSum / (tw * th)) > 180;
+  const pixCount = pw * ph;
+  for (let i = 0; i < maskData.data.length; i += 4) brightSum += maskData.data[i];
+  const inverted = (brightSum / pixCount) > 180;
 
-  // Convert to alpha
-  for (let i = 0; i < thumbData.data.length; i += 4) {
-    const brightness = thumbData.data[i];
-    thumbData.data[i] = 255;
-    thumbData.data[i + 1] = 255;
-    thumbData.data[i + 2] = 255;
-    thumbData.data[i + 3] = inverted ? (255 - brightness) : brightness;
+  // Convert brightness → alpha
+  for (let i = 0; i < maskData.data.length; i += 4) {
+    const brightness = maskData.data[i];
+    maskData.data[i] = 255;
+    maskData.data[i + 1] = 255;
+    maskData.data[i + 2] = 255;
+    maskData.data[i + 3] = inverted ? (255 - brightness) : brightness;
   }
-  thumbCtx.putImageData(thumbData, 0, 0);
+  maskCtx.putImageData(maskData, 0, 0);
 
-  // Step 2: Composite original crop + alpha mask
+  // Composite: original crop + alpha mask
   const outCanvas = document.createElement('canvas');
   outCanvas.width = pw;
   outCanvas.height = ph;
@@ -420,12 +359,10 @@ function cropSegmented(
 
   outCtx.drawImage(originalImg, px, py, pw, ph, 0, 0, pw, ph);
   outCtx.globalCompositeOperation = 'destination-in';
-  outCtx.imageSmoothingEnabled = true;
-  outCtx.imageSmoothingQuality = 'high';
-  outCtx.drawImage(thumbCanvas, 0, 0, pw, ph);
+  outCtx.drawImage(maskCanvas, 0, 0);
   outCtx.globalCompositeOperation = 'source-over';
 
-  thumbCanvas.width = 0; thumbCanvas.height = 0;
+  maskCanvas.width = 0; maskCanvas.height = 0;
 
   const result = outCanvas.toDataURL('image/png');
   outCanvas.width = 0; outCanvas.height = 0;
