@@ -115,7 +115,7 @@ async function processOutput(
 
     // The mask may contain multiple clothing items (e.g., shirt + pants).
     // Split into connected components and create one item per component.
-    const components = splitMaskIntoComponents(maskImg, width, height);
+    const { components, labels } = splitMaskIntoComponents(maskImg, width, height);
     console.log(`[GroundedSAM] Found ${components.length} connected components in mask`);
 
     const items: GroundedSAMItem[] = [];
@@ -127,7 +127,7 @@ async function processOutput(
 
       // Apply this component's mask to the original image
       const { segmentedBase64 } = applyComponentMask(
-        originalImg, comp.mask, comp.pixelBounds, width, height,
+        originalImg, labels, comp.labelId, comp.pixelBounds, width, height,
       );
 
       items.push({
@@ -243,24 +243,24 @@ function applyMask(
   return { segmentedBase64, boundingBox };
 }
 
-// ── Connected component splitting ────────────────────────────────────────────
+// ── Connected component labeling ─────────────────────────────────────────────
 
 interface MaskComponent {
-  mask: boolean[]; // true = this pixel belongs to this component
+  labelId: number;
   boundingBox: BoundingBox;
   pixelBounds: { minX: number; minY: number; maxX: number; maxY: number };
   pixelCount: number;
 }
 
 /**
- * Split a binary mask image into connected components using flood fill.
- * Each component becomes a separate clothing item.
+ * Split a binary mask into connected components using two-pass labeling.
+ * Much more memory-efficient than flood fill for large images.
  */
 function splitMaskIntoComponents(
   maskImg: HTMLImageElement,
   width: number,
   height: number,
-): MaskComponent[] {
+): { components: MaskComponent[]; labels: Int32Array } {
   // Get mask pixel data
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -269,99 +269,108 @@ function splitMaskIntoComponents(
   ctx.drawImage(maskImg, 0, 0, width, height);
   const data = ctx.getImageData(0, 0, width, height);
 
-  // Create binary mask (true = white = clothing)
-  const binary = new Uint8Array(width * height);
-  for (let i = 0; i < binary.length; i++) {
+  const totalPixels = width * height;
+
+  // Create binary mask (1 = white = clothing, 0 = background)
+  const binary = new Uint8Array(totalPixels);
+  for (let i = 0; i < totalPixels; i++) {
     binary[i] = data.data[i * 4] > 128 ? 1 : 0;
   }
 
-  // Track visited pixels
-  const visited = new Uint8Array(width * height);
-  const components: MaskComponent[] = [];
+  // Two-pass connected component labeling (much faster than flood fill)
+  const labels = new Int32Array(totalPixels); // 0 = background, 1+ = component ID
+  const parent = new Int32Array(totalPixels + 1); // Union-Find parent
+  for (let i = 0; i < parent.length; i++) parent[i] = i;
+  let nextLabel = 1;
+
+  // Find root with path compression
+  function find(x: number): number {
+    while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; }
+    return x;
+  }
+  function union(a: number, b: number) {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  }
+
+  // Pass 1: Assign provisional labels
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x;
+      if (binary[idx] === 0) continue;
+
+      const above = y > 0 ? labels[idx - width] : 0;
+      const left = x > 0 ? labels[idx - 1] : 0;
+
+      if (above === 0 && left === 0) {
+        labels[idx] = nextLabel++;
+      } else if (above !== 0 && left === 0) {
+        labels[idx] = above;
+      } else if (above === 0 && left !== 0) {
+        labels[idx] = left;
+      } else {
+        labels[idx] = Math.min(above, left);
+        if (above !== left) union(above, left);
+      }
+    }
+  }
+
+  // Pass 2: Resolve labels & collect stats
+  const statsMap = new Map<number, { minX: number; minY: number; maxX: number; maxY: number; count: number }>();
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = y * width + x;
-      if (binary[idx] === 0 || visited[idx]) continue;
+      if (labels[idx] === 0) continue;
+      const root = find(labels[idx]);
+      labels[idx] = root;
 
-      // Flood fill to find connected component
-      const compMask = new Array<boolean>(width * height).fill(false);
-      let minX = x, minY = y, maxX = x, maxY = y;
-      let count = 0;
-      const stack = [idx];
-
-      while (stack.length > 0) {
-        const ci = stack.pop()!;
-        if (visited[ci] || binary[ci] === 0) continue;
-        visited[ci] = 1;
-        compMask[ci] = true;
-        count++;
-
-        const cx = ci % width;
-        const cy = Math.floor(ci / width);
-        minX = Math.min(minX, cx);
-        minY = Math.min(minY, cy);
-        maxX = Math.max(maxX, cx);
-        maxY = Math.max(maxY, cy);
-
-        // 4-connected neighbours
-        if (cx > 0) stack.push(ci - 1);
-        if (cx < width - 1) stack.push(ci + 1);
-        if (cy > 0) stack.push(ci - width);
-        if (cy < height - 1) stack.push(ci + width);
-      }
-
-      // Skip tiny components (noise) — need at least 0.5% of image
-      if (count < width * height * 0.005) continue;
-
-      components.push({
-        mask: compMask,
-        boundingBox: {
-          x: minX / width,
-          y: minY / height,
-          width: (maxX - minX) / width,
-          height: (maxY - minY) / height,
-        },
-        pixelBounds: { minX, minY, maxX, maxY },
-        pixelCount: count,
-      });
+      let s = statsMap.get(root);
+      if (!s) { s = { minX: x, minY: y, maxX: x, maxY: y, count: 0 }; statsMap.set(root, s); }
+      if (x < s.minX) s.minX = x;
+      if (y < s.minY) s.minY = y;
+      if (x > s.maxX) s.maxX = x;
+      if (y > s.maxY) s.maxY = y;
+      s.count++;
     }
   }
 
-  // Sort by area (largest first)
-  components.sort((a, b) => b.pixelCount - a.pixelCount);
+  // Convert to components, filter noise
+  const minPixels = totalPixels * 0.005; // at least 0.5% of image
+  const components: MaskComponent[] = [];
 
-  return components;
+  for (const [labelId, s] of statsMap) {
+    if (s.count < minPixels) continue;
+    components.push({
+      labelId,
+      boundingBox: {
+        x: s.minX / width,
+        y: s.minY / height,
+        width: (s.maxX - s.minX) / width,
+        height: (s.maxY - s.minY) / height,
+      },
+      pixelBounds: { minX: s.minX, minY: s.minY, maxX: s.maxX, maxY: s.maxY },
+      pixelCount: s.count,
+    });
+  }
+
+  components.sort((a, b) => b.pixelCount - a.pixelCount);
+  return { components, labels };
 }
 
 /**
- * Apply a single component's boolean mask to the original image.
+ * Apply a single component's mask to the original image using label data.
  * Returns a cropped transparent-background image.
  */
 function applyComponentMask(
   originalImg: HTMLImageElement,
-  mask: boolean[],
+  labels: Int32Array,
+  labelId: number,
   pixelBounds: { minX: number; minY: number; maxX: number; maxY: number },
   width: number,
   height: number,
 ): { segmentedBase64: string } {
-  // Draw original
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(originalImg, 0, 0, width, height);
-  const imgData = ctx.getImageData(0, 0, width, height);
-
-  // Apply mask: make non-component pixels transparent
-  for (let i = 0; i < mask.length; i++) {
-    if (!mask[i]) {
-      imgData.data[i * 4 + 3] = 0; // Set alpha to 0
-    }
-  }
-  ctx.putImageData(imgData, 0, 0);
-
-  // Crop to bounding box with 5% padding
+  // Crop region with 5% padding
   const { minX, minY, maxX, maxY } = pixelBounds;
   const bw = maxX - minX;
   const bh = maxY - minY;
@@ -371,13 +380,27 @@ function applyComponentMask(
   const cropW = Math.min(width - cropX, Math.ceil(bw * (1 + pad * 2)));
   const cropH = Math.min(height - cropY, Math.ceil(bh * (1 + pad * 2)));
 
-  const cropCanvas = document.createElement('canvas');
-  cropCanvas.width = cropW;
-  cropCanvas.height = cropH;
-  const cropCtx = cropCanvas.getContext('2d')!;
-  cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+  // Draw original cropped region
+  const canvas = document.createElement('canvas');
+  canvas.width = cropW;
+  canvas.height = cropH;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(originalImg, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+  const imgData = ctx.getImageData(0, 0, cropW, cropH);
 
-  return { segmentedBase64: cropCanvas.toDataURL('image/png') };
+  // Make non-component pixels transparent
+  for (let cy = 0; cy < cropH; cy++) {
+    for (let cx = 0; cx < cropW; cx++) {
+      const srcIdx = (cropY + cy) * width + (cropX + cx);
+      if (labels[srcIdx] !== labelId) {
+        const pixIdx = (cy * cropW + cx) * 4;
+        imgData.data[pixIdx + 3] = 0;
+      }
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  return { segmentedBase64: canvas.toDataURL('image/png') };
 }
 
 // ── Utility helpers ──────────────────────────────────────────────────────────
