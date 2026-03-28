@@ -16,13 +16,72 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // ── Fetch strategies ────────────────────────────────────────────────────
-    // We collect the BEST full-content HTML plus any partial HTML that may
-    // contain meta tags (og:image, JSON-LD) even if the page body is a
-    // cookie/GDPR wall.
+    // ── Step 0: Try AJAX/API endpoints FIRST for known bot-protected sites ──
+    // These bypass PerimeterX/Cloudflare and are much faster than timing out
+    // on direct fetches. Vercel free tier has a 10s function timeout.
+    let earlyImage = '';
+    let earlyText = '';
+    let earlyStructured = '';
 
-    let bestHtml = '';          // Best HTML with real product content
-    const allHtmlChunks: string[] = []; // ALL HTML we received, for meta extraction
+    const ajaxResult = await tryAjaxEndpoints(parsedUrl, url);
+    if (ajaxResult.imageUrl) earlyImage = ajaxResult.imageUrl;
+    if (ajaxResult.html) {
+      // Extract text
+      const t = ajaxResult.html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+      if (t.length > 100) earlyText = t.slice(0, 3000);
+      // Extract JSON-LD
+      const jm = ajaxResult.html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+      if (jm) {
+        for (const m of jm) {
+          const jc = m.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+          try { const p = JSON.parse(jc); if (findProduct(p)) { earlyStructured = jc; break; } } catch { /* skip */ }
+        }
+      }
+    }
+
+    // If AJAX gave us an image, we can skip slow direct fetches for bot-protected sites
+    // and just get text from Microlink
+    if (earlyImage) {
+      // Try Microlink for text/description if we don't have good text
+      let text = earlyText;
+      let structuredData = earlyStructured;
+      if (!text || text.length < 200) {
+        try {
+          const mlRes = await fetch(
+            `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
+            { signal: AbortSignal.timeout(8000) }
+          );
+          if (mlRes.ok) {
+            const mlData = await mlRes.json() as Record<string, unknown>;
+            if (mlData.status === 'success' && mlData.data) {
+              const d = mlData.data as Record<string, unknown>;
+              const parts: string[] = [];
+              if (d.title) parts.push(`Product: ${d.title}`);
+              if (d.description) parts.push(`Description: ${d.description}`);
+              if (d.author) parts.push(`Brand: ${d.author}`);
+              if (parts.length > 0) text = `META TAGS: ${parts.join(' | ')}${text ? '\n\n' + text : ''}`;
+            }
+          }
+        } catch { /* continue with what we have */ }
+      }
+      // Truncate and return early
+      if (text.length > 3000) text = text.slice(0, 3000) + '\u2026';
+      if (structuredData.length > 2000) structuredData = structuredData.slice(0, 2000) + '\u2026';
+      return res.status(200).json({
+        text,
+        structuredData: structuredData || undefined,
+        imageUrl: earlyImage,
+      });
+    }
+
+    // ── Fetch strategies (for sites without AJAX workaround) ────────────────
+    let bestHtml = '';
+    const allHtmlChunks: string[] = [];
 
     const gdprCookies = [
       'notice_gdpr_prefs=0,1,2:1a8b7b603bbe638a',
@@ -80,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const response = await fetch(url, {
           headers: opts.headers,
           redirect: 'manual' as RequestRedirect,
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(5000),
         });
 
         if (response.status >= 300 && response.status < 400) {
@@ -137,7 +196,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const response = await fetch(url, {
             headers: opts.headers,
             redirect: 'follow',
-            signal: AbortSignal.timeout(10000),
+            signal: AbortSignal.timeout(5000),
           });
           if (response.ok) {
             const h = await response.text();
@@ -266,37 +325,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // 5. FALLBACK: Try site-specific AJAX/API endpoints that bypass anti-bot
-    // These endpoints are used by the site's own JS and often aren't behind PerimeterX
-    if (!imageUrl || !text) {
-      const ajaxResult = await tryAjaxEndpoints(parsedUrl, url);
-      if (ajaxResult.imageUrl && !imageUrl) imageUrl = ajaxResult.imageUrl;
-      if (ajaxResult.html && !text) {
-        // Extract text from AJAX HTML
-        const ajaxText = ajaxResult.html
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
-          .replace(/\s+/g, ' ').trim();
-        if (ajaxText.length > 100) text = ajaxText.slice(0, 3000);
-        // Also try extracting JSON-LD from AJAX response
-        if (!structuredData && ajaxResult.html) {
-          const jsonLdM = ajaxResult.html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-          if (jsonLdM) {
-            for (const m of jsonLdM) {
-              const jc = m.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
-              try {
-                const p = JSON.parse(jc);
-                if (findProduct(p)) { structuredData = jc; break; }
-              } catch { /* skip */ }
-            }
-          }
-        }
-      }
-    }
-
-    // 6. LAST RESORT: Use Microlink.io API (free tier, has headless browser)
+    // 5. LAST RESORT: Use Microlink.io API (free tier, has headless browser)
     if (!imageUrl || (!text && !structuredData)) {
       try {
         const mlRes = await fetch(
