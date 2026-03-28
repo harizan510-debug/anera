@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Plus, Search, X, Trash2, Check, Sparkles, Link2, Camera, Loader2 } from 'lucide-react';
 import { hasClaudeKey } from '../apiHelper';
-import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, fileToBase64, genId } from '../store';
+import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
 import type { RawDetection } from '../api';
 import { detectItemFromUrl } from '../api';
