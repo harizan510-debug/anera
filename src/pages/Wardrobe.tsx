@@ -781,24 +781,35 @@ export default function Wardrobe() {
           {filtered.map(item => (
             <div
               key={item.id}
-              onClick={() => setEditModal({ item: { ...item } })}
-              className="rounded-2xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
+              className="relative rounded-2xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
               style={{ background: CATEGORY_COLORS[item.category] || 'var(--accent-light)', border: '1px solid rgba(43,43,43,0.06)' }}
             >
-              <div className="aspect-square w-full rounded-xl overflow-hidden" style={{ background: '#F2F2F4' }}>
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} className="w-full h-full object-contain p-2" alt={item.subcategory} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">👕</div>
-                )}
-              </div>
-              <div className="px-2 py-2">
-                <p className="text-xs font-semibold capitalize truncate" style={{ color: '#2B2B2B' }}>
-                  {item.color} {item.subcategory}
-                </p>
-                <p className="text-[10px]" style={{ color: 'rgba(43,43,43,0.5)' }}>
-                  worn {item.wearCount}×
-                </p>
+              {/* Delete button — top-right corner */}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                className="absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-full flex items-center justify-center bg-black/40 hover:bg-red-500 transition-colors"
+                aria-label="Remove item"
+              >
+                <X size={13} color="white" strokeWidth={2.5} />
+              </button>
+              <div
+                onClick={() => setEditModal({ item: { ...item } })}
+              >
+                <div className="aspect-square w-full rounded-xl overflow-hidden" style={{ background: '#F2F2F4' }}>
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} className="w-full h-full object-contain p-2" alt={item.subcategory} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">👕</div>
+                  )}
+                </div>
+                <div className="px-2 py-2">
+                  <p className="text-xs font-semibold capitalize truncate" style={{ color: '#2B2B2B' }}>
+                    {item.color} {item.subcategory}
+                  </p>
+                  <p className="text-[10px]" style={{ color: 'rgba(43,43,43,0.5)' }}>
+                    worn {item.wearCount}×
+                  </p>
+                </div>
               </div>
             </div>
           ))}
