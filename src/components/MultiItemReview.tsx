@@ -1,7 +1,43 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Check, X, Pencil, ChevronUp, ImagePlus, Crop, Maximize } from 'lucide-react';
 import type { DetectedItem, WardrobeItem } from '../types';
 import { genId, fileToBase64 } from '../store';
+
+/**
+ * Compress a base64 image to fit comfortably in localStorage.
+ * Resizes to max 400px and converts to JPEG at 0.75 quality.
+ * This keeps each image under ~60-80KB instead of 2-5MB PNGs.
+ */
+async function compressForStorage(dataUrl: string, maxDim = 400): Promise<string> {
+  // Skip if it's a blob URL or not a data URL — can't compress
+  if (!dataUrl.startsWith('data:')) return dataUrl;
+  // Skip if already small enough (under 100KB)
+  if (dataUrl.length < 100_000) return dataUrl;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > maxDim || h > maxDim) {
+        const scale = maxDim / Math.max(w, h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(dataUrl); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      canvas.width = 0; canvas.height = 0; // free memory
+      console.log(`[Compress] ${Math.round(dataUrl.length / 1024)}KB → ${Math.round(compressed.length / 1024)}KB`);
+      resolve(compressed);
+    };
+    img.onerror = () => resolve(dataUrl); // fallback: return original
+    img.src = dataUrl;
+  });
+}
 
 const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'];
 const CAT_LABELS: Record<WardrobeItem['category'], string> = {
@@ -171,26 +207,40 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
     setTagInputs(prev => ({ ...prev, [tempId]: '' }));
   };
 
-  const handleConfirm = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleConfirm = useCallback(async () => {
     if (editItems.length === 0) { onCancel(); return; }
-    const wardrobeItems: WardrobeItem[] = editItems.map(d => ({
-      id: genId(),
-      imageUrl: useOriginal[d.tempId]
-        ? (d.bgRemovedImageUrl || d.originalImageUrl || d.croppedImageUrl)
-        : (d.croppedImageUrl || d.originalImageUrl),
-      category: d.category,
-      subcategory: d.subcategory || 'item',
-      color: d.color || 'unknown',
-      pattern: d.pattern || 'plain',
-      fit: d.fit || 'regular',
-      brand: d.brand || undefined,
-      wearCount: 0,
-      lastWorn: null,
-      estimatedValue: 0,
-      tags: d.tags,
-    }));
-    onConfirm(wardrobeItems);
-  };
+    setSaving(true);
+    try {
+      // Compress all images in parallel before storing
+      const wardrobeItems: WardrobeItem[] = await Promise.all(
+        editItems.map(async (d) => {
+          const rawUrl = useOriginal[d.tempId]
+            ? (d.bgRemovedImageUrl || d.originalImageUrl || d.croppedImageUrl)
+            : (d.croppedImageUrl || d.originalImageUrl);
+          const imageUrl = await compressForStorage(rawUrl);
+          return {
+            id: genId(),
+            imageUrl,
+            category: d.category,
+            subcategory: d.subcategory || 'item',
+            color: d.color || 'unknown',
+            pattern: d.pattern || 'plain',
+            fit: d.fit || 'regular',
+            brand: d.brand || undefined,
+            wearCount: 0,
+            lastWorn: null,
+            estimatedValue: 0,
+            tags: d.tags,
+          };
+        })
+      );
+      onConfirm(wardrobeItems);
+    } finally {
+      setSaving(false);
+    }
+  }, [editItems, useOriginal, onConfirm, onCancel]);
 
   // ────────────────────────────────────────────────────────────────────────
   return (
@@ -206,10 +256,10 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
         <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           {editItems.length} item{editItems.length !== 1 ? 's' : ''} detected
         </p>
-        <button onClick={handleConfirm} disabled={editItems.length === 0}
+        <button onClick={handleConfirm} disabled={editItems.length === 0 || saving}
           className="flex items-center gap-1.5 text-sm font-semibold disabled:opacity-40"
           style={{ color: 'var(--accent)' }}>
-          <Check size={16} /> Save all
+          <Check size={16} /> {saving ? 'Saving...' : 'Save all'}
         </button>
       </div>
 
@@ -500,12 +550,12 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
         style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)' }}>
         <button
           onClick={handleConfirm}
-          disabled={editItems.length === 0}
+          disabled={editItems.length === 0 || saving}
           className="w-full py-4 rounded-2xl font-medium text-white flex items-center justify-center gap-2 disabled:opacity-40"
           style={{ background: 'var(--accent)' }}
         >
           <Check size={18} />
-          Add {editItems.length} item{editItems.length !== 1 ? 's' : ''} to wardrobe
+          {saving ? 'Saving...' : `Add ${editItems.length} item${editItems.length !== 1 ? 's' : ''} to wardrobe`}
         </button>
       </div>
     </div>

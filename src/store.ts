@@ -25,7 +25,13 @@ export function loadUser(): User {
 }
 
 export function saveUser(user: User) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  } catch (e) {
+    // QuotaExceededError — localStorage is full
+    console.error('[Store] localStorage quota exceeded! Try removing some items.', e);
+    alert('Storage is full. Please remove some items from your wardrobe to free up space.');
+  }
 }
 
 export function addWardrobeItem(item: WardrobeItem) {

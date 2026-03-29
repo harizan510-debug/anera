@@ -867,7 +867,7 @@ export default function Wardrobe() {
               <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
                 {label}
               </p>
-              <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+              <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory basics-scroll">
                 {basics.map(b => (
                   <BasicCard
                     key={`${b.color}-${b.subcategory}`}
