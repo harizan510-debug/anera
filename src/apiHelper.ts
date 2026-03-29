@@ -88,30 +88,12 @@ export async function replicateCreate(params: ReplicateCreateParams): Promise<Re
       throw new Error(detail);
     }
   } catch (e) {
-    if (e instanceof Error && !e.message.includes('Server API error') && !e.message.includes('Replicate credits')) {
-      // fall through to client SDK
-    } else {
-      throw e;
-    }
+    // All Replicate calls go through the server proxy — no client-side fallback
+    // (API key is server-only for security)
+    throw e;
   }
 
-  // Fallback: direct client-side call
-  const apiKey = import.meta.env.VITE_REPLICATE_API_KEY;
-  if (!apiKey) throw new Error('No Replicate key available (server route unavailable, VITE_REPLICATE_API_KEY not set)');
-
-  const res = await fetch('https://api.replicate.com/v1/predictions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ version: params.version, input: params.input }),
-  });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Replicate create prediction failed (${res.status}): ${errText}`);
-  }
-  return res.json();
+  throw new Error('Replicate server proxy unavailable');
 }
 
 /**
@@ -131,29 +113,19 @@ export async function replicatePoll(url: string): Promise<Record<string, unknown
       throw new Error((err as Record<string, string>).error || `Server API error ${res.status}`);
     }
   } catch (e) {
-    if (e instanceof Error && !e.message.includes('Server API error')) {
-      // fall through
-    } else {
-      throw e;
-    }
+    throw e;
   }
 
-  // Fallback: direct client-side call
-  const apiKey = import.meta.env.VITE_REPLICATE_API_KEY;
-  if (!apiKey) throw new Error('No Replicate key available');
-
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  if (!res.ok) throw new Error(`Replicate poll failed (${res.status})`);
-  return res.json();
+  throw new Error('Replicate server proxy unavailable');
 }
 
 /**
- * Check whether a Replicate key is available (either server-side or client-side).
+ * Check whether Replicate is available.
+ * In production (Vercel), the server proxy handles the key.
+ * In dev, we assume the server proxy is available if running via `vercel dev`.
  */
 export function hasReplicateKey(): boolean {
-  return !!import.meta.env.VITE_REPLICATE_API_KEY || !!import.meta.env.PROD;
+  return !!import.meta.env.PROD || !!import.meta.env.VITE_REPLICATE_ENABLED;
 }
 
 // ── URL Scraper ─────────────────────────────────────────────────────────────
