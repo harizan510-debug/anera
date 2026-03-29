@@ -614,10 +614,9 @@ export default function Wardrobe() {
 
   const addBasic = (b: BasicItem) => {
     if (isBasicAdded(b)) return;
-    const imageUrl = makeClothingSVG(b.svgShape, b.swatchColor);
     addWardrobeItem({
       id: genId(),
-      imageUrl,
+      imageUrl: b.imageUrl || makeClothingSVG(b.svgShape, b.swatchColor),
       category: b.category,
       subcategory: b.subcategory,
       color: b.color,
