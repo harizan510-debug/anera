@@ -310,6 +310,13 @@ async function dinoPipelineItems(
   _mimeType: string,
   originalObjectUrl: string,
 ): Promise<DetectedItem[]> {
+  // Remove background ONCE from full image
+  let cleanImageUrl = originalObjectUrl;
+  try {
+    const noBg = await removeBackground(base64Image);
+    if (noBg && noBg.length > 100) cleanImageUrl = noBg;
+  } catch { /* use original */ }
+
   const dinoBoxes = await detectWithGroundingDINO(base64Image);
   if (dinoBoxes.length === 0) return [];
 
@@ -320,22 +327,20 @@ async function dinoPipelineItems(
     const normalizedBox = dinoBoxToNormalized(box, imgDims.width, imgDims.height);
     let croppedBase64: string;
     try {
-      croppedBase64 = await cropImage(originalObjectUrl, normalizedBox, 0);
+      croppedBase64 = await cropImage(cleanImageUrl, normalizedBox, 0);
     } catch {
-      continue;
+      try {
+        croppedBase64 = await cropImage(originalObjectUrl, normalizedBox, 0);
+      } catch { continue; }
     }
 
-    // Background removal + classification
-    const [noBgImage, classification] = await Promise.all([
-      removeBackground(croppedBase64).catch(() => croppedBase64),
-      classifyClothingItem(croppedBase64, box.label).catch(() => null),
-    ]);
-
+    // Classify only — no per-item rembg needed
+    const classification = await classifyClothingItem(croppedBase64, box.label).catch(() => null);
     if (!classification) continue;
 
     items.push({
       tempId: genId(),
-      croppedImageUrl: noBgImage,
+      croppedImageUrl: croppedBase64,
       originalImageUrl: originalObjectUrl,
       category: classification.category,
       categoryConfidence: classification.categoryConfidence,
@@ -361,6 +366,20 @@ async function dinoPipeline(
   originalObjectUrl: string,
   totalStart: number,
 ): Promise<PipelineResult> {
+  // Step 1: Remove background from FULL image FIRST (one API call)
+  let cleanImageUrl = originalObjectUrl;
+  try {
+    console.log('[Pipeline] DINO: removing background from full image first...');
+    const noBg = await removeBackground(base64Image);
+    if (noBg && noBg.length > 100) {
+      cleanImageUrl = noBg;
+      console.log(`[Pipeline] DINO: background removed (${Math.round(noBg.length / 1024)}KB)`);
+    }
+  } catch (err) {
+    console.warn('[Pipeline] DINO: background removal failed, using original:', err);
+  }
+
+  // Step 2: Detect with DINO
   const detectionStart = performance.now();
   const dinoBoxes: GroundingDINOBox[] = await detectWithGroundingDINO(base64Image);
   const detectionMs = performance.now() - detectionStart;
@@ -371,6 +390,7 @@ async function dinoPipeline(
 
   console.log(`[Pipeline] DINO detected ${dinoBoxes.length} items in ${Math.round(detectionMs)}ms`);
 
+  // Step 3: Crop from the clean (background-removed) image
   const cropStart = performance.now();
   const imgDims = await getImageDimensions(originalObjectUrl);
   const croppedItems: Array<{
@@ -383,55 +403,58 @@ async function dinoPipeline(
     const normalizedBox = dinoBoxToNormalized(box, imgDims.width, imgDims.height);
     let croppedBase64: string;
     try {
-      croppedBase64 = await cropImage(originalObjectUrl, normalizedBox, 0);
+      croppedBase64 = await cropImage(cleanImageUrl, normalizedBox, 0);
     } catch {
-      croppedBase64 = `data:image/jpeg;base64,${base64Image}`;
+      try {
+        croppedBase64 = await cropImage(originalObjectUrl, normalizedBox, 0);
+      } catch {
+        continue;
+      }
     }
     croppedItems.push({ croppedBase64, boundingBox: normalizedBox, dinoLabel: box.label });
   }
   const cropMs = performance.now() - cropStart;
 
+  // Step 4: Classify each item (no per-item rembg needed — already clean)
   const classStart = performance.now();
-  const processingPromises = croppedItems.map(async (item) => {
-    const [noBgImage, classification] = await Promise.all([
-      removeBackground(item.croppedBase64).catch(() => item.croppedBase64),
-      classifyClothingItem(item.croppedBase64, item.dinoLabel).catch(err => {
-        console.error(`[Pipeline] Classification failed for "${item.dinoLabel}":`, err);
-        return null;
-      }),
-    ]);
-    return { noBgImage, classification };
+  const classPromises = croppedItems.map(async (item) => {
+    try {
+      return await classifyClothingItem(item.croppedBase64, item.dinoLabel);
+    } catch (err) {
+      console.error(`[Pipeline] Classification failed for "${item.dinoLabel}":`, err);
+      return null;
+    }
   });
-  const results = await Promise.all(processingPromises);
+  const classifications = await Promise.all(classPromises);
   const classMs = performance.now() - classStart;
 
   const items: DetectedItem[] = [];
   for (let i = 0; i < croppedItems.length; i++) {
-    const { noBgImage, classification } = results[i];
-    if (!classification) continue;
+    const cls = classifications[i];
+    if (!cls) continue;
 
     items.push({
       tempId: genId(),
-      croppedImageUrl: noBgImage,
+      croppedImageUrl: croppedItems[i].croppedBase64,
       originalImageUrl: originalObjectUrl,
-      category: classification.category,
-      categoryConfidence: classification.categoryConfidence,
-      subcategory: classification.subcategory,
-      subcategoryConfidence: classification.subcategoryConfidence,
-      color: classification.color,
-      colorConfidence: classification.colorConfidence,
-      brand: classification.brand,
-      brandConfidence: classification.brandConfidence,
-      pattern: classification.pattern,
-      fit: classification.fit,
-      tags: classification.tags,
+      category: cls.category,
+      categoryConfidence: cls.categoryConfidence,
+      subcategory: cls.subcategory,
+      subcategoryConfidence: cls.subcategoryConfidence,
+      color: cls.color,
+      colorConfidence: cls.colorConfidence,
+      brand: cls.brand,
+      brandConfidence: cls.brandConfidence,
+      pattern: cls.pattern,
+      fit: cls.fit,
+      tags: cls.tags,
       boundingBox: croppedItems[i].boundingBox,
     });
   }
 
   const totalMs = performance.now() - totalStart;
   console.log(
-    `[Pipeline] DINO+rembg complete: ${items.length} items | ` +
+    `[Pipeline] DINO complete: ${items.length} items | ` +
     `detection=${Math.round(detectionMs)}ms, crop=${Math.round(cropMs)}ms, ` +
     `classification=${Math.round(classMs)}ms, total=${Math.round(totalMs)}ms`,
   );
@@ -456,30 +479,44 @@ async function fallbackClaudeOnly(
   originalObjectUrl: string,
   totalStart: number,
 ): Promise<PipelineResult> {
+  // Step 1: Remove background from FULL image FIRST (one API call instead of N)
+  // This removes the model, background, etc. before detection
+  let cleanImageUrl = originalObjectUrl;
+  let cleanBase64 = base64Image;
+  try {
+    console.log('[Pipeline] Claude-only: removing background from full image first...');
+    const noBg = await removeBackground(base64Image);
+    if (noBg && noBg.length > 100) {
+      cleanBase64 = noBg;
+      // Create an object URL for cropping
+      cleanImageUrl = noBg; // data URI works with cropImage
+      console.log(`[Pipeline] Claude-only: background removed (${Math.round(noBg.length / 1024)}KB)`);
+    }
+  } catch (err) {
+    console.warn('[Pipeline] Claude-only: background removal failed, using original:', err);
+  }
+
+  // Step 2: Detect items using Claude Vision (on original image for best detection)
   const detectionStart = performance.now();
   const rawItems: RawDetection[] = await detectClothingItems(base64Image, mimeType);
   const detectionMs = performance.now() - detectionStart;
 
+  // Step 3: Crop each item from the CLEAN (background-removed) image
   const cropStart = performance.now();
   const detectedItems: DetectedItem[] = [];
 
   for (const raw of rawItems) {
-    let croppedImageUrl = originalObjectUrl;
+    let croppedImageUrl = cleanImageUrl;
     try {
-      croppedImageUrl = await cropImage(originalObjectUrl, raw.boundingBox);
+      // Crop from the background-removed image — items already have clean backgrounds
+      croppedImageUrl = await cropImage(cleanImageUrl, raw.boundingBox);
     } catch {
-      // fallback: use full photo
-    }
-
-    // Try to remove background
-    const croppedFallback = croppedImageUrl;
-    try {
-      const noBg = await removeBackground(croppedImageUrl);
-      if (noBg && noBg.length > 100 && noBg !== croppedImageUrl) {
-        croppedImageUrl = noBg;
+      // Fallback: try cropping from original
+      try {
+        croppedImageUrl = await cropImage(originalObjectUrl, raw.boundingBox);
+      } catch {
+        croppedImageUrl = originalObjectUrl;
       }
-    } catch {
-      croppedImageUrl = croppedFallback;
     }
 
     detectedItems.push({
