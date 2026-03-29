@@ -70,53 +70,55 @@ interface ReplicateCreateParams {
  * Create a Replicate prediction. Tries /api/replicate first, falls back to direct API.
  */
 export async function replicateCreate(params: ReplicateCreateParams): Promise<Record<string, unknown>> {
-  // Try server-side proxy
-  try {
-    const res = await fetch('/api/replicate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...params }),
-    });
-    if (res.ok) return await res.json();
-    if (res.status !== 404) {
-      const err = await res.json().catch(() => ({})) as Record<string, unknown>;
-      // Surface Replicate-specific errors clearly
-      const detail = (err.detail as string) || (err.error as string) || `Server API error ${res.status}`;
-      if (res.status === 402 || String(detail).toLowerCase().includes('credit')) {
-        throw new Error('Replicate credits exhausted — add credits at replicate.com/account/billing');
-      }
-      throw new Error(detail);
-    }
-  } catch (e) {
-    // All Replicate calls go through the server proxy — no client-side fallback
-    // (API key is server-only for security)
-    throw e;
-  }
-
-  throw new Error('Replicate server proxy unavailable');
+  return replicateRequest({ action: 'create', ...params });
 }
 
 /**
- * Poll a Replicate prediction. Tries /api/replicate first, falls back to direct API.
+ * Poll a Replicate prediction via server proxy.
  */
 export async function replicatePoll(url: string): Promise<Record<string, unknown>> {
-  // Try server-side proxy
-  try {
+  return replicateRequest({ action: 'poll', url });
+}
+
+/**
+ * Send a request to the Replicate server proxy with automatic retry on 429 (rate limit).
+ */
+async function replicateRequest(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [2000, 5000, 10000]; // exponential backoff
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const res = await fetch('/api/replicate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'poll', url }),
+      body: JSON.stringify(body),
     });
+
     if (res.ok) return await res.json();
-    if (res.status !== 404) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error((err as Record<string, string>).error || `Server API error ${res.status}`);
+
+    // Rate limited — wait and retry
+    if (res.status === 429) {
+      if (attempt < MAX_RETRIES) {
+        const delay = RETRY_DELAYS[attempt] || 10000;
+        console.warn(`[Replicate] Rate limited (429), retrying in ${delay / 1000}s... (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw new Error('Replicate rate limited (429) — too many requests, try again in a minute');
     }
-  } catch (e) {
-    throw e;
+
+    // Parse error details
+    const err = await res.json().catch(() => ({})) as Record<string, unknown>;
+    const detail = (err.detail as string) || (err.error as string) || `Replicate API error ${res.status}`;
+
+    if (res.status === 402) {
+      throw new Error('Replicate credits exhausted — add credits at replicate.com/account/billing');
+    }
+
+    throw new Error(detail);
   }
 
-  throw new Error('Replicate server proxy unavailable');
+  throw new Error('Replicate request failed after retries');
 }
 
 /**
