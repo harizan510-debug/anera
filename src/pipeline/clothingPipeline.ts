@@ -236,6 +236,7 @@ interface ClassifyInput {
 async function classifyItems(
   inputs: ClassifyInput[],
   originalObjectUrl: string,
+  bgRemovedImageUrl?: string,
 ): Promise<DetectedItem[]> {
   const results = await Promise.all(
     inputs.map(async (input) => {
@@ -245,6 +246,7 @@ async function classifyItems(
           tempId: genId(),
           croppedImageUrl: input.segmentedBase64,
           originalImageUrl: originalObjectUrl,
+          bgRemovedImageUrl: bgRemovedImageUrl || undefined,
           category: cls.category,
           categoryConfidence: cls.categoryConfidence,
           subcategory: cls.subcategory,
@@ -342,6 +344,7 @@ async function dinoPipelineItems(
       tempId: genId(),
       croppedImageUrl: croppedBase64,
       originalImageUrl: originalObjectUrl,
+      bgRemovedImageUrl: cleanImageUrl !== originalObjectUrl ? cleanImageUrl : undefined,
       category: classification.category,
       categoryConfidence: classification.categoryConfidence,
       subcategory: classification.subcategory,
@@ -437,6 +440,7 @@ async function dinoPipeline(
       tempId: genId(),
       croppedImageUrl: croppedItems[i].croppedBase64,
       originalImageUrl: originalObjectUrl,
+      bgRemovedImageUrl: cleanImageUrl !== originalObjectUrl ? cleanImageUrl : undefined,
       category: cls.category,
       categoryConfidence: cls.categoryConfidence,
       subcategory: cls.subcategory,
@@ -520,6 +524,7 @@ async function fallbackClaudeOnly(
       tempId: genId(),
       croppedImageUrl,
       originalImageUrl: originalObjectUrl,
+      bgRemovedImageUrl: cleanImageUrl !== originalObjectUrl ? cleanImageUrl : undefined,
       category: raw.category,
       categoryConfidence: raw.categoryConfidence,
       subcategory: raw.subcategory,

@@ -176,7 +176,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
     const wardrobeItems: WardrobeItem[] = editItems.map(d => ({
       id: genId(),
       imageUrl: useOriginal[d.tempId]
-        ? (d.originalImageUrl || d.croppedImageUrl)
+        ? (d.bgRemovedImageUrl || d.originalImageUrl || d.croppedImageUrl)
         : (d.croppedImageUrl || d.originalImageUrl),
       category: d.category,
       subcategory: d.subcategory || 'item',
@@ -248,7 +248,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                   style={{ width: 64, height: 64, background: '#F2F2F4' }}>
                   {(item.croppedImageUrl || item.originalImageUrl) ? (
                     <img
-                      src={useOriginal[item.tempId] ? (item.originalImageUrl || item.croppedImageUrl) : (item.croppedImageUrl || item.originalImageUrl)}
+                      src={useOriginal[item.tempId] ? (item.bgRemovedImageUrl || item.originalImageUrl || item.croppedImageUrl) : (item.croppedImageUrl || item.originalImageUrl)}
                       alt={item.subcategory}
                       className="w-full h-full object-contain p-1"
                     />
@@ -313,8 +313,8 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
               {expanded && (
                 <div className="px-3 pb-3 pt-1 space-y-3" style={{ borderTop: '1px solid var(--border)' }}>
 
-                  {/* Use original / Use cropped toggle — only show when both images exist and differ */}
-                  {item.croppedImageUrl && item.originalImageUrl && item.croppedImageUrl !== item.originalImageUrl && (
+                  {/* Cropped vs No-crop toggle — only show when bg-removed full image is available */}
+                  {item.croppedImageUrl && (item.bgRemovedImageUrl || item.originalImageUrl) && (
                     <div>
                       <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
                         Photo
@@ -340,7 +340,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                             border: `1px solid ${useOriginal[item.tempId] ? 'var(--accent)' : 'var(--border)'}`,
                           }}
                         >
-                          <Maximize size={13} /> Original photo
+                          <Maximize size={13} /> No crop
                         </button>
                       </div>
                     </div>

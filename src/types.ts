@@ -22,8 +22,9 @@ export interface BoundingBox {
 
 export interface DetectedItem {
   tempId: string;
-  croppedImageUrl: string;   // base64 data URL from canvas crop
-  originalImageUrl: string;  // blob URL of the source photo
+  croppedImageUrl: string;      // base64 data URL from canvas crop (bg-removed + cropped to bounding box)
+  originalImageUrl: string;     // blob URL of the source photo
+  bgRemovedImageUrl?: string;   // full image with background removed but NOT cropped
   category: WardrobeItem['category'];
   categoryConfidence: number;
   subcategory: string;
