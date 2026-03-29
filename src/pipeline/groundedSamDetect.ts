@@ -2,10 +2,9 @@
  * Grounded SAM: detection + pixel-level segmentation in one Replicate call.
  * Combines Grounding DINO (text-based detection) with Meta SAM (mask generation).
  *
- * Returns per-item transparent-background images and bounding boxes.
- *
- * IMPORTANT: All canvas work uses GPU-accelerated compositing (globalCompositeOperation)
- * instead of pixel-by-pixel getImageData to avoid OOM crashes on mobile.
+ * Returns per-item transparent-background images, bounding boxes, and a
+ * segmentation_confidence score (0-1) used by the pipeline to decide whether
+ * to trust SAM output or fall back to bounding-box detection.
  */
 
 import { replicateCreate, replicatePoll } from '../apiHelper';
@@ -31,12 +30,34 @@ export interface GroundedSAMItem {
   label: string;
 }
 
+/** Confidence metrics computed from the mask analysis */
+export interface SegmentationQuality {
+  /** Overall confidence 0-1: ≥0.7 = use SAM, 0.4-0.7 = partial, <0.4 = fallback */
+  segmentation_confidence: number;
+  /** Fraction of image pixels that are "clothing" in the mask (0-1) */
+  maskCoverage: number;
+  /** Number of distinct items produced */
+  itemCount: number;
+  /** Average mask edge sharpness (0-1): higher = cleaner edges */
+  edgeSharpness: number;
+  /** Whether the mask appears to cover the whole image (likely a bad mask) */
+  maskCoversAll: boolean;
+  /** Human-readable reason for the confidence level */
+  reason: string;
+}
+
+export interface GroundedSAMResult {
+  items: GroundedSAMItem[];
+  quality: SegmentationQuality;
+}
+
 /**
  * Detect and segment clothing items using Grounded SAM.
+ * Returns items + quality metrics for the confidence-based pipeline.
  */
 export async function detectAndSegment(
   base64Image: string,
-): Promise<GroundedSAMItem[]> {
+): Promise<GroundedSAMResult> {
   const dataUri = await compressForUpload(base64Image);
   console.log(`[GroundedSAM] Sending image (${Math.round(dataUri.length / 1024)}KB)`);
 
@@ -74,19 +95,28 @@ export async function detectAndSegment(
   throw new Error('Grounded SAM: prediction timed out after 3 minutes');
 }
 
+// ── Output processing ──────────────────────────────────────────────────────────
+
 /**
- * Process Grounded SAM output using ONLY GPU-accelerated canvas compositing.
- * No getImageData, no typed arrays, no pixel loops — pure drawImage + compositing.
- *
+ * Process Grounded SAM output.
  * Output indices: [0] annotated, [1] neg annotated, [2] mask.jpg, [3] inverted mask
  */
 async function processOutput(
   output: unknown,
   originalDataUri: string,
-): Promise<GroundedSAMItem[]> {
+): Promise<GroundedSAMResult> {
+  const emptyQuality: SegmentationQuality = {
+    segmentation_confidence: 0,
+    maskCoverage: 0,
+    itemCount: 0,
+    edgeSharpness: 0,
+    maskCoversAll: false,
+    reason: 'No output from model',
+  };
+
   if (!output || !Array.isArray(output) || output.length === 0) {
     console.warn('[GroundedSAM] Empty output');
-    return [];
+    return { items: [], quality: emptyQuality };
   }
 
   const outputUrls = output as string[];
@@ -95,7 +125,6 @@ async function processOutput(
   const maskUrl = outputUrls.length >= 3 ? outputUrls[2] : outputUrls[outputUrls.length - 1];
 
   try {
-    // Load original + mask as Image elements (browser manages memory)
     const [originalImg, maskImg] = await Promise.all([
       loadImage(originalDataUri),
       fetchAndLoadImage(maskUrl),
@@ -105,28 +134,213 @@ async function processOutput(
     const height = originalImg.naturalHeight;
     console.log(`[GroundedSAM] Processing ${width}×${height} image, mask ${maskImg.naturalWidth}×${maskImg.naturalHeight}`);
 
-    // Use GPU-accelerated compositing to apply mask — NO getImageData needed
+    // Analyse mask quality FIRST (on tiny thumbnail — ~40KB)
+    const maskAnalysis = analyseMask(maskImg, width, height);
+
+    // Apply mask compositing
     const segmentedBase64 = applyMaskCompositing(originalImg, maskImg, width, height);
 
     if (!segmentedBase64) {
-      console.warn('[GroundedSAM] Compositing produced empty result');
-      return [];
+      return {
+        items: [],
+        quality: { ...emptyQuality, reason: 'Canvas compositing failed' },
+      };
     }
 
-    // Find bounding box from the mask using a tiny thumbnail (avoids OOM)
-    const boundingBox = estimateBoundingBoxFromMask(maskImg, width, height);
-
-    // Split into top/bottom halves if mask covers >60% of image height
-    // (likely shirt + pants in a full-body photo)
+    // Find bounding box & split into items
+    const boundingBox = maskAnalysis.boundingBox;
     const items = splitIntoItems(segmentedBase64, boundingBox, originalImg, maskImg, width, height);
 
-    console.log(`[GroundedSAM] Produced ${items.length} segmented items`);
-    return items;
+    // Compute final confidence
+    const quality = computeConfidence(maskAnalysis, items.length);
+
+    console.log(
+      `[GroundedSAM] Produced ${items.length} items | ` +
+      `confidence=${quality.segmentation_confidence.toFixed(2)}, ` +
+      `coverage=${(quality.maskCoverage * 100).toFixed(1)}%, ` +
+      `sharpness=${quality.edgeSharpness.toFixed(2)} | ${quality.reason}`,
+    );
+
+    return { items, quality };
   } catch (err) {
     console.error('[GroundedSAM] Failed to process mask:', err);
-    return [];
+    return { items: [], quality: { ...emptyQuality, reason: `Processing error: ${err}` } };
   }
 }
+
+// ── Mask analysis (confidence scoring) ──────────────────────────────────────────
+
+interface MaskAnalysis {
+  /** Fraction of pixels that are "clothing" (0-1) */
+  coverage: number;
+  /** Edge sharpness: ratio of pixels that are clearly white or black vs gray (0-1) */
+  sharpness: number;
+  /** Whether the mask appears inverted */
+  inverted: boolean;
+  /** Avg brightness of mask */
+  avgBrightness: number;
+  /** Bounding box of the clothing region */
+  boundingBox: BoundingBox;
+  /** Whether mask covers >90% of the image */
+  coversAll: boolean;
+}
+
+/**
+ * Analyse the binary mask on a 100×100 thumbnail to assess quality.
+ * Only ~40KB of memory used.
+ */
+function analyseMask(maskImg: HTMLImageElement, _imgW: number, _imgH: number): MaskAnalysis {
+  const S = 100;
+  const canvas = document.createElement('canvas');
+  canvas.width = S;
+  canvas.height = S;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(maskImg, 0, 0, S, S);
+  const data = ctx.getImageData(0, 0, S, S);
+  canvas.width = 0; canvas.height = 0;
+
+  const totalPix = S * S;
+  let brightSum = 0;
+  let clothingPixels = 0;
+  let sharpPixels = 0; // pixels that are clearly black (<30) or white (>225)
+  let minX = S, minY = S, maxX = 0, maxY = 0;
+
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const val = data.data[(y * S + x) * 4];
+      brightSum += val;
+      // Count sharp (non-gray) pixels
+      if (val < 30 || val > 225) sharpPixels++;
+    }
+  }
+
+  const avgBrightness = brightSum / totalPix;
+  const inverted = avgBrightness > 180;
+
+  // Second pass: count clothing pixels and find bounding box
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const val = data.data[(y * S + x) * 4];
+      const isClothing = inverted ? val < 128 : val > 128;
+      if (isClothing) {
+        clothingPixels++;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  const coverage = clothingPixels / totalPix;
+  const sharpness = sharpPixels / totalPix;
+  const coversAll = coverage > 0.90;
+
+  const boundingBox: BoundingBox = (maxX > minX && maxY > minY)
+    ? { x: minX / S, y: minY / S, width: (maxX - minX) / S, height: (maxY - minY) / S }
+    : { x: 0, y: 0, width: 1, height: 1 };
+
+  return { coverage, sharpness, inverted, avgBrightness, boundingBox, coversAll };
+}
+
+/**
+ * Compute overall segmentation confidence from mask analysis + item count.
+ *
+ * Scoring rubric:
+ * - Good mask coverage (5-80%):         +0.25
+ * - Sharp edges (>70% of pixels):       +0.25
+ * - Reasonable item count (1-6):         +0.25
+ * - Mask doesn't cover everything:       +0.15
+ * - Mask has some clothing (>2%):        +0.10
+ *
+ * Penalties:
+ * - Mask covers >90% of image:           -0.30 (likely failed to segment)
+ * - Coverage <2% (nothing detected):     -0.40
+ * - Coverage >80% (too much):            -0.20
+ * - Fuzzy edges (<50% sharp):            -0.15
+ * - 0 items produced:                    → confidence = 0
+ */
+function computeConfidence(analysis: MaskAnalysis, itemCount: number): SegmentationQuality {
+  if (itemCount === 0) {
+    return {
+      segmentation_confidence: 0,
+      maskCoverage: analysis.coverage,
+      itemCount: 0,
+      edgeSharpness: analysis.sharpness,
+      maskCoversAll: analysis.coversAll,
+      reason: 'No items extracted from mask',
+    };
+  }
+
+  let score = 0;
+  const reasons: string[] = [];
+
+  // Coverage scoring
+  if (analysis.coverage >= 0.05 && analysis.coverage <= 0.80) {
+    score += 0.25;
+    reasons.push(`good coverage ${(analysis.coverage * 100).toFixed(0)}%`);
+  } else if (analysis.coverage < 0.02) {
+    score -= 0.40;
+    reasons.push(`very low coverage ${(analysis.coverage * 100).toFixed(1)}%`);
+  } else if (analysis.coverage > 0.80) {
+    score += 0.05;
+    reasons.push(`high coverage ${(analysis.coverage * 100).toFixed(0)}%`);
+  } else {
+    // 2-5% — borderline
+    score += 0.10;
+    reasons.push(`low coverage ${(analysis.coverage * 100).toFixed(1)}%`);
+  }
+
+  // Edge sharpness
+  if (analysis.sharpness > 0.70) {
+    score += 0.25;
+    reasons.push('sharp edges');
+  } else if (analysis.sharpness > 0.50) {
+    score += 0.15;
+    reasons.push('moderate edges');
+  } else {
+    score += 0.05;
+    reasons.push('fuzzy edges');
+  }
+
+  // Item count
+  if (itemCount >= 1 && itemCount <= 6) {
+    score += 0.25;
+    reasons.push(`${itemCount} items`);
+  } else if (itemCount > 6) {
+    score += 0.10;
+    reasons.push(`many items (${itemCount})`);
+  }
+
+  // Full-image coverage penalty
+  if (analysis.coversAll) {
+    score -= 0.30;
+    reasons.push('PENALTY: mask covers entire image');
+  } else {
+    score += 0.15;
+    reasons.push('mask has clear boundaries');
+  }
+
+  // Minimum clothing presence
+  if (analysis.coverage > 0.02) {
+    score += 0.10;
+    reasons.push('clothing detected');
+  }
+
+  // Clamp to 0-1
+  const segmentation_confidence = Math.max(0, Math.min(1, score));
+
+  return {
+    segmentation_confidence,
+    maskCoverage: analysis.coverage,
+    itemCount,
+    edgeSharpness: analysis.sharpness,
+    maskCoversAll: analysis.coversAll,
+    reason: reasons.join(', '),
+  };
+}
+
+// ── Mask compositing ────────────────────────────────────────────────────────────
 
 /**
  * Apply mask to original image using a single getImageData on the mask canvas.
@@ -134,7 +348,6 @@ async function processOutput(
  * brightness → alpha, then use 'destination-in' compositing.
  *
  * Memory: one getImageData on 800×800 = ~2.5MB — safe on all devices.
- * The OOM was from multiple simultaneous getImageData + typed arrays.
  */
 function applyMaskCompositing(
   originalImg: HTMLImageElement,
@@ -193,59 +406,11 @@ function applyMaskCompositing(
   return result;
 }
 
-/**
- * Estimate bounding box from mask using a tiny thumbnail.
- * Scans a 100×100 version to find white region bounds — uses ~40KB RAM.
- */
-function estimateBoundingBoxFromMask(
-  maskImg: HTMLImageElement,
-  _imgWidth: number,
-  _imgHeight: number,
-): BoundingBox {
-  const S = 100; // thumbnail size
-  const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return { x: 0, y: 0, width: 1, height: 1 };
-
-  ctx.drawImage(maskImg, 0, 0, S, S);
-  const data = ctx.getImageData(0, 0, S, S); // ~40KB
-  canvas.width = 0; canvas.height = 0;
-
-  // Check if inverted
-  let brightSum = 0;
-  for (let i = 0; i < data.data.length; i += 4) brightSum += data.data[i];
-  const inverted = (brightSum / (S * S)) > 180;
-
-  let minX = S, minY = S, maxX = 0, maxY = 0;
-  for (let y = 0; y < S; y++) {
-    for (let x = 0; x < S; x++) {
-      const val = data.data[(y * S + x) * 4];
-      const isClothing = inverted ? val < 128 : val > 128;
-      if (isClothing) {
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-
-  if (maxX <= minX || maxY <= minY) return { x: 0, y: 0, width: 1, height: 1 };
-
-  return {
-    x: minX / S,
-    y: minY / S,
-    width: (maxX - minX) / S,
-    height: (maxY - minY) / S,
-  };
-}
+// ── Item splitting ──────────────────────────────────────────────────────────────
 
 /**
  * If the masked region is tall (>60% of image), split into top and bottom halves.
  * This handles full-body photos where shirt + pants are one continuous mask.
- * Uses ONLY drawImage (no getImageData on full-size canvases).
  */
 function splitIntoItems(
   fullSegmentedBase64: string,
@@ -268,7 +433,6 @@ function splitIntoItems(
   const midY = bbox.y + bbox.height / 2;
   const items: GroundedSAMItem[] = [];
 
-  // Create top half
   const topBase64 = cropSegmented(originalImg, maskImg, width, height, {
     x: bbox.x, y: bbox.y,
     width: bbox.width, height: midY - bbox.y,
@@ -281,7 +445,6 @@ function splitIntoItems(
     });
   }
 
-  // Create bottom half
   const bottomBase64 = cropSegmented(originalImg, maskImg, width, height, {
     x: bbox.x, y: midY,
     width: bbox.width, height: bbox.y + bbox.height - midY,
@@ -294,7 +457,6 @@ function splitIntoItems(
     });
   }
 
-  // Fallback: if splitting failed, return the full segmented image
   if (items.length === 0) {
     items.push({
       segmentedBase64: fullSegmentedBase64,
@@ -324,7 +486,6 @@ function cropSegmented(
 
   if (pw < 10 || ph < 10) return null;
 
-  // Draw mask for this crop region and convert brightness → alpha
   const maskCanvas = document.createElement('canvas');
   maskCanvas.width = pw;
   maskCanvas.height = ph;
@@ -334,13 +495,11 @@ function cropSegmented(
   maskCtx.drawImage(maskImg, px, py, pw, ph, 0, 0, pw, ph);
   const maskData = maskCtx.getImageData(0, 0, pw, ph);
 
-  // Check brightness to detect inversion
   let brightSum = 0;
   const pixCount = pw * ph;
   for (let i = 0; i < maskData.data.length; i += 4) brightSum += maskData.data[i];
   const inverted = (brightSum / pixCount) > 180;
 
-  // Convert brightness → alpha
   for (let i = 0; i < maskData.data.length; i += 4) {
     const brightness = maskData.data[i];
     maskData.data[i] = 255;
@@ -350,7 +509,6 @@ function cropSegmented(
   }
   maskCtx.putImageData(maskData, 0, 0);
 
-  // Composite: original crop + alpha mask
   const outCanvas = document.createElement('canvas');
   outCanvas.width = pw;
   outCanvas.height = ph;
@@ -394,24 +552,18 @@ async function fetchAndLoadImage(url: string): Promise<HTMLImageElement> {
     const img = await loadImage(objectUrl);
     return img;
   } finally {
-    // Don't revoke immediately — the img element still references it.
-    // It will be GC'd when the img element is no longer referenced.
-    // Schedule cleanup for later:
     setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
   }
 }
 
 /**
  * Ensure image is a proper data URI and compress if still too large.
- * Usually the caller (Wardrobe.tsx) already compressed to 800px,
- * so this is mostly a pass-through.
  */
 async function compressForUpload(base64Image: string): Promise<string> {
   const dataUri = base64Image.startsWith('data:')
     ? base64Image
     : `data:image/jpeg;base64,${base64Image}`;
 
-  // Already small enough — skip compression
   if (dataUri.length < 600_000) return dataUri;
 
   console.log(`[GroundedSAM] Image still large (${Math.round(dataUri.length / 1024)}KB), compressing...`);

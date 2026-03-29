@@ -464,7 +464,7 @@ export default function Wardrobe() {
           const result = await processClothingImage(base64, file.type || 'image/jpeg', originalImageUrl);
           clearInterval(progressTimer);
           allDetected.push(...result.items);
-          console.log(`[Wardrobe] Photo ${i + 1} pipeline timing:`, result.timing);
+          console.log(`[Wardrobe] Photo ${i + 1}: path=${result.pipelinePath}, items=${result.items.length}, confidence=${result.segmentationQuality?.segmentation_confidence?.toFixed(2) ?? 'n/a'}`, result.timing);
         } else {
           // Demo fallback when no API keys are set
           await new Promise(r => setTimeout(r, 600));
