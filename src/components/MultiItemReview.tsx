@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Check, X, Pencil, ChevronUp, ImagePlus } from 'lucide-react';
+import { Check, X, Pencil, ChevronUp, ImagePlus, Crop, Maximize } from 'lucide-react';
 import type { DetectedItem, WardrobeItem } from '../types';
 import { genId, fileToBase64 } from '../store';
 
@@ -123,6 +123,8 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({});
   const [imageUrlInputs, setImageUrlInputs] = useState<Record<string, string>>({});
   const [showImageInput, setShowImageInput] = useState<Record<string, boolean>>({});
+  // Track which items the user toggled to use the original (uncropped) image
+  const [useOriginal, setUseOriginal] = useState<Record<string, boolean>>({});
   const imgFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Auto-expand cards that have any field with low confidence
@@ -173,7 +175,9 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
     if (editItems.length === 0) { onCancel(); return; }
     const wardrobeItems: WardrobeItem[] = editItems.map(d => ({
       id: genId(),
-      imageUrl: d.croppedImageUrl || d.originalImageUrl,
+      imageUrl: useOriginal[d.tempId]
+        ? (d.originalImageUrl || d.croppedImageUrl)
+        : (d.croppedImageUrl || d.originalImageUrl),
       category: d.category,
       subcategory: d.subcategory || 'item',
       color: d.color || 'unknown',
@@ -244,7 +248,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                   style={{ width: 64, height: 64, background: '#F2F2F4' }}>
                   {(item.croppedImageUrl || item.originalImageUrl) ? (
                     <img
-                      src={item.croppedImageUrl || item.originalImageUrl}
+                      src={useOriginal[item.tempId] ? (item.originalImageUrl || item.croppedImageUrl) : (item.croppedImageUrl || item.originalImageUrl)}
                       alt={item.subcategory}
                       className="w-full h-full object-contain p-1"
                     />
@@ -308,6 +312,39 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
               {/* ── Expanded edit form ── */}
               {expanded && (
                 <div className="px-3 pb-3 pt-1 space-y-3" style={{ borderTop: '1px solid var(--border)' }}>
+
+                  {/* Use original / Use cropped toggle — only show when both images exist and differ */}
+                  {item.croppedImageUrl && item.originalImageUrl && item.croppedImageUrl !== item.originalImageUrl && (
+                    <div>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                        Photo
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setUseOriginal(p => ({ ...p, [item.tempId]: false }))}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
+                          style={{
+                            background: !useOriginal[item.tempId] ? 'var(--accent)' : 'var(--bg)',
+                            color: !useOriginal[item.tempId] ? 'white' : 'var(--text-secondary)',
+                            border: `1px solid ${!useOriginal[item.tempId] ? 'var(--accent)' : 'var(--border)'}`,
+                          }}
+                        >
+                          <Crop size={13} /> Cropped
+                        </button>
+                        <button
+                          onClick={() => setUseOriginal(p => ({ ...p, [item.tempId]: true }))}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
+                          style={{
+                            background: useOriginal[item.tempId] ? 'var(--accent)' : 'var(--bg)',
+                            color: useOriginal[item.tempId] ? 'white' : 'var(--text-secondary)',
+                            border: `1px solid ${useOriginal[item.tempId] ? 'var(--accent)' : 'var(--border)'}`,
+                          }}
+                        >
+                          <Maximize size={13} /> Original photo
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Image upload (shown when no image or user clicks Add) */}
                   {(!item.croppedImageUrl && !item.originalImageUrl) || showImageInput[item.tempId] ? (
