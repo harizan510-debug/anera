@@ -28,7 +28,9 @@ export interface RawDetection {
   boundingBox: BoundingBox;
 }
 
-export async function analyzeClothingImage(base64Image: string, mimeType: string = 'image/jpeg'): Promise<Partial<WardrobeItem>> {
+export async function analyzeClothingImage(base64Image: string, _mimeType: string = 'image/jpeg'): Promise<Partial<WardrobeItem>> {
+  const mediaType = detectMediaType(base64Image);
+
   const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 500,
@@ -39,7 +41,7 @@ export async function analyzeClothingImage(base64Image: string, mimeType: string
           type: 'image',
           source: {
             type: 'base64',
-            media_type: mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+            media_type: mediaType,
             data: base64Image.split(',')[1] || base64Image,
           },
         },
@@ -85,8 +87,12 @@ function safeBB(bb: unknown): BoundingBox {
 
 export async function detectClothingItems(
   base64Image: string,
-  mimeType: string = 'image/jpeg',
+  _mimeType: string = 'image/jpeg',
 ): Promise<RawDetection[]> {
+  // Detect actual media type from data URI (the mimeType param may be stale
+  // after compression, e.g. image/heic → image/jpeg)
+  const mediaType = detectMediaType(base64Image);
+
   const response = await claudeMessage({
     model: 'claude-sonnet-4-6',
     max_tokens: 1800,
@@ -97,7 +103,7 @@ export async function detectClothingItems(
           type: 'image',
           source: {
             type: 'base64',
-            media_type: mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+            media_type: mediaType,
             data: base64Image.split(',')[1] || base64Image,
           },
         },
