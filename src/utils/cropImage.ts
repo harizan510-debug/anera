@@ -37,7 +37,9 @@ export function cropImage(
         return;
       }
       ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
-      resolve(canvas.toDataURL('image/jpeg', 0.85));
+      // Preserve transparency: use PNG if source is PNG (e.g. after background removal)
+      const isPng = sourceUrl.startsWith('data:image/png');
+      resolve(isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.85));
     };
     img.onerror = () => reject(new Error('cropImage: failed to load source image'));
     img.src = sourceUrl;

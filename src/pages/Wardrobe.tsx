@@ -75,6 +75,7 @@ interface BasicItem {
   tags: string[];
   swatchColor: string; // CSS colour for the fill
   svgShape: ClothingShape;
+  imageUrl?: string; // Optional real product image URL (takes priority over SVG)
 }
 
 /**
@@ -345,43 +346,43 @@ function makeClothingSVG(shape: ClothingShape, fill: string): string {
 
 const BASICS: BasicItem[] = [
   // Tops
-  { category: 'top', subcategory: 'classic tee',        color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'minimal'],       swatchColor: '#F0F0F0', svgShape: 'tee' },
-  { category: 'top', subcategory: 'sweater',             color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'cosy'],           swatchColor: '#F5F5F0', svgShape: 'tee' },
-  { category: 'top', subcategory: 'turtleneck sweater',  color: 'black',      pattern: 'plain',   fit: 'fitted',    tags: ['minimal', 'classic'],       swatchColor: '#2D2D2D', svgShape: 'turtleneck' },
-  { category: 'top', subcategory: 'crewneck sweater',    color: 'grey',       pattern: 'plain',   fit: 'regular',   tags: ['casual', 'minimal'],        swatchColor: '#ADADAD', svgShape: 'tee' },
-  { category: 'top', subcategory: 'striped tee',         color: 'navy',       pattern: 'striped', fit: 'regular',   tags: ['casual', 'classic'],        swatchColor: '#1B3060', svgShape: 'striped-tee' },
-  { category: 'top', subcategory: 'button-down shirt',   color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['smart', 'versatile'],       swatchColor: '#FAFAFA', svgShape: 'shirt' },
-  { category: 'top', subcategory: 'linen shirt',         color: 'beige',      pattern: 'plain',   fit: 'relaxed',   tags: ['casual', 'summer'],         swatchColor: '#D4C5A9', svgShape: 'shirt' },
+  { category: 'top', subcategory: 'classic tee',        color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'minimal'],       swatchColor: '#F0F0F0', svgShape: 'tee',         imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=260&fit=crop&crop=center' },
+  { category: 'top', subcategory: 'sweater',             color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'cosy'],           swatchColor: '#F5F5F0', svgShape: 'tee',         imageUrl: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=200&h=260&fit=crop&crop=center' },
+  { category: 'top', subcategory: 'turtleneck sweater',  color: 'black',      pattern: 'plain',   fit: 'fitted',    tags: ['minimal', 'classic'],       swatchColor: '#2D2D2D', svgShape: 'turtleneck',  imageUrl: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=200&h=260&fit=crop&crop=center' },
+  { category: 'top', subcategory: 'crewneck sweater',    color: 'grey',       pattern: 'plain',   fit: 'regular',   tags: ['casual', 'minimal'],        swatchColor: '#ADADAD', svgShape: 'tee',         imageUrl: 'https://images.unsplash.com/photo-1614975059251-992f11792571?w=200&h=260&fit=crop&crop=center' },
+  { category: 'top', subcategory: 'striped tee',         color: 'navy',       pattern: 'striped', fit: 'regular',   tags: ['casual', 'classic'],        swatchColor: '#1B3060', svgShape: 'striped-tee', imageUrl: 'https://images.unsplash.com/photo-1503341504253-dff4f37c0e48?w=200&h=260&fit=crop&crop=center' },
+  { category: 'top', subcategory: 'button-down shirt',   color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['smart', 'versatile'],       swatchColor: '#FAFAFA', svgShape: 'shirt',       imageUrl: 'https://images.unsplash.com/photo-1598032895397-b9472444bf93?w=200&h=260&fit=crop&crop=center' },
+  { category: 'top', subcategory: 'linen shirt',         color: 'beige',      pattern: 'plain',   fit: 'relaxed',   tags: ['casual', 'summer'],         swatchColor: '#D4C5A9', svgShape: 'shirt',       imageUrl: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&h=260&fit=crop&crop=center' },
   // Bottoms
-  { category: 'bottom', subcategory: 'wide-leg jeans',   color: 'light blue', pattern: 'plain',   fit: 'relaxed',   tags: ['casual', 'trendy'],         swatchColor: '#8BB8D8', svgShape: 'jeans' },
-  { category: 'bottom', subcategory: 'skinny jeans',     color: 'black',      pattern: 'plain',   fit: 'slim',      tags: ['casual', 'versatile'],      swatchColor: '#2A2A2A', svgShape: 'jeans' },
-  { category: 'bottom', subcategory: 'straight jeans',   color: 'dark blue',  pattern: 'plain',   fit: 'regular',   tags: ['casual', 'classic'],        swatchColor: '#2C4A6E', svgShape: 'jeans' },
-  { category: 'bottom', subcategory: 'tailored trousers',color: 'black',      pattern: 'plain',   fit: 'slim',      tags: ['smart', 'work'],            swatchColor: '#1A1A1A', svgShape: 'trousers' },
-  { category: 'bottom', subcategory: 'chinos',           color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['smart-casual', 'versatile'],swatchColor: '#C8B896', svgShape: 'trousers' },
-  { category: 'bottom', subcategory: 'midi skirt',       color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'midi-skirt' },
+  { category: 'bottom', subcategory: 'wide-leg jeans',   color: 'light blue', pattern: 'plain',   fit: 'relaxed',   tags: ['casual', 'trendy'],         swatchColor: '#8BB8D8', svgShape: 'jeans',       imageUrl: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bottom', subcategory: 'skinny jeans',     color: 'black',      pattern: 'plain',   fit: 'slim',      tags: ['casual', 'versatile'],      swatchColor: '#2A2A2A', svgShape: 'jeans',       imageUrl: 'https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bottom', subcategory: 'straight jeans',   color: 'dark blue',  pattern: 'plain',   fit: 'regular',   tags: ['casual', 'classic'],        swatchColor: '#2C4A6E', svgShape: 'jeans',       imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bottom', subcategory: 'tailored trousers',color: 'black',      pattern: 'plain',   fit: 'slim',      tags: ['smart', 'work'],            swatchColor: '#1A1A1A', svgShape: 'trousers',    imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bottom', subcategory: 'chinos',           color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['smart-casual', 'versatile'],swatchColor: '#C8B896', svgShape: 'trousers',    imageUrl: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bottom', subcategory: 'midi skirt',       color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'midi-skirt',  imageUrl: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=200&h=260&fit=crop&crop=center' },
   // Footwear
-  { category: 'footwear', subcategory: 'sneakers',       color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'sporty'],         swatchColor: '#EFEFEF', svgShape: 'sneaker' },
-  { category: 'footwear', subcategory: 'ankle boots',    color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['versatile', 'classic'],     swatchColor: '#1A1A1A', svgShape: 'ankle-boot' },
-  { category: 'footwear', subcategory: 'loafers',        color: 'tan',        pattern: 'plain',   fit: 'regular',   tags: ['smart-casual', 'classic'],  swatchColor: '#C4A882', svgShape: 'loafer' },
-  { category: 'footwear', subcategory: 'heels',          color: 'nude',       pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#E8C9A8', svgShape: 'heel' },
-  { category: 'footwear', subcategory: 'ballet flats',   color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'classic'],       swatchColor: '#2A2A2A', svgShape: 'flat' },
+  { category: 'footwear', subcategory: 'sneakers',       color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'sporty'],         swatchColor: '#EFEFEF', svgShape: 'sneaker',     imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=200&h=260&fit=crop&crop=center' },
+  { category: 'footwear', subcategory: 'ankle boots',    color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['versatile', 'classic'],     swatchColor: '#1A1A1A', svgShape: 'ankle-boot',  imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=200&h=260&fit=crop&crop=center' },
+  { category: 'footwear', subcategory: 'loafers',        color: 'tan',        pattern: 'plain',   fit: 'regular',   tags: ['smart-casual', 'classic'],  swatchColor: '#C4A882', svgShape: 'loafer',      imageUrl: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=200&h=260&fit=crop&crop=center' },
+  { category: 'footwear', subcategory: 'heels',          color: 'nude',       pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#E8C9A8', svgShape: 'heel',        imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=200&h=260&fit=crop&crop=south' },
+  { category: 'footwear', subcategory: 'ballet flats',   color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'classic'],       swatchColor: '#2A2A2A', svgShape: 'flat',        imageUrl: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=200&h=260&fit=crop&crop=center' },
   // Outerwear
-  { category: 'outerwear', subcategory: 'leather jacket',color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['edgy', 'cool'],             swatchColor: '#1A1A1A', svgShape: 'jacket' },
-  { category: 'outerwear', subcategory: 'trench coat',   color: 'camel',      pattern: 'plain',   fit: 'oversized', tags: ['classic', 'elegant'],       swatchColor: '#C4A86A', svgShape: 'coat' },
-  { category: 'outerwear', subcategory: 'blazer',        color: 'navy',       pattern: 'plain',   fit: 'regular',   tags: ['smart', 'work'],            swatchColor: '#1B3060', svgShape: 'blazer' },
-  { category: 'outerwear', subcategory: 'wool coat',     color: 'grey',       pattern: 'plain',   fit: 'oversized', tags: ['classic', 'winter'],        swatchColor: '#8A8A8A', svgShape: 'coat' },
+  { category: 'outerwear', subcategory: 'leather jacket',color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['edgy', 'cool'],             swatchColor: '#1A1A1A', svgShape: 'jacket',      imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=200&h=260&fit=crop&crop=center' },
+  { category: 'outerwear', subcategory: 'trench coat',   color: 'camel',      pattern: 'plain',   fit: 'oversized', tags: ['classic', 'elegant'],       swatchColor: '#C4A86A', svgShape: 'coat',        imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&h=260&fit=crop&crop=center' },
+  { category: 'outerwear', subcategory: 'blazer',        color: 'navy',       pattern: 'plain',   fit: 'regular',   tags: ['smart', 'work'],            swatchColor: '#1B3060', svgShape: 'blazer',      imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=200&h=260&fit=crop&crop=north' },
+  { category: 'outerwear', subcategory: 'wool coat',     color: 'grey',       pattern: 'plain',   fit: 'oversized', tags: ['classic', 'winter'],        swatchColor: '#8A8A8A', svgShape: 'coat',        imageUrl: 'https://images.unsplash.com/photo-1548624313-0396c75e4b1a?w=200&h=260&fit=crop&crop=center' },
   // Dresses
-  { category: 'dress', subcategory: 'midi dress',        color: 'black',      pattern: 'plain',   fit: 'fitted',    tags: ['elegant', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'midi-dress' },
-  { category: 'dress', subcategory: 'shirt dress',       color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'effortless'],     swatchColor: '#F5F5F0', svgShape: 'shirt-dress' },
-  { category: 'dress', subcategory: 'slip dress',        color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'elegant'],       swatchColor: '#E0CDB8', svgShape: 'slip-dress' },
+  { category: 'dress', subcategory: 'midi dress',        color: 'black',      pattern: 'plain',   fit: 'fitted',    tags: ['elegant', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'midi-dress',  imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&h=260&fit=crop&crop=center' },
+  { category: 'dress', subcategory: 'shirt dress',       color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'effortless'],     swatchColor: '#F5F5F0', svgShape: 'shirt-dress', imageUrl: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=200&h=260&fit=crop&crop=center' },
+  { category: 'dress', subcategory: 'slip dress',        color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'elegant'],       swatchColor: '#E0CDB8', svgShape: 'slip-dress',  imageUrl: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d44?w=200&h=260&fit=crop&crop=center' },
   // Bags
-  { category: 'bag', subcategory: 'tote bag',            color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['practical', 'everyday'],    swatchColor: '#1A1A1A', svgShape: 'tote' },
-  { category: 'bag', subcategory: 'leather tote',        color: 'tan',        pattern: 'plain',   fit: 'regular',   tags: ['classic', 'work'],          swatchColor: '#C4A882', svgShape: 'leather-tote' },
-  { category: 'bag', subcategory: 'crossbody bag',       color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'practical'],      swatchColor: '#2A2A2A', svgShape: 'crossbody' },
+  { category: 'bag', subcategory: 'tote bag',            color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['practical', 'everyday'],    swatchColor: '#1A1A1A', svgShape: 'tote',        imageUrl: 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bag', subcategory: 'leather tote',        color: 'tan',        pattern: 'plain',   fit: 'regular',   tags: ['classic', 'work'],          swatchColor: '#C4A882', svgShape: 'leather-tote',imageUrl: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=200&h=260&fit=crop&crop=center' },
+  { category: 'bag', subcategory: 'crossbody bag',       color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'practical'],      swatchColor: '#2A2A2A', svgShape: 'crossbody',   imageUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=200&h=260&fit=crop&crop=center' },
   // Jewellery
-  { category: 'jewellery', subcategory: 'hoop earrings', color: 'gold',       pattern: 'plain',   fit: 'regular',   tags: ['classic', 'versatile'],     swatchColor: '#D4AF37', svgShape: 'hoop' },
-  { category: 'jewellery', subcategory: 'chain necklace',color: 'silver',     pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'classic'],       swatchColor: '#C0C0C0', svgShape: 'necklace' },
-  { category: 'jewellery', subcategory: 'stud earrings', color: 'gold',       pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'everyday'],      swatchColor: '#D4AF37', svgShape: 'stud' },
+  { category: 'jewellery', subcategory: 'hoop earrings', color: 'gold',       pattern: 'plain',   fit: 'regular',   tags: ['classic', 'versatile'],     swatchColor: '#D4AF37', svgShape: 'hoop',        imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&h=260&fit=crop&crop=center' },
+  { category: 'jewellery', subcategory: 'chain necklace',color: 'silver',     pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'classic'],       swatchColor: '#C0C0C0', svgShape: 'necklace',    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&h=260&fit=crop&crop=center' },
+  { category: 'jewellery', subcategory: 'stud earrings', color: 'gold',       pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'everyday'],      swatchColor: '#D4AF37', svgShape: 'stud',        imageUrl: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=200&h=260&fit=crop&crop=center' },
 ];
 
 // Grouped by category for rendering
@@ -997,7 +998,9 @@ function BasicCard({
   onAdd: () => void;
   onRemove: () => void;
 }) {
-  const imgSrc = makeClothingSVG(basic.svgShape, basic.swatchColor);
+  const svgSrc = makeClothingSVG(basic.svgShape, basic.swatchColor);
+  const imgSrc = basic.imageUrl || svgSrc;
+  const isPhoto = !!basic.imageUrl;
 
   return (
     <div className="flex-shrink-0 w-[80px]">
@@ -1009,8 +1012,10 @@ function BasicCard({
       >
         <img
           src={imgSrc}
-          className="w-full h-full object-contain"
+          className={`w-full h-full ${isPhoto ? 'object-cover' : 'object-contain'}`}
           alt={`${basic.color} ${basic.subcategory}`}
+          loading="lazy"
+          onError={(e) => { (e.target as HTMLImageElement).src = svgSrc; }}
         />
 
         {/* Dim overlay + ✓ badge when added */}
