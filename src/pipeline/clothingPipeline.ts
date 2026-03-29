@@ -482,13 +482,10 @@ async function fallbackClaudeOnly(
   // Step 1: Remove background from FULL image FIRST (one API call instead of N)
   // This removes the model, background, etc. before detection
   let cleanImageUrl = originalObjectUrl;
-  let cleanBase64 = base64Image;
   try {
     console.log('[Pipeline] Claude-only: removing background from full image first...');
     const noBg = await removeBackground(base64Image);
     if (noBg && noBg.length > 100) {
-      cleanBase64 = noBg;
-      // Create an object URL for cropping
       cleanImageUrl = noBg; // data URI works with cropImage
       console.log(`[Pipeline] Claude-only: background removed (${Math.round(noBg.length / 1024)}KB)`);
     }
