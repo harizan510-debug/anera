@@ -3,10 +3,11 @@ import { Check, X, Pencil, ChevronUp, ImagePlus } from 'lucide-react';
 import type { DetectedItem, WardrobeItem } from '../types';
 import { genId, fileToBase64 } from '../store';
 
-const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery'];
+const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'];
 const CAT_LABELS: Record<WardrobeItem['category'], string> = {
   top: 'Top', bottom: 'Bottom', footwear: 'Footwear',
   outerwear: 'Outerwear', dress: 'Dress', bag: 'Bag', jewellery: 'Jewellery',
+  belt: 'Belt', hat: 'Hat',
 };
 
 // ── Confidence helpers ──────────────────────────────────────────────────────

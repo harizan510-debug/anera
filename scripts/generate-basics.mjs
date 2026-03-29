@@ -32,7 +32,15 @@ const ITEMS = [
   ['darkblue-straight-jeans', 'Dark indigo blue straight-leg jeans, flat lay product photography on pure white background, studio lighting, isolated garment, no person, no mannequin'],
   ['black-tailored-trousers', 'Black tailored dress trousers, slim fit, flat lay product photography on pure white background, studio lighting, isolated garment, no person, no mannequin, formal style'],
   ['beige-chinos',            'Beige khaki chino trousers, flat lay product photography on pure white background, studio lighting, isolated garment, no person, no mannequin, smart casual'],
-  ['black-midi-skirt',        'A black midi pencil skirt, knee length, flat lay product photography on pure white background, studio lighting, isolated garment, no person, no mannequin, elegant'],
+  ['black-mini-skirt',        'A black mini skirt, above the knee, short length, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['black-midi-skirt',        'A black midi skirt, below the knee, calf length, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['black-maxi-skirt',        'A black maxi skirt, ankle length, long flowing, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['beige-mini-skirt',        'A beige tan mini skirt, above the knee, short length, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['beige-midi-skirt',        'A beige tan midi skirt, below the knee, calf length, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['beige-maxi-skirt',        'A beige tan maxi skirt, ankle length, long flowing, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['blue-mini-skirt',         'A navy blue mini skirt, above the knee, short length, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['blue-midi-skirt',         'A navy blue midi skirt, below the knee, calf length, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
+  ['blue-maxi-skirt',         'A navy blue maxi skirt, ankle length, long flowing, flat lay product photography on pure white background, studio lighting, isolated skirt only, no person, no mannequin, no top, just the skirt'],
 
   // Footwear
   ['white-sneakers',          'A pair of clean white minimalist leather sneakers, product photography on pure white background, studio lighting, isolated shoes, no person, side angle view'],
@@ -61,6 +69,18 @@ const ITEMS = [
   ['gold-hoop-earrings',      'A pair of medium gold hoop earrings, product photography on pure white background, studio lighting, isolated jewellery, no person, close-up, shiny metallic'],
   ['silver-chain-necklace',   'A delicate silver chain necklace, product photography on pure white background, studio lighting, isolated jewellery, no person, minimal elegant'],
   ['gold-stud-earrings',      'A pair of small round gold stud earrings, product photography on pure white background, studio lighting, isolated jewellery, no person, close-up, minimal'],
+
+  // Belts
+  ['black-leather-belt',      'A black leather belt with silver buckle, flat lay product photography on pure white background, studio lighting, isolated accessory, no person, classic style'],
+  ['brown-leather-belt',      'A brown leather belt with gold buckle, flat lay product photography on pure white background, studio lighting, isolated accessory, no person, classic style'],
+  ['tan-woven-belt',          'A tan woven braided belt, flat lay product photography on pure white background, studio lighting, isolated accessory, no person, casual style'],
+  ['black-chain-belt',        'A thin black chain belt with gold links, flat lay product photography on pure white background, studio lighting, isolated accessory, no person, elegant'],
+
+  // Hats
+  ['black-fedora',            'A black wool fedora hat, product photography on pure white background, studio lighting, isolated accessory, no person, classic style, front angle'],
+  ['beige-straw-hat',         'A beige wide-brim straw sun hat, product photography on pure white background, studio lighting, isolated accessory, no person, summer style'],
+  ['black-baseball-cap',      'A plain black baseball cap, product photography on pure white background, studio lighting, isolated accessory, no person, casual sporty'],
+  ['grey-beanie',             'A grey knit beanie hat, product photography on pure white background, studio lighting, isolated accessory, no person, cosy winter style'],
 ];
 
 const RETRY_DELAYS = [2000, 5000, 10000];

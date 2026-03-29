@@ -1,7 +1,7 @@
 export interface WardrobeItem {
   id: string;
   imageUrl: string;
-  category: 'top' | 'bottom' | 'footwear' | 'outerwear' | 'jewellery' | 'bag' | 'dress';
+  category: 'top' | 'bottom' | 'footwear' | 'outerwear' | 'jewellery' | 'bag' | 'dress' | 'belt' | 'hat';
   subcategory: string;
   color: string;
   pattern: string;

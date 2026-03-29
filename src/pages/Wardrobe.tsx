@@ -43,16 +43,16 @@ async function compressFileToBase64(file: File, maxDim: number): Promise<string>
   return dataUri;
 }
 
-const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery'];
+const CATEGORIES: WardrobeItem['category'][] = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'];
 
 const categoryLabel: Record<WardrobeItem['category'], string> = {
   top: 'Tops', bottom: 'Bottoms', footwear: 'Footwear', outerwear: 'Outerwear',
-  dress: 'Dresses', bag: 'Bags', jewellery: 'Jewellery',
+  dress: 'Dresses', bag: 'Bags', jewellery: 'Jewellery', belt: 'Belts', hat: 'Hats',
 };
 
 const CATEGORY_COLORS: Record<WardrobeItem['category'], string> = {
   top: '#F2F2F4', bottom: '#F2F2F4', footwear: '#F2F2F4', outerwear: '#F2F2F4',
-  dress: '#F2F2F4', bag: '#F2F2F4', jewellery: '#F2F2F4',
+  dress: '#F2F2F4', bag: '#F2F2F4', jewellery: '#F2F2F4', belt: '#F2F2F4', hat: '#F2F2F4',
 };
 
 // ── Basics ──────────────────────────────────────────────────────────────────
@@ -64,7 +64,8 @@ type ClothingShape =
   | 'sneaker' | 'ankle-boot' | 'loafer' | 'heel' | 'flat'
   | 'jacket' | 'coat' | 'blazer'
   | 'tote' | 'leather-tote' | 'crossbody'
-  | 'hoop' | 'necklace' | 'stud';
+  | 'hoop' | 'necklace' | 'stud'
+  | 'belt' | 'hat';
 
 interface BasicItem {
   subcategory: string;
@@ -336,6 +337,17 @@ function makeClothingSVG(shape: ClothingShape, fill: string): string {
         <line x1="68"  y1="116" x2="68"  y2="100" stroke="${fill}" stroke-width="5" stroke-linecap="round"/>
         <line x1="132" y1="116" x2="132" y2="100" stroke="${fill}" stroke-width="5" stroke-linecap="round"/>`;
       break;
+    case 'belt':
+      inner = `
+        <rect x="20" y="115" width="160" height="30" rx="6" fill="${fill}" stroke="${sk}" stroke-width="1.5"/>
+        <rect x="82" y="108" width="36" height="44" rx="4" fill="none" stroke="${sk}" stroke-width="3"/>
+        <circle cx="100" cy="130" r="4" fill="${sk}"/>`;
+      break;
+    case 'hat':
+      inner = `
+        <ellipse cx="100" cy="170" rx="80" ry="16" fill="${fill}" stroke="${sk}" stroke-width="1.5"/>
+        <path d="M50,170 Q50,90 100,80 Q150,90 150,170" fill="${fill}" stroke="${sk}" stroke-width="1.5"/>`;
+      break;
     default:
       inner = `<circle cx="100" cy="130" r="60" fill="${fill}" stroke="${sk}" stroke-width="1.5"/>`;
   }
@@ -360,7 +372,15 @@ const BASICS: BasicItem[] = [
   { category: 'bottom', subcategory: 'straight jeans',   color: 'dark blue',  pattern: 'plain',   fit: 'regular',   tags: ['casual', 'classic'],        swatchColor: '#2C4A6E', svgShape: 'jeans',       imageUrl: '/basics/darkblue-straight-jeans.webp' },
   { category: 'bottom', subcategory: 'tailored trousers',color: 'black',      pattern: 'plain',   fit: 'slim',      tags: ['smart', 'work'],            swatchColor: '#1A1A1A', svgShape: 'trousers',    imageUrl: '/basics/black-tailored-trousers.webp' },
   { category: 'bottom', subcategory: 'chinos',           color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['smart-casual', 'versatile'],swatchColor: '#C8B896', svgShape: 'trousers',    imageUrl: '/basics/beige-chinos.webp' },
-  { category: 'bottom', subcategory: 'midi skirt',       color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'midi-skirt',  imageUrl: '/basics/black-midi-skirt.webp' },
+  { category: 'bottom', subcategory: 'mini skirt',        color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'trendy'],         swatchColor: '#1A1A1A', svgShape: 'midi-skirt',  imageUrl: '/basics/black-mini-skirt.webp' },
+  { category: 'bottom', subcategory: 'midi skirt',        color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'midi-skirt',  imageUrl: '/basics/black-midi-skirt.webp' },
+  { category: 'bottom', subcategory: 'maxi skirt',        color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'flowing'],       swatchColor: '#1A1A1A', svgShape: 'midi-skirt',  imageUrl: '/basics/black-maxi-skirt.webp' },
+  { category: 'bottom', subcategory: 'mini skirt',        color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'summer'],         swatchColor: '#D4C5A9', svgShape: 'midi-skirt',  imageUrl: '/basics/beige-mini-skirt.webp' },
+  { category: 'bottom', subcategory: 'midi skirt',        color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#D4C5A9', svgShape: 'midi-skirt',  imageUrl: '/basics/beige-midi-skirt.webp' },
+  { category: 'bottom', subcategory: 'maxi skirt',        color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'flowing'],       swatchColor: '#D4C5A9', svgShape: 'midi-skirt',  imageUrl: '/basics/beige-maxi-skirt.webp' },
+  { category: 'bottom', subcategory: 'mini skirt',        color: 'navy',       pattern: 'plain',   fit: 'regular',   tags: ['casual', 'classic'],        swatchColor: '#1B3060', svgShape: 'midi-skirt',  imageUrl: '/basics/blue-mini-skirt.webp' },
+  { category: 'bottom', subcategory: 'midi skirt',        color: 'navy',       pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'versatile'],     swatchColor: '#1B3060', svgShape: 'midi-skirt',  imageUrl: '/basics/blue-midi-skirt.webp' },
+  { category: 'bottom', subcategory: 'maxi skirt',        color: 'navy',       pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'flowing'],       swatchColor: '#1B3060', svgShape: 'midi-skirt',  imageUrl: '/basics/blue-maxi-skirt.webp' },
   // Footwear
   { category: 'footwear', subcategory: 'sneakers',       color: 'white',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'sporty'],         swatchColor: '#EFEFEF', svgShape: 'sneaker',     imageUrl: '/basics/white-sneakers.webp' },
   { category: 'footwear', subcategory: 'ankle boots',    color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['versatile', 'classic'],     swatchColor: '#1A1A1A', svgShape: 'ankle-boot',  imageUrl: '/basics/black-ankle-boots.webp' },
@@ -384,6 +404,16 @@ const BASICS: BasicItem[] = [
   { category: 'jewellery', subcategory: 'hoop earrings', color: 'gold',       pattern: 'plain',   fit: 'regular',   tags: ['classic', 'versatile'],     swatchColor: '#D4AF37', svgShape: 'hoop',        imageUrl: '/basics/gold-hoop-earrings.webp' },
   { category: 'jewellery', subcategory: 'chain necklace',color: 'silver',     pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'classic'],       swatchColor: '#C0C0C0', svgShape: 'necklace',    imageUrl: '/basics/silver-chain-necklace.webp' },
   { category: 'jewellery', subcategory: 'stud earrings', color: 'gold',       pattern: 'plain',   fit: 'regular',   tags: ['minimal', 'everyday'],      swatchColor: '#D4AF37', svgShape: 'stud',        imageUrl: '/basics/gold-stud-earrings.webp' },
+  // Belts
+  { category: 'belt', subcategory: 'leather belt',       color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['classic', 'versatile'],     swatchColor: '#1A1A1A', svgShape: 'belt',     imageUrl: '/basics/black-leather-belt.webp' },
+  { category: 'belt', subcategory: 'leather belt',       color: 'brown',      pattern: 'plain',   fit: 'regular',   tags: ['classic', 'smart-casual'],  swatchColor: '#6B3A2A', svgShape: 'belt',     imageUrl: '/basics/brown-leather-belt.webp' },
+  { category: 'belt', subcategory: 'woven belt',         color: 'tan',        pattern: 'woven',   fit: 'regular',   tags: ['casual', 'summer'],         swatchColor: '#C4A882', svgShape: 'belt',     imageUrl: '/basics/tan-woven-belt.webp' },
+  { category: 'belt', subcategory: 'chain belt',         color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['elegant', 'trendy'],        swatchColor: '#2A2A2A', svgShape: 'belt',     imageUrl: '/basics/black-chain-belt.webp' },
+  // Hats
+  { category: 'hat', subcategory: 'fedora',              color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['classic', 'smart'],         swatchColor: '#1A1A1A', svgShape: 'hat',      imageUrl: '/basics/black-fedora.webp' },
+  { category: 'hat', subcategory: 'straw hat',           color: 'beige',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'summer'],         swatchColor: '#D4C5A9', svgShape: 'hat',      imageUrl: '/basics/beige-straw-hat.webp' },
+  { category: 'hat', subcategory: 'baseball cap',        color: 'black',      pattern: 'plain',   fit: 'regular',   tags: ['casual', 'sporty'],         swatchColor: '#1A1A1A', svgShape: 'hat',      imageUrl: '/basics/black-baseball-cap.webp' },
+  { category: 'hat', subcategory: 'beanie',              color: 'grey',       pattern: 'plain',   fit: 'regular',   tags: ['casual', 'winter'],         swatchColor: '#8A8A8A', svgShape: 'hat',      imageUrl: '/basics/grey-beanie.webp' },
 ];
 
 // Grouped by category for rendering
@@ -395,6 +425,8 @@ const BASICS_BY_CATEGORY: { category: WardrobeItem['category']; label: string; i
   { category: 'dress',     label: 'Dresses',   items: BASICS.filter(b => b.category === 'dress') },
   { category: 'bag',       label: 'Bags',      items: BASICS.filter(b => b.category === 'bag') },
   { category: 'jewellery', label: 'Jewellery', items: BASICS.filter(b => b.category === 'jewellery') },
+  { category: 'belt',      label: 'Belts',     items: BASICS.filter(b => b.category === 'belt') },
+  { category: 'hat',       label: 'Hats',      items: BASICS.filter(b => b.category === 'hat') },
 ];
 
 // ── Demo detections used when no API key is configured ──────────────────────
