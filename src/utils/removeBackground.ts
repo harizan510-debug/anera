@@ -58,12 +58,14 @@ export async function removeBackground(base64Image: string): Promise<string> {
 
       console.log(`[RemoveBG] Succeeded after ${attempt + 1} polls, fetching result...`);
 
-      // Fetch the result image and convert to base64
+      // Fetch the result image and convert to base64 PNG (preserve transparency)
       const imgRes = await fetch(outputUrl);
       if (!imgRes.ok) throw new Error(`Failed to fetch rembg output: ${imgRes.status}`);
       const blob = await imgRes.blob();
-      const result64 = await blobToBase64(blob);
-      console.log(`[RemoveBG] Done (${Math.round(result64.length / 1024)}KB)`);
+      // Force PNG type to guarantee transparency is preserved in data URI
+      const pngBlob = blob.type === 'image/png' ? blob : new Blob([blob], { type: 'image/png' });
+      const result64 = await blobToBase64(pngBlob);
+      console.log(`[RemoveBG] Done (${Math.round(result64.length / 1024)}KB, type=${pngBlob.type})`);
       return result64;
     }
 

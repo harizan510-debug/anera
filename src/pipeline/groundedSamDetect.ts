@@ -583,8 +583,10 @@ async function compressForUpload(base64Image: string): Promise<string> {
   if (!ctx) throw new Error('Cannot create canvas for compression');
   ctx.drawImage(img, 0, 0, w, h);
 
-  const result = canvas.toDataURL('image/jpeg', 0.75);
+  // Preserve transparency: use PNG if source is PNG (e.g. after background removal)
+  const isPng = dataUri.startsWith('data:image/png');
+  const result = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.75);
   canvas.width = 0; canvas.height = 0;
-  console.log(`[GroundedSAM] Compressed to ${Math.round(result.length / 1024)}KB (${w}×${h})`);
+  console.log(`[GroundedSAM] Compressed to ${Math.round(result.length / 1024)}KB (${w}×${h}, ${isPng ? 'PNG' : 'JPEG'})`);
   return result;
 }
