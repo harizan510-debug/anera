@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Plus, Search, X, Trash2, Check, Sparkles, Link2, Camera, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Plus, Search, X, Trash2, Check, Sparkles, Link2, Camera, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { hasClaudeKey } from '../apiHelper';
 import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
@@ -867,7 +867,7 @@ export default function Wardrobe() {
               <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
                 {label}
               </p>
-              <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory basics-scroll">
+              <ScrollRow>
                 {basics.map(b => (
                   <BasicCard
                     key={`${b.color}-${b.subcategory}`}
@@ -877,7 +877,7 @@ export default function Wardrobe() {
                     onRemove={() => removeBasic(b)}
                   />
                 ))}
-              </div>
+              </ScrollRow>
             </div>
           ))}
         </div>
@@ -1014,6 +1014,63 @@ const fieldStyle: React.CSSProperties = {
   color: 'var(--text-primary)',
   outline: 'none',
 };
+
+// ── ScrollRow — horizontal scroll with left/right arrow buttons ──────────────
+function ScrollRow({ children }: { children: React.ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(true);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.7;
+    el.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+  }, []);
+
+  return (
+    <div className="relative group">
+      {/* Left arrow */}
+      {canLeft && (
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full flex items-center justify-center bg-white/90 shadow-md border border-black/5 active:scale-90 transition-transform"
+          style={{ marginTop: -6 }}
+        >
+          <ChevronLeft size={16} color="#2B2B2B" strokeWidth={2.5} />
+        </button>
+      )}
+
+      {/* Scrollable row */}
+      <div
+        ref={scrollRef}
+        onScroll={checkScroll}
+        onLoad={checkScroll}
+        className="flex gap-3 overflow-x-auto pb-3 basics-scroll"
+      >
+        {children}
+      </div>
+
+      {/* Right arrow */}
+      {canRight && (
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full flex items-center justify-center bg-white/90 shadow-md border border-black/5 active:scale-90 transition-transform"
+          style={{ marginTop: -6 }}
+        >
+          <ChevronRight size={16} color="#2B2B2B" strokeWidth={2.5} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 // ── BasicCard ────────────────────────────────────────────────────────────────
 // Small visual card with an SVG clothing illustration, item label,
