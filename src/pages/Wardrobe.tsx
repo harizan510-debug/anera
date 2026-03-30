@@ -50,6 +50,19 @@ const categoryLabel: Record<WardrobeItem['category'], string> = {
   dress: 'Dresses', bag: 'Bags', jewellery: 'Jewellery', belt: 'Belts', hat: 'Hats',
 };
 
+// Distinct tag color per category
+const CATEGORY_TAG_COLORS: Record<WardrobeItem['category'], { bg: string; text: string }> = {
+  top:       { bg: '#C8B6FF', text: '#5B21B6' },  // lilac
+  bottom:    { bg: '#93C5FD', text: '#1E40AF' },  // sky blue
+  footwear:  { bg: '#A7F3D0', text: '#065F46' },  // green
+  outerwear: { bg: '#FECACA', text: '#991B1B' },  // rose
+  dress:     { bg: '#F9A8D4', text: '#9D174D' },  // pink
+  bag:       { bg: '#FDE68A', text: '#92400E' },  // amber
+  jewellery: { bg: '#FCD34D', text: '#78350F' },  // gold
+  belt:      { bg: '#D4C5A9', text: '#5C4A26' },  // tan
+  hat:       { bg: '#C4B5FD', text: '#4C1D95' },  // violet
+};
+
 
 
 // ── Basics ──────────────────────────────────────────────────────────────────
@@ -838,7 +851,7 @@ export default function Wardrobe() {
                     {item.color} {item.subcategory}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[9px] font-medium px-2 py-0.5 rounded-full" style={{ background: '#B8F2E6', color: '#1A6B5A' }}>
+                    <span className="text-[9px] font-medium px-2 py-0.5 rounded-full" style={{ background: CATEGORY_TAG_COLORS[item.category].bg, color: CATEGORY_TAG_COLORS[item.category].text }}>
                       {item.category}
                     </span>
                     <span className="text-[9px]" style={{ color: 'rgba(43,43,43,0.4)' }}>
