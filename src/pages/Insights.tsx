@@ -337,32 +337,55 @@ export default function Insights() {
                 Log outfits on the calendar to track your most worn items.
               </p>
             ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {mostWorn.filter(i => i.wearCount > 0).map((item, idx) => {
                 const cpw = costPerWear(item);
+                const isTop = idx === 0;
                 return (
-                  <div key={item.id} className="flex items-center gap-3">
-                    <span className="text-xs font-bold w-4 text-center" style={{ color: idx === 0 ? LILAC_DEEP : 'rgba(43,43,43,0.35)' }}>
+                  <div key={item.id}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+                    style={{
+                      background: isTop ? 'rgba(167,139,250,0.08)' : 'transparent',
+                      border: isTop ? '1px solid rgba(167,139,250,0.18)' : '1px solid transparent',
+                    }}>
+                    <span className="text-sm font-bold w-5 text-center" style={{ color: isTop ? LILAC_DEEP : 'rgba(43,43,43,0.3)' }}>
                       {idx + 1}
                     </span>
-                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#FAFAFA' }}>
+                    <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#FAFAFA', border: '1px solid rgba(43,43,43,0.06)' }}>
                       {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-sm opacity-40">👕</div>}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium capitalize truncate" style={{ color: '#2B2B2B' }}>
+                      <p className="text-xs font-semibold capitalize truncate" style={{ color: '#2B2B2B' }}>
                         {item.color} {item.subcategory}
                       </p>
-                      <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
-                        {item.wearCount}x worn{cpw !== null ? ` · £${cpw}/wear` : ''}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          {item.wearCount}x worn
+                        </span>
+                        {cpw !== null && (
+                          <>
+                            <span className="text-[10px]" style={{ color: 'rgba(43,43,43,0.2)' }}>·</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-px rounded-full"
+                              style={{ background: cpw <= 5 ? '#DCFCE7' : cpw <= 15 ? '#FEF3C7' : '#FEE2E2',
+                                       color: cpw <= 5 ? '#15803D' : cpw <= 15 ? '#92400E' : '#DC2626' }}>
+                              £{cpw.toFixed(2)}/wear
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: LILAC, color: '#5B21B6' }}>
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+                      style={{ background: isTop ? LILAC_DEEP : LILAC, color: isTop ? '#FFFFFF' : '#5B21B6' }}>
                       {item.wearCount}x
                     </span>
                   </div>
                 );
               })}
+              {!withCPW.length && (
+                <p className="text-[10px] text-center pt-1" style={{ color: 'var(--text-secondary)' }}>
+                  💡 Add estimated values to your items to see cost per wear
+                </p>
+              )}
             </div>
             )}
           </div>
