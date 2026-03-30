@@ -272,7 +272,7 @@ export default function Insights() {
                   const total = catCounts.reduce((s, c) => s + c.count, 0);
                   const R = 36;
                   const CIRC = 2 * Math.PI * R;
-                  const GAP_DEG = 4;                        // degrees of gap per segment
+                  const GAP_DEG = 1.5;                      // degrees of gap per segment
                   const GAP = (GAP_DEG / 360) * CIRC;       // gap in stroke units
                   let offset = 0;
                   return catCounts.map(({ label, count }) => {
