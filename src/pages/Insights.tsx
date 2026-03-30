@@ -325,13 +325,18 @@ export default function Insights() {
         </div>
 
         {/* Most worn — top 5 with cost per wear */}
-        {mostWorn.length > 0 && mostWorn[0].wearCount > 0 && (
+        {mostWorn.length > 0 && (
           <div className="rounded-2xl px-5 py-4 mb-4"
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp size={15} style={{ color: LILAC_DEEP }} />
               <p className="text-sm" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn items</p>
             </div>
+            {mostWorn[0].wearCount === 0 ? (
+              <p className="text-xs py-2" style={{ color: 'var(--text-secondary)' }}>
+                Log outfits on the calendar to track your most worn items.
+              </p>
+            ) : (
             <div className="space-y-2.5">
               {mostWorn.filter(i => i.wearCount > 0).map((item, idx) => {
                 const cpw = costPerWear(item);
@@ -359,6 +364,7 @@ export default function Insights() {
                 );
               })}
             </div>
+            )}
           </div>
         )}
 
