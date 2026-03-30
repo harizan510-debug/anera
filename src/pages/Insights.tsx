@@ -289,7 +289,7 @@ export default function Insights() {
                         strokeWidth="13"
                         strokeDasharray={`${arcLen} ${CIRC - arcLen}`}
                         strokeDashoffset={-segOffset}
-                        strokeLinecap="round"
+                        strokeLinecap="butt"
                         style={{ transition: 'stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease' }}
                       />
                     );
