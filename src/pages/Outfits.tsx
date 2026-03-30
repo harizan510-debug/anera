@@ -3,13 +3,14 @@ import type { ReactNode } from 'react';
 import {
   Sparkles, CloudSun, Loader2, ChevronLeft, ChevronRight,
   Plus, X, MapPin, FolderOpen, MessageCircle, Check, CalendarDays,
+  Wind, Sun, Umbrella, Thermometer,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser, genId } from '../store';
 import type { WardrobeItem } from '../types';
 import { generateOutfitRecommendations } from '../api';
 import { hasClaudeKey } from '../apiHelper';
-import { supabase, isSupabaseConfigured, getCityWeather } from '../supabase';
+import { supabase, isSupabaseConfigured, getCityWeather, getWeatherByCoords, getWeatherByIP } from '../supabase';
 import type { WeatherInfo } from '../supabase';
 
 
@@ -90,6 +91,7 @@ export default function Outfits() {
   const [genError, setGenError]   = useState('');
   const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
   const [weatherCity, setWeatherCity] = useState('');
+  const [weatherLoading, setWeatherLoading] = useState(true);
 
   // Dress-me slots
   const [slotTop,      setSlotTop]      = useState<WardrobeItem | null>(null);
@@ -131,19 +133,62 @@ export default function Outfits() {
   const [folderName,      setFolderName]       = useState('');
   const [folderColor,     setFolderColor]      = useState(EVENT_COLORS[0]);
 
-  // Weather on mount
+  // Weather on mount — try geolocation → profile city → IP geolocation
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    (async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-      const { data: profile } = await supabase
-        .from('profiles').select('city').eq('id', authUser.id).single();
-      if (!profile?.city) return;
-      setWeatherCity(profile.city);
-      const info = await getCityWeather(profile.city);
-      if (info) { setWeatherInfo(info); setWeather(tempToWeatherChip(info.temp, info.isRainy)); }
-    })();
+    let cancelled = false;
+
+    const applyWeather = (info: WeatherInfo) => {
+      if (cancelled) return;
+      setWeatherInfo(info);
+      setWeatherCity(info.cityName);
+      setWeather(tempToWeatherChip(info.temp, info.isRainy));
+      setWeatherLoading(false);
+    };
+
+    const fetchFromIP = async () => {
+      try {
+        const info = await getWeatherByIP();
+        if (info && !cancelled) { applyWeather(info); return; }
+      } catch { /* ignore */ }
+      if (!cancelled) setWeatherLoading(false);
+    };
+
+    const fetchFromProfile = async () => {
+      if (!isSupabaseConfigured) { fetchFromIP(); return; }
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser || cancelled) { fetchFromIP(); return; }
+        const { data: profile } = await supabase
+          .from('profiles').select('city').eq('id', authUser.id).single();
+        if (!profile?.city || cancelled) { fetchFromIP(); return; }
+        const info = await getCityWeather(profile.city);
+        if (info) { applyWeather(info); return; }
+      } catch { /* ignore */ }
+      fetchFromIP();
+    };
+
+    // Try browser geolocation first
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const info = await getWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+          if (info) {
+            applyWeather(info);
+          } else {
+            fetchFromProfile();
+          }
+        },
+        () => {
+          // Geolocation denied or failed — fall back to profile city, then IP
+          fetchFromProfile();
+        },
+        { timeout: 8000, maximumAge: 300000 }
+      );
+    } else {
+      fetchFromProfile();
+    }
+
+    return () => { cancelled = true; };
   }, []);
 
   // Calendar derived values
@@ -193,7 +238,7 @@ export default function Outfits() {
     setGenError(''); setLoading(true);
     try {
       const wCtx = weatherInfo
-        ? `${weather} — ${weatherInfo.temp}°C, ${weatherInfo.description}${weatherInfo.isRainy ? '. Rain forecast.' : ''}`
+        ? `${weather} — ${weatherInfo.temp}°C (feels ${weatherInfo.feelsLike}°C), ${weatherInfo.description}, wind ${weatherInfo.windSpeed}km/h, UV ${weatherInfo.uvIndex}${weatherInfo.isRainy ? `. Rain: ${weatherInfo.rainMm}mm.` : ''}`
         : weather;
       const noteParts = [
         slotTop      ? `Top: ${slotTop.color} ${slotTop.subcategory}`           : null,
@@ -327,19 +372,95 @@ export default function Outfits() {
       {tab === 'outfits' && (
         <div className="px-4 space-y-5">
 
-          {/* Weather banner */}
-          {weatherInfo && (
+          {/* Weather loading skeleton */}
+          {weatherLoading && !weatherInfo && (
             <div
-              className="px-4 py-3 rounded-2xl flex items-start gap-3"
+              className="rounded-2xl overflow-hidden animate-pulse"
               style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
             >
-              <span className="text-xl flex-shrink-0">{weatherInfo.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {weatherInfo.temp}°C · {weatherInfo.description}
-                  {weatherCity && <span className="font-normal" style={{ color: 'var(--text-secondary)' }}> in {weatherCity}</span>}
-                </p>
-                {weatherInfo.isRainy && <p className="text-xs mt-0.5" style={{ color: '#6B7C4E' }}>Rain forecast -- grab an umbrella!</p>}
+              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-3 w-20 rounded-full" style={{ background: '#E5E7EB' }} />
+                  <div className="h-9 w-24 rounded-lg" style={{ background: '#E5E7EB' }} />
+                  <div className="h-3 w-32 rounded-full" style={{ background: '#E5E7EB' }} />
+                </div>
+                <div className="w-12 h-12 rounded-full" style={{ background: '#E5E7EB' }} />
+              </div>
+              <div className="px-4 py-3 flex gap-6" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                <div className="h-3 w-16 rounded-full" style={{ background: '#E5E7EB' }} />
+                <div className="h-3 w-16 rounded-full" style={{ background: '#E5E7EB' }} />
+                <div className="h-3 w-16 rounded-full" style={{ background: '#E5E7EB' }} />
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Weather Widget */}
+          {weatherInfo && (
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
+            >
+              {/* Top section: city + main temp + icon */}
+              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+                <div>
+                  {weatherCity && (
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <MapPin size={12} color="#6B7C4E" />
+                      <span className="text-xs font-semibold" style={{ color: '#6B7C4E' }}>{weatherCity}</span>
+                    </div>
+                  )}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1 }}>{weatherInfo.temp}°</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>C</span>
+                  </div>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                    {weatherInfo.description}
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Thermometer size={11} color="var(--text-secondary)" />
+                    <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                      Feels like {weatherInfo.feelsLike}°C
+                    </span>
+                  </div>
+                </div>
+                <span className="text-5xl flex-shrink-0">{weatherInfo.icon}</span>
+              </div>
+
+              {/* Bottom stats row */}
+              <div
+                className="px-4 py-2.5 flex items-center justify-between"
+                style={{ borderTop: '1px solid rgba(107,124,78,0.1)', background: 'rgba(107,124,78,0.04)' }}
+              >
+                {/* Wind */}
+                <div className="flex items-center gap-1.5">
+                  <Wind size={14} color="#6B7C4E" />
+                  <div>
+                    <p className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-secondary)', letterSpacing: '0.3px' }}>Wind</p>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{weatherInfo.windSpeed} km/h</p>
+                  </div>
+                </div>
+
+                {/* Rain + umbrella */}
+                <div className="flex items-center gap-1.5">
+                  <Umbrella size={14} color={weatherInfo.isRainy ? '#DC2626' : '#9CA3AF'} />
+                  <div>
+                    <p className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-secondary)', letterSpacing: '0.3px' }}>Rain</p>
+                    <p className="text-xs font-semibold" style={{ color: weatherInfo.isRainy ? '#DC2626' : 'var(--text-primary)' }}>
+                      {weatherInfo.rainMm > 0 ? `${weatherInfo.rainMm} mm` : '0 mm'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* UV */}
+                <div className="flex items-center gap-1.5">
+                  <Sun size={14} color={weatherInfo.uvIndex >= 6 ? '#F59E0B' : '#6B7C4E'} />
+                  <div>
+                    <p className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-secondary)', letterSpacing: '0.3px' }}>UV</p>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {weatherInfo.uvIndex} {weatherInfo.uvIndex <= 2 ? 'Low' : weatherInfo.uvIndex <= 5 ? 'Mod' : weatherInfo.uvIndex <= 7 ? 'High' : 'V.High'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

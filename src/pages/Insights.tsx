@@ -146,9 +146,9 @@ export default function Insights() {
 
   // ── Insights tab ──────────────────────────────────────────────────────────
   if (activeTab === 'insights') {
-    const mostWorn    = [...items].sort((a, b) => b.wearCount - a.wearCount).slice(0, 3);
+    const mostWorn    = [...items].sort((a, b) => b.wearCount - a.wearCount).slice(0, 5);
     const leastWorn   = [...items].sort((a, b) => a.wearCount - b.wearCount)
-                          .filter(i => i.wearCount === 0 || daysSince(i.lastWorn) > 60).slice(0, 3);
+                          .filter(i => i.wearCount === 0 || daysSince(i.lastWorn) > 60).slice(0, 5);
     const totalWears  = items.reduce((s, i) => s + i.wearCount, 0);
     const unwornCount = items.filter(i => i.wearCount === 0).length;
     const dormantCount = items.filter(i => daysSince(i.lastWorn) > 90).length;
@@ -260,37 +260,40 @@ export default function Insights() {
         </div>
 
         {/* Category breakdown — doughnut chart */}
-        <div className="rounded-2xl px-5 py-5 mb-4"
+        <div className="rounded-2xl px-4 py-5 mb-4"
           style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
-          <p className="text-sm mb-5" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
+          <p className="text-sm mb-4" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
 
-          <div className="flex items-center gap-6">
-            {/* SVG doughnut */}
-            <div className="flex-shrink-0 relative" style={{ width: 140, height: 140 }}>
+          <div className="flex items-center">
+            {/* SVG doughnut — 50% */}
+            <div className="relative" style={{ width: '50%', aspectRatio: '1' }}>
               <svg viewBox="0 0 100 100" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
                 {(() => {
                   const total = catCounts.reduce((s, c) => s + c.count, 0);
-                  const R = 38;
+                  const R = 36;
                   const CIRC = 2 * Math.PI * R;
-                  const GAP = 2; // gap in dasharray units
+                  const GAP_DEG = 4;                        // degrees of gap per segment
+                  const GAP = (GAP_DEG / 360) * CIRC;       // gap in stroke units
                   let offset = 0;
                   return catCounts.map(({ label, count }) => {
                     const pct = count / total;
-                    const len = pct * CIRC - GAP;
+                    const segLen = pct * CIRC;
+                    const arcLen = Math.max(segLen - GAP, 1);
+                    const segOffset = offset + GAP / 2;      // center the gap
                     const el = (
                       <circle
                         key={label}
                         cx="50" cy="50" r={R}
                         fill="none"
                         stroke={CAT_CHART_COLORS[label] || '#E5E7EB'}
-                        strokeWidth="12"
-                        strokeDasharray={`${Math.max(len, 0)} ${CIRC}`}
-                        strokeDashoffset={-offset}
+                        strokeWidth="13"
+                        strokeDasharray={`${arcLen} ${CIRC - arcLen}`}
+                        strokeDashoffset={-segOffset}
                         strokeLinecap="round"
                         style={{ transition: 'stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease' }}
                       />
                     );
-                    offset += pct * CIRC;
+                    offset += segLen;
                     return el;
                   });
                 })()}
@@ -302,17 +305,17 @@ export default function Insights() {
               </div>
             </div>
 
-            {/* Legend */}
-            <div className="flex-1 space-y-2">
+            {/* Legend — 50% */}
+            <div className="w-1/2 pl-3 space-y-1.5">
               {catCounts.map(({ label, count }) => {
                 const pct = Math.round((count / items.length) * 100);
                 return (
-                  <div key={label} className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: CAT_CHART_COLORS[label] }} />
-                    <span className="capitalize text-xs flex-1" style={{ color: '#2B2B2B' }}>{label}s</span>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  <div key={label} className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: CAT_CHART_COLORS[label] }} />
+                    <span className="capitalize text-[11px] flex-1 truncate" style={{ color: '#2B2B2B' }}>{label}s</span>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap"
                       style={{ background: CAT_CHART_COLORS[label], color: CAT_CHART_TEXT[label] }}>
-                      {count} <span className="font-normal">({pct}%)</span>
+                      {count} ({pct}%)
                     </span>
                   </div>
                 );
@@ -321,28 +324,40 @@ export default function Insights() {
           </div>
         </div>
 
-        {/* Most worn */}
+        {/* Most worn — top 5 with cost per wear */}
         {mostWorn.length > 0 && mostWorn[0].wearCount > 0 && (
           <div className="rounded-2xl px-5 py-4 mb-4"
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp size={15} style={{ color: LILAC_DEEP }} />
-              <p className="text-sm" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn</p>
+              <p className="text-sm" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn items</p>
             </div>
-            <div className="flex gap-3">
-              {mostWorn.filter(i => i.wearCount > 0).map(item => (
-                <div key={item.id} className="flex-1 min-w-0">
-                  <div className="aspect-square rounded-xl overflow-hidden mb-1.5" style={{ background: '#FAFAFA' }}>
-                    {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+            <div className="space-y-2.5">
+              {mostWorn.filter(i => i.wearCount > 0).map((item, idx) => {
+                const cpw = costPerWear(item);
+                return (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <span className="text-xs font-bold w-4 text-center" style={{ color: idx === 0 ? LILAC_DEEP : 'rgba(43,43,43,0.35)' }}>
+                      {idx + 1}
+                    </span>
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#FAFAFA' }}>
+                      {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-sm opacity-40">👕</div>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium capitalize truncate" style={{ color: '#2B2B2B' }}>
+                        {item.color} {item.subcategory}
+                      </p>
+                      <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
+                        {item.wearCount}x worn{cpw !== null ? ` · £${cpw}/wear` : ''}
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: LILAC, color: '#5B21B6' }}>
+                      {item.wearCount}x
+                    </span>
                   </div>
-                  <p className="text-[10px] text-center truncate capitalize" style={{ color: 'var(--text-secondary)' }}>
-                    {item.color} {item.subcategory}
-                  </p>
-                  <p className="text-[10px] text-center font-medium" style={{ color: LILAC_DEEP }}>
-                    {item.wearCount}x
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -375,25 +390,75 @@ export default function Insights() {
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
             <p className="text-sm mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Gathering dust</p>
             <div className="space-y-3">
-              {leastWorn.map(item => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                    {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+              {leastWorn.map(item => {
+                const state = itemStates[item.id];
+                if (state?.dismissed) return null;
+                return (
+                  <div key={item.id} className="rounded-xl overflow-hidden"
+                    style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
+                    <div className="flex items-center gap-3 p-3">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                        {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm capitalize truncate" style={{ color: '#2B2B2B', fontWeight: 600 }}>
+                          {item.color} {item.subcategory}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          {item.wearCount === 0 ? 'Never worn' : `Last worn ${daysSince(item.lastWorn)} days ago`}
+                        </p>
+                      </div>
+                      <span className="text-xs px-2.5 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                        {item.wearCount}x
+                      </span>
+                    </div>
+                    {/* Declutter actions */}
+                    {!state?.action ? (
+                      <div className="flex gap-2 px-3 pb-3">
+                        {[
+                          { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: LILAC },
+                          { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: MINT },
+                          { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: BUTTER },
+                        ].map(btn => (
+                          <button
+                            key={btn.id}
+                            onClick={() => setAction(item.id, btn.id)}
+                            className="flex-1 py-2 rounded-full text-[11px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-[0.97]"
+                            style={{ background: btn.bg, color: btn.color }}
+                          >
+                            <btn.Icon size={12} />
+                            {btn.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-3 pb-3">
+                        <div className="rounded-xl px-3 py-2.5 flex items-center justify-between"
+                          style={{ background: '#FAFAFA' }}>
+                          <p className="text-xs font-medium capitalize" style={{ color: '#2B2B2B' }}>
+                            {state.action === 'sell' ? 'List for sale' : state.action === 'donate' ? 'Donate' : 'Restyle it'}
+                          </p>
+                          <div className="flex gap-2 ml-2">
+                            {state.action !== 'restyle' && (
+                              <button onClick={() => confirmDelete(item.id)}
+                                className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                                style={{ background: '#DC2626', color: 'white' }}>
+                                Remove
+                              </button>
+                            )}
+                            <button onClick={() => dismiss(item.id)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                              style={{ background: '#FFFFFF', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-secondary)' }}>
+                              Done
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm capitalize truncate" style={{ color: '#2B2B2B' }}>
-                      {item.color} {item.subcategory}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      {item.wearCount === 0 ? 'Never worn' : `Last worn ${daysSince(item.lastWorn)} days ago`}
-                    </p>
-                  </div>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: '#FEE2E2', color: '#DC2626' }}>
-                    {item.wearCount}x
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
