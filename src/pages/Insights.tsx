@@ -156,26 +156,26 @@ export default function Insights() {
     const categories = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'] as const;
     // Matching colors from Wardrobe page CATEGORY_TAG_COLORS
     const CAT_CHART_COLORS: Record<string, string> = {
-      top:       '#C8B6FF',  // lilac
-      bottom:    '#93C5FD',  // sky blue
-      footwear:  '#A7F3D0',  // green
-      outerwear: '#FECACA',  // rose
-      dress:     '#F9A8D4',  // pink
-      bag:       '#FDE68A',  // amber
-      jewellery: '#FCD34D',  // gold
-      belt:      '#D4C5A9',  // tan
-      hat:       '#C4B5FD',  // violet
+      top:       '#7C3AED',  // deep purple
+      bottom:    '#3B82F6',  // blue
+      footwear:  '#059669',  // teal
+      outerwear: '#9F1239',  // burgundy
+      dress:     '#DB2777',  // pink
+      bag:       '#D97706',  // amber
+      jewellery: '#EAB308',  // gold
+      belt:      '#6B7C4E',  // olive
+      hat:       '#0EA5E9',  // sky blue
     };
     const CAT_CHART_TEXT: Record<string, string> = {
-      top:       '#5B21B6',
-      bottom:    '#1E40AF',
-      footwear:  '#065F46',
-      outerwear: '#991B1B',
-      dress:     '#9D174D',
-      bag:       '#92400E',
-      jewellery: '#78350F',
-      belt:      '#5C4A26',
-      hat:       '#4C1D95',
+      top:       '#FFFFFF',
+      bottom:    '#FFFFFF',
+      footwear:  '#FFFFFF',
+      outerwear: '#FFFFFF',
+      dress:     '#FFFFFF',
+      bag:       '#FFFFFF',
+      jewellery: '#422006',
+      belt:      '#FFFFFF',
+      hat:       '#FFFFFF',
     };
     const catCounts  = categories
       .map(c => ({ label: c, count: items.filter(i => i.category === c).length }))
@@ -272,7 +272,7 @@ export default function Insights() {
                   const total = catCounts.reduce((s, c) => s + c.count, 0);
                   const R = 36;
                   const CIRC = 2 * Math.PI * R;
-                  const GAP_DEG = 1.5;                      // degrees of gap per segment
+                  const GAP_DEG = 0.7;                      // degrees of gap per segment
                   const GAP = (GAP_DEG / 360) * CIRC;       // gap in stroke units
                   let offset = 0;
                   return catCounts.map(({ label, count }) => {
