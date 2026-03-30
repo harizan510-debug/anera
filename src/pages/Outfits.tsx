@@ -860,7 +860,17 @@ export default function Outfits() {
                     style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
                     <img src={pin.imageUrl} className="w-full object-cover"
                       alt={pin.note || 'Inspiration'}
-                      onError={e => { e.currentTarget.style.display = 'none'; }} />
+                      style={{ minHeight: 120 }}
+                      onError={e => {
+                        const el = e.currentTarget;
+                        el.style.display = 'none';
+                        const fallback = el.parentElement?.querySelector('.pin-fallback') as HTMLElement | null;
+                        if (fallback) fallback.style.display = 'flex';
+                      }} />
+                    <div className="pin-fallback hidden flex-col items-center justify-center py-8 px-3 text-center" style={{ background: 'var(--surface)', minHeight: 120 }}>
+                      <span className="text-2xl mb-2">🖼️</span>
+                      <p className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>Image couldn't load</p>
+                    </div>
                     {pin.note && (
                       <div className="px-2 py-1.5">
                         <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{pin.note}</p>
@@ -1133,12 +1143,38 @@ export default function Outfits() {
 
       {/* Add pin */}
       {showAddPin && (
-        <ModalSheet onClose={() => setShowAddPin(false)} title="Pin inspiration">
+        <ModalSheet onClose={() => { setShowAddPin(false); setPinUrl(''); setPinNote(''); }} title="Pin inspiration">
           <div className="space-y-3">
-            <input value={pinUrl} onChange={e => setPinUrl(e.target.value)}
-              placeholder="Paste image URL"
+            {/* Upload from device */}
+            <div>
+              <label className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold cursor-pointer transition-all active:scale-[0.98]"
+                style={{ border: '1.5px dashed rgba(43,43,43,0.2)', color: 'var(--text-secondary)' }}>
+                📷 Upload from device
+                <input type="file" accept="image/*" className="hidden" onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => { if (typeof reader.result === 'string') setPinUrl(reader.result); };
+                  reader.readAsDataURL(file);
+                }} />
+              </label>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px" style={{ background: 'rgba(43,43,43,0.1)' }} />
+              <span className="text-[10px] font-semibold uppercase" style={{ color: 'rgba(43,43,43,0.35)' }}>or</span>
+              <div className="flex-1 h-px" style={{ background: 'rgba(43,43,43,0.1)' }} />
+            </div>
+            <input value={pinUrl.startsWith('data:') ? '✓ Image uploaded' : pinUrl} onChange={e => setPinUrl(e.target.value)}
+              placeholder="Paste direct image URL (.jpg, .png)"
+              readOnly={pinUrl.startsWith('data:')}
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
               style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
+            {pinUrl && (
+              <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid rgba(43,43,43,0.08)', maxHeight: 160 }}>
+                <img src={pinUrl} className="w-full object-cover" style={{ maxHeight: 160 }} alt="Preview"
+                  onError={e => { e.currentTarget.style.display = 'none'; }} />
+              </div>
+            )}
             <input value={pinNote} onChange={e => setPinNote(e.target.value)}
               placeholder="Note (optional)"
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
