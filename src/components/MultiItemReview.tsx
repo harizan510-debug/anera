@@ -46,6 +46,21 @@ const CAT_LABELS: Record<WardrobeItem['category'], string> = {
   belt: 'Belt', hat: 'Hat',
 };
 
+// ── Design tokens ─────────────────────────────────────────────────────────
+const LILAC = '#C8B6FF';
+const LILAC_DARK = '#A78BFA';
+const LILAC_LIGHT = '#EDE7FF';
+const MINT = '#B8F2E6';
+const MINT_DARK = '#2D8B73';
+const BUTTER = '#FFF3B0';
+const BUTTER_DARK = '#92400E';
+const SURFACE = '#FFFFFF';
+const BG = '#FAFAFA';
+const SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
+const SOFT_RED = '#FEE2E2';
+const SOFT_RED_TEXT = '#DC2626';
+const SOFT_RED_BORDER = '#FECACA';
+
 // ── Confidence helpers ──────────────────────────────────────────────────────
 
 function minConfidence(item: DetectedItem): number {
@@ -60,17 +75,14 @@ function avgConfidence(item: DetectedItem): number {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-function cardAccentColor(item: DetectedItem): string {
+function confidenceColor(item: DetectedItem): { bg: string; text: string; dot: string } {
   const mc = minConfidence(item);
-  if (mc >= 0.85) return '#22c55e';
-  if (mc >= 0.6) return '#f59e0b';
-  return '#ef4444';
+  if (mc >= 0.85) return { bg: MINT, text: MINT_DARK, dot: MINT_DARK };
+  if (mc >= 0.6) return { bg: BUTTER, text: BUTTER_DARK, dot: '#D97706' };
+  return { bg: SOFT_RED, text: SOFT_RED_TEXT, dot: SOFT_RED_TEXT };
 }
 
 // ── ConfidenceField: input with confidence-based visual styling ─────────────
-// > 0.85 → normal input + faded green ✓
-// 0.6–0.85 → amber bottom border + amber dot
-// < 0.6 → amber background + red border + "Please confirm" badge
 
 interface ConfidenceFieldProps {
   label: string;
@@ -85,23 +97,26 @@ function ConfidenceField({ label, confidence, children }: ConfidenceFieldProps) 
 
   return (
     <div>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF' }}>
           {label}
         </span>
         {isHigh && (
-          <span style={{ fontSize: 11, color: '#22c55e', opacity: 0.75, fontWeight: 700, lineHeight: 1 }}>✓</span>
+          <span style={{ fontSize: 11, color: MINT_DARK, opacity: 0.85, fontWeight: 700, lineHeight: 1 }}>&#10003;</span>
         )}
         {isMed && (
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#D97706', display: 'inline-block', flexShrink: 0 }} />
         )}
         {isLow && (
-          <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 20, background: '#FEF9C3', color: '#92400E', border: '1px solid #FCD34D', letterSpacing: '0.03em', lineHeight: '1.6' }}>
+          <span style={{
+            fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+            background: BUTTER, color: BUTTER_DARK, border: 'none',
+            letterSpacing: '0.03em', lineHeight: '1.6',
+          }}>
             Please confirm
           </span>
         )}
       </div>
-      {/* Clone children with confidence-derived style injected */}
       <ConfidenceInputWrapper confidence={confidence}>
         {children}
       </ConfidenceInputWrapper>
@@ -117,10 +132,10 @@ function ConfidenceInputWrapper({ confidence, children }: { confidence: number; 
 
   return (
     <div style={{
-      borderRadius: 10,
-      outline: isLow ? '1.5px solid #FCD34D' : undefined,
-      background: isLow ? '#FFFBEB' : undefined,
-      borderBottom: isMed ? '2px solid #f59e0b' : undefined,
+      borderRadius: 12,
+      outline: isLow ? `1.5px solid ${BUTTER}` : undefined,
+      background: isLow ? '#FFFDF5' : undefined,
+      borderBottom: isMed ? '2px solid #D97706' : undefined,
       overflow: 'hidden',
     }}>
       {children}
@@ -131,15 +146,27 @@ function ConfidenceInputWrapper({ confidence, children }: { confidence: number; 
 // ── Shared input style ──────────────────────────────────────────────────────
 
 const inputStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: '1px solid var(--border)',
-  borderRadius: 10,
-  padding: '8px 10px',
+  background: BG,
+  border: '1.5px solid #E5E7EB',
+  borderRadius: 12,
+  padding: '10px 12px',
   fontSize: 13,
-  color: 'var(--text-primary)',
+  color: '#1F2937',
   outline: 'none',
   width: '100%',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
 };
+
+const inputFocusStyle = `
+  .anera-input:focus {
+    border-color: ${LILAC} !important;
+    box-shadow: 0 0 0 3px rgba(200, 182, 255, 0.2) !important;
+  }
+  .anera-select:focus {
+    border-color: ${LILAC} !important;
+    box-shadow: 0 0 0 3px rgba(200, 182, 255, 0.2) !important;
+  }
+`;
 
 const selectStyle: React.CSSProperties = {
   ...inputStyle,
@@ -244,63 +271,77 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
 
   // ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: 'var(--bg)' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: BG }}>
+
+      {/* Inject focus styles */}
+      <style>{inputFocusStyle}</style>
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between px-5 py-3.5 flex-shrink-0"
+        style={{ background: SURFACE, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
         <button onClick={onCancel} className="flex items-center gap-1.5 text-sm"
-          style={{ color: 'var(--text-secondary)' }}>
+          style={{ color: '#9CA3AF' }}>
           <X size={18} /> Cancel
         </button>
-        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <p className="text-sm font-semibold" style={{ color: '#1F2937' }}>
           {editItems.length} item{editItems.length !== 1 ? 's' : ''} detected
         </p>
         <button onClick={handleConfirm} disabled={editItems.length === 0 || saving}
           className="flex items-center gap-1.5 text-sm font-semibold disabled:opacity-40"
-          style={{ color: 'var(--accent)' }}>
+          style={{ color: LILAC_DARK }}>
           <Check size={16} /> {saving ? 'Saving...' : 'Save all'}
         </button>
       </div>
 
       {/* ── Legend ── */}
-      <div className="px-4 pt-2.5 pb-2 flex-shrink-0 flex items-center gap-3 flex-wrap">
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Anera's confidence:</span>
-        {[['#22c55e', '✓ High'], ['#f59e0b', '● Unsure'], ['#ef4444', '● Please check']].map(([color, label]) => (
-          <span key={label} className="flex items-center gap-1 text-xs" style={{ color }}>
-            {label}
-          </span>
-        ))}
+      <div className="px-5 pt-3 pb-2 flex-shrink-0 flex items-center gap-4 flex-wrap">
+        <span className="text-xs font-medium" style={{ color: '#9CA3AF' }}>Confidence:</span>
+        <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: MINT_DARK }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: MINT, border: `1.5px solid ${MINT_DARK}`, display: 'inline-block' }} />
+          High
+        </span>
+        <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#D97706' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: BUTTER, border: '1.5px solid #D97706', display: 'inline-block' }} />
+          Unsure
+        </span>
+        <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: SOFT_RED_TEXT }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: SOFT_RED, border: `1.5px solid ${SOFT_RED_TEXT}`, display: 'inline-block' }} />
+          Check
+        </span>
       </div>
 
       {/* ── Scrollable item list ── */}
-      <div className="flex-1 overflow-y-auto pb-28 px-4 pt-1">
+      <div className="flex-1 overflow-y-auto pb-28 px-4 pt-2">
         {editItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-2xl mb-2">👗</p>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>All items removed. Tap Cancel to go back.</p>
+            <p className="text-2xl mb-3" role="img" aria-label="dress">&#128087;</p>
+            <p className="text-sm" style={{ color: '#9CA3AF' }}>All items removed. Tap Cancel to go back.</p>
           </div>
         )}
 
         {editItems.map((item, idx) => {
           const expanded = isExpanded(item.tempId);
-          const accent = cardAccentColor(item);
+          const conf = confidenceColor(item);
           const pct = Math.round(avgConfidence(item) * 100);
 
           return (
-            <div key={item.tempId} className="mb-3 rounded-2xl overflow-hidden"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}` }}>
+            <div key={item.tempId} className="mb-4 rounded-2xl overflow-hidden"
+              style={{
+                background: SURFACE,
+                boxShadow: SHADOW,
+                border: '1px solid #F3F4F6',
+              }}>
 
               {/* ── Compact row (always visible) ── */}
-              <div className="flex gap-3 p-3 items-start">
-                {/* Crop thumbnail — or add-image prompt when missing */}
-                <div className="flex-shrink-0 rounded-xl overflow-hidden"
-                  style={{ width: 64, height: 64, background: '#F2F2F4' }}>
+              <div className="flex gap-3.5 p-3.5 items-start">
+                {/* Crop thumbnail */}
+                <div className="flex-shrink-0 rounded-2xl overflow-hidden"
+                  style={{ width: 68, height: 68, background: BG, border: '1px solid #F3F4F6' }}>
                   {(item.croppedImageUrl || item.originalImageUrl) ? (
                     <img
                       src={useOriginal[item.tempId] ? (item.bgRemovedImageUrl || item.originalImageUrl || item.croppedImageUrl) : (item.croppedImageUrl || item.originalImageUrl)}
                       alt={item.subcategory}
-                      className="w-full h-full object-contain p-1"
+                      className="w-full h-full object-contain p-1.5"
                     />
                   ) : (
                     <button
@@ -309,35 +350,35 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                         if (!expandedIds.has(item.tempId)) toggleExpand(item.tempId);
                       }}
                       className="w-full h-full flex flex-col items-center justify-center gap-0.5"
-                      style={{ color: 'var(--accent)' }}
+                      style={{ color: LILAC_DARK }}
                       title="Add image"
                     >
-                      <ImagePlus size={18} />
-                      <span style={{ fontSize: 8, fontWeight: 600 }}>Add</span>
+                      <ImagePlus size={20} />
+                      <span style={{ fontSize: 9, fontWeight: 600 }}>Add</span>
                     </button>
                   )}
                 </div>
 
                 {/* Summary text */}
                 <div className="flex-1 min-w-0 py-0.5">
-                  <p className="text-sm font-semibold capitalize leading-tight mb-1"
-                    style={{ color: 'var(--text-primary)' }}>
+                  <p className="text-sm font-semibold capitalize leading-tight mb-1.5"
+                    style={{ color: '#1F2937' }}>
                     {item.color} {item.subcategory}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    <span className="text-[11px] px-2 py-0.5 rounded-full"
-                      style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}>
+                    <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
+                      style={{ background: LILAC_LIGHT, color: LILAC_DARK }}>
                       {CAT_LABELS[item.category]}
                     </span>
                     {item.brand && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full"
-                        style={{ background: 'var(--bg)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                      <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
+                        style={{ background: BG, color: '#6B7280', border: '1px solid #E5E7EB' }}>
                         {item.brand}
                       </span>
                     )}
                     {item.tags.slice(0, 2).map(t => (
-                      <span key={t} className="text-[11px] px-2 py-0.5 rounded-full"
-                        style={{ background: 'var(--bg)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                      <span key={t} className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
+                        style={{ background: MINT, color: MINT_DARK }}>
                         {t}
                       </span>
                     ))}
@@ -345,14 +386,18 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                 </div>
 
                 {/* Confidence % + Edit toggle */}
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0 pt-0.5">
-                  <span className="text-[11px] font-semibold" style={{ color: accent }}>
-                    {pct}% sure
+                <div className="flex flex-col items-end gap-2 flex-shrink-0 pt-0.5">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: conf.bg, color: conf.text }}>
+                    {pct}%
                   </span>
                   <button
                     onClick={() => toggleExpand(item.tempId)}
-                    className="flex items-center gap-1 text-xs font-medium"
-                    style={{ color: expanded ? 'var(--text-secondary)' : 'var(--accent)' }}
+                    className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-all"
+                    style={{
+                      color: expanded ? '#6B7280' : LILAC_DARK,
+                      background: expanded ? '#F3F4F6' : LILAC_LIGHT,
+                    }}
                   >
                     {expanded ? <><ChevronUp size={13} /> Done</> : <><Pencil size={12} /> Edit</>}
                   </button>
@@ -361,33 +406,35 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
 
               {/* ── Expanded edit form ── */}
               {expanded && (
-                <div className="px-3 pb-3 pt-1 space-y-3" style={{ borderTop: '1px solid var(--border)' }}>
+                <div className="px-4 pb-4 pt-2 space-y-3.5" style={{ borderTop: '1px solid #F3F4F6', background: '#FDFCFF' }}>
 
-                  {/* Cropped vs No-crop toggle — only show when bg-removed full image is available */}
+                  {/* Cropped vs No-crop toggle */}
                   {item.croppedImageUrl && (item.bgRemovedImageUrl || item.originalImageUrl) && (
                     <div>
-                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: 8 }}>
                         Photo
                       </span>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setUseOriginal(p => ({ ...p, [item.tempId]: false }))}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                           style={{
-                            background: !useOriginal[item.tempId] ? 'var(--accent)' : 'var(--bg)',
-                            color: !useOriginal[item.tempId] ? 'white' : 'var(--text-secondary)',
-                            border: `1px solid ${!useOriginal[item.tempId] ? 'var(--accent)' : 'var(--border)'}`,
+                            background: !useOriginal[item.tempId] ? LILAC : BG,
+                            color: !useOriginal[item.tempId] ? '#1F2937' : '#9CA3AF',
+                            border: `1.5px solid ${!useOriginal[item.tempId] ? LILAC_DARK : '#E5E7EB'}`,
+                            boxShadow: !useOriginal[item.tempId] ? '0 2px 8px rgba(200,182,255,0.3)' : 'none',
                           }}
                         >
                           <Crop size={13} /> Cropped
                         </button>
                         <button
                           onClick={() => setUseOriginal(p => ({ ...p, [item.tempId]: true }))}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                           style={{
-                            background: useOriginal[item.tempId] ? 'var(--accent)' : 'var(--bg)',
-                            color: useOriginal[item.tempId] ? 'white' : 'var(--text-secondary)',
-                            border: `1px solid ${useOriginal[item.tempId] ? 'var(--accent)' : 'var(--border)'}`,
+                            background: useOriginal[item.tempId] ? LILAC : BG,
+                            color: useOriginal[item.tempId] ? '#1F2937' : '#9CA3AF',
+                            border: `1.5px solid ${useOriginal[item.tempId] ? LILAC_DARK : '#E5E7EB'}`,
+                            boxShadow: useOriginal[item.tempId] ? '0 2px 8px rgba(200,182,255,0.3)' : 'none',
                           }}
                         >
                           <Maximize size={13} /> No crop
@@ -399,7 +446,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                   {/* Image upload (shown when no image or user clicks Add) */}
                   {(!item.croppedImageUrl && !item.originalImageUrl) || showImageInput[item.tempId] ? (
                     <div>
-                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: 8 }}>
                         Product image
                       </span>
                       <div className="flex gap-2">
@@ -424,7 +471,8 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                               }
                             }
                           }}
-                          placeholder="Paste image URL…"
+                          placeholder="Paste image URL..."
+                          className="anera-input"
                           style={{ ...inputStyle, flex: 1 }}
                         />
                         <input
@@ -443,14 +491,14 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                         />
                         <button
                           onClick={() => imgFileRefs.current[item.tempId]?.click()}
-                          className="px-3 py-2 rounded-xl text-xs font-medium flex-shrink-0"
-                          style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}
+                          className="px-4 py-2.5 rounded-full text-xs font-semibold flex-shrink-0 transition-all"
+                          style={{ background: LILAC_LIGHT, color: LILAC_DARK, border: `1px solid ${LILAC}` }}
                         >
                           Upload
                         </button>
                       </div>
-                      <p className="text-[10px] mt-1" style={{ color: 'var(--text-secondary)' }}>
-                        Tip: Right-click the product image on the website → "Copy image address" → paste here
+                      <p className="text-[10px] mt-1.5" style={{ color: '#9CA3AF' }}>
+                        Tip: Right-click the product image on the website, "Copy image address", paste here
                       </p>
                     </div>
                   ) : null}
@@ -460,17 +508,19 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                     <input
                       value={item.subcategory}
                       onChange={e => update(item.tempId, 'subcategory', e.target.value)}
-                      placeholder="e.g. blazer, straight-leg jeans…"
+                      placeholder="e.g. blazer, straight-leg jeans..."
+                      className="anera-input"
                       style={inputStyle}
                     />
                   </ConfidenceField>
 
                   {/* Category + Colour */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <ConfidenceField label="Category" confidence={item.categoryConfidence}>
                       <select
                         value={item.category}
                         onChange={e => update(item.tempId, 'category', e.target.value as WardrobeItem['category'])}
+                        className="anera-select"
                         style={selectStyle}
                       >
                         {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
@@ -481,6 +531,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                         value={item.color}
                         onChange={e => update(item.tempId, 'color', e.target.value)}
                         placeholder="e.g. navy"
+                        className="anera-input"
                         style={inputStyle}
                       />
                     </ConfidenceField>
@@ -494,23 +545,24 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                     <input
                       value={item.brand}
                       onChange={e => update(item.tempId, 'brand', e.target.value)}
-                      placeholder="e.g. Zara, Nike… (optional)"
+                      placeholder="e.g. Zara, Nike... (optional)"
+                      className="anera-input"
                       style={inputStyle}
                     />
                   </ConfidenceField>
 
                   {/* Tags */}
                   <div>
-                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: 8 }}>
                       Style tags
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {item.tags.map(tag => (
-                        <span key={tag} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs"
-                          style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}>
+                        <span key={tag} className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
+                          style={{ background: MINT, color: MINT_DARK }}>
                           {tag}
-                          <button onClick={() => removeTag(item.tempId, tag)} className="flex-shrink-0 leading-none">
-                            <X size={10} />
+                          <button onClick={() => removeTag(item.tempId, tag)} className="flex-shrink-0 leading-none ml-0.5 opacity-70 hover:opacity-100 transition-opacity">
+                            <X size={11} />
                           </button>
                         </span>
                       ))}
@@ -520,8 +572,8 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitTag(item.tempId); } }}
                         onBlur={() => commitTag(item.tempId)}
                         placeholder="+ tag"
-                        className="px-2.5 py-1 rounded-full text-xs outline-none"
-                        style={{ background: 'var(--bg)', border: '1px dashed var(--border)', color: 'var(--text-secondary)', width: 68 }}
+                        className="anera-input px-3 py-1.5 rounded-full text-xs outline-none"
+                        style={{ background: BG, border: `1.5px dashed ${LILAC}`, color: LILAC_DARK, width: 72, fontSize: 12 }}
                       />
                     </div>
                   </div>
@@ -529,14 +581,14 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
               )}
 
               {/* ── Card footer ── */}
-              <div className="px-3 py-2 flex items-center justify-between"
-                style={{ borderTop: '1px solid var(--border)' }}>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <div className="px-4 py-2.5 flex items-center justify-between"
+                style={{ borderTop: '1px solid #F3F4F6', background: BG }}>
+                <span className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
                   Item {idx + 1} of {editItems.length}
                 </span>
                 <button onClick={() => removeItem(item.tempId)}
-                  className="flex items-center gap-1 text-xs"
-                  style={{ color: '#ef4444' }}>
+                  className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-all"
+                  style={{ color: SOFT_RED_TEXT, background: SOFT_RED, border: `1px solid ${SOFT_RED_BORDER}` }}>
                   <X size={12} /> Remove
                 </button>
               </div>
@@ -546,13 +598,18 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
       </div>
 
       {/* ── Sticky CTA ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-[61] px-4 pb-8 pt-3 safe-area-bottom"
-        style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-[61] px-5 pb-8 pt-4 safe-area-bottom"
+        style={{ background: `linear-gradient(to top, ${BG} 70%, transparent)` }}>
         <button
           onClick={handleConfirm}
           disabled={editItems.length === 0 || saving}
-          className="w-full py-4 rounded-2xl font-medium text-white flex items-center justify-center gap-2 disabled:opacity-40"
-          style={{ background: 'var(--accent)' }}
+          className="w-full py-4 rounded-full font-semibold flex items-center justify-center gap-2.5 disabled:opacity-40 transition-all"
+          style={{
+            background: LILAC,
+            color: '#1F2937',
+            boxShadow: '0 4px 20px rgba(200,182,255,0.4)',
+            fontSize: 15,
+          }}
         >
           <Check size={18} />
           {saving ? 'Saving...' : `Add ${editItems.length} item${editItems.length !== 1 ? 's' : ''} to wardrobe`}
