@@ -140,29 +140,37 @@ export default function Outfits() {
   const [folderColor,     setFolderColor]      = useState(EVENT_COLORS[0]);
 
   // One-time migration: reconcile wear counts from existing outfit logs
+  // Reads directly from localStorage to avoid any hook timing issues
   useEffect(() => {
-    const MIGRATION_KEY = 'anera_wear_count_migrated';
+    const MIGRATION_KEY = 'anera_wear_count_migrated_v2';
     if (localStorage.getItem(MIGRATION_KEY)) return;
-    if (logs.length === 0) return;
-    // Count how many times each item appears across all logs
-    const counts: Record<string, number> = {};
-    logs.forEach(log => log.itemIds.forEach(id => { counts[id] = (counts[id] || 0) + 1; }));
-    // Update wardrobe items
-    const updated = wardrobeItems.map(item => {
-      const loggedCount = counts[item.id] || 0;
-      if (loggedCount > item.wearCount) {
-        return { ...item, wearCount: loggedCount, lastWorn: item.lastWorn || new Date().toISOString() };
-      }
-      return item;
-    });
-    if (JSON.stringify(updated) !== JSON.stringify(wardrobeItems)) {
+    try {
+      const rawLogs = localStorage.getItem('anera_outfit_logs');
+      const savedLogs: OutfitLog[] = rawLogs ? JSON.parse(rawLogs) : [];
+      if (savedLogs.length === 0) return;
+      // Count how many times each item appears across all logs
+      const counts: Record<string, number> = {};
+      savedLogs.forEach(log => log.itemIds.forEach(id => { counts[id] = (counts[id] || 0) + 1; }));
+      // Update wardrobe items via store
       const user = loadUser();
-      user.wardrobeItems = updated;
-      saveUser(user);
-      window.location.reload(); // reload to pick up updated data
-    }
+      let changed = false;
+      user.wardrobeItems.forEach(item => {
+        const loggedCount = counts[item.id] || 0;
+        if (loggedCount > item.wearCount) {
+          item.wearCount = loggedCount;
+          item.lastWorn = item.lastWorn || new Date().toISOString();
+          changed = true;
+        }
+      });
+      if (changed) {
+        saveUser(user);
+        localStorage.setItem(MIGRATION_KEY, '1');
+        window.location.reload();
+        return;
+      }
+    } catch { /* ignore parse errors */ }
     localStorage.setItem(MIGRATION_KEY, '1');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Weather on mount — try geolocation → profile city → IP geolocation
   useEffect(() => {
