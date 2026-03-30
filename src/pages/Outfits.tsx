@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import {
   Sparkles, CloudSun, Loader2, ChevronLeft, ChevronRight,
   Plus, X, MapPin, FolderOpen, MessageCircle, Check, CalendarDays,
-  Wind, Sun, Umbrella, Thermometer,
+  Wind, Sun, Umbrella, Thermometer, Pencil, Plane,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser, genId } from '../store';
@@ -20,7 +20,8 @@ type OutfitsTab = 'outfits' | 'trips' | 'moodboard';
 
 interface OutfitLog  { id: string; date: string; itemIds: string[]; occasion: string; }
 interface CalEvent   { id: string; date: string; title: string; color: string; source: 'manual' | 'google'; }
-interface Trip       { id: string; destination: string; startDate: string; endDate: string; }
+type TripSeason = 'Spring' | 'Summer' | 'Autumn' | 'Winter';
+interface Trip       { id: string; destination: string; startDate: string; endDate: string; season?: TripSeason; }
 interface MoodPin    { id: string; imageUrl: string; folderId: string; note: string; }
 interface MoodFolder { id: string; name: string; color: string; }
 interface GeneratedOutfit { items: WardrobeItem[]; note: string; }
@@ -33,7 +34,10 @@ const MONTH_NAMES = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
 ];
-const EVENT_COLORS = ['#6B7C4E','#B8F2E6','#FFF3B0','#6B7C4E','#DB2777','#059669'];
+const EVENT_COLORS = ['#6B7C4E','#B8F2E6','#FFF3B0','#3B82F6','#DB2777','#059669','#7C3AED','#9F1239'];
+const TRIP_SEASONS: TripSeason[] = ['Spring', 'Summer', 'Autumn', 'Winter'];
+const SEASON_EMOJI: Record<TripSeason, string> = { Spring: '🌸', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
+const TRIP_CAL_COLOR = '#818CF8'; // indigo for trip indicators on calendar
 const DEFAULT_FOLDERS: MoodFolder[] = [
   { id: 'f_inspo',   name: 'Inspo',   color: '#6B7C4E' },
   { id: 'f_minimal', name: 'Minimal', color: '#B8F2E6' },
@@ -120,6 +124,8 @@ export default function Outfits() {
   const [tripDest,    setTripDest]    = useState('');
   const [tripStart,   setTripStart]   = useState('');
   const [tripEnd,     setTripEnd]     = useState('');
+  const [tripSeason,  setTripSeason]  = useState<TripSeason | ''>('');
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
   // Moodboard
   const [folders,         setFolders]         = useLS<MoodFolder[]>('anera_mood_folders', DEFAULT_FOLDERS);
@@ -195,6 +201,10 @@ export default function Outfits() {
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const firstDow    = new Date(calYear, calMonth, 1).getDay();
   const today       = todayStr();
+
+  // Trip lookup for calendar
+  const tripOnDate = (ds: string): Trip | undefined =>
+    trips.find(t => ds >= t.startDate && ds <= t.endDate);
 
   const prevMonth = () => calMonth === 0
     ? (setCalYear(y => y - 1), setCalMonth(11))
@@ -299,9 +309,32 @@ export default function Outfits() {
   // Trips
   const addTrip = () => {
     if (!tripDest.trim() || !tripStart || !tripEnd) return;
-    setTrips(prev => [...prev, { id: genId(), destination: tripDest.trim(), startDate: tripStart, endDate: tripEnd }]);
-    setTripDest(''); setTripStart(''); setTripEnd('');
+    setTrips(prev => [...prev, { id: genId(), destination: tripDest.trim(), startDate: tripStart, endDate: tripEnd, season: tripSeason || undefined }]);
+    setTripDest(''); setTripStart(''); setTripEnd(''); setTripSeason('');
     setShowAddTrip(false);
+  };
+
+  const openEditTrip = (trip: Trip) => {
+    setEditingTrip(trip);
+    setTripDest(trip.destination);
+    setTripStart(trip.startDate);
+    setTripEnd(trip.endDate);
+    setTripSeason(trip.season || '');
+  };
+
+  const saveEditTrip = () => {
+    if (!editingTrip || !tripDest.trim() || !tripStart || !tripEnd) return;
+    setTrips(prev => prev.map(t => t.id === editingTrip.id
+      ? { ...t, destination: tripDest.trim(), startDate: tripStart, endDate: tripEnd, season: tripSeason || undefined }
+      : t
+    ));
+    setEditingTrip(null);
+    setTripDest(''); setTripStart(''); setTripEnd(''); setTripSeason('');
+  };
+
+  const closeEditTrip = () => {
+    setEditingTrip(null);
+    setTripDest(''); setTripStart(''); setTripEnd(''); setTripSeason('');
   };
 
   const tripItems = (trip: Trip): WardrobeItem[] => {
@@ -602,21 +635,23 @@ export default function Outfits() {
                 const isToday = ds === today;
                 const hasLog  = logs.some(l => l.date === ds);
                 const evts    = calEvents.filter(e => e.date === ds);
+                const inTrip  = tripOnDate(ds);
                 return (
                   <button
                     key={d}
                     onClick={() => openDay(ds)}
                     className="flex flex-col items-center py-1.5 rounded-full transition-all active:scale-95"
                     style={{
-                      background: isToday ? '#6B7C4E' : 'transparent',
+                      background: isToday ? '#6B7C4E' : inTrip ? 'rgba(129,140,248,0.12)' : 'transparent',
                     }}
                   >
                     <span className={`text-[11px] leading-none mb-0.5 ${isToday ? 'font-semibold' : 'font-medium'}`}
-                      style={{ color: isToday ? '#FFFFFF' : '#2B2B2B' }}>
+                      style={{ color: isToday ? '#FFFFFF' : inTrip ? '#6366F1' : '#2B2B2B' }}>
                       {d}
                     </span>
                     <div className="flex gap-0.5 justify-center min-h-[6px]">
                       {hasLog && <span className="w-1.5 h-1.5 rounded-full" style={{ background: isToday ? 'white' : '#34D399' }} />}
+                      {inTrip && !isToday && <span className="w-1.5 h-1.5 rounded-full" style={{ background: TRIP_CAL_COLOR }} />}
                       {evts.slice(0, 2).map(e => (
                         <span key={e.id} className="w-1.5 h-1.5 rounded-full" style={{ background: isToday ? 'white' : e.color }} />
                       ))}
@@ -627,7 +662,7 @@ export default function Outfits() {
             </div>
 
             {/* Legend */}
-            <div className="flex gap-4 px-4 pb-3 pt-2" style={{ borderTop: '1px solid rgba(43,43,43,0.06)' }}>
+            <div className="flex gap-4 px-4 pb-3 pt-2 flex-wrap" style={{ borderTop: '1px solid rgba(43,43,43,0.06)' }}>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: '#34D399' }} />
                 <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Outfit logged</span>
@@ -635,6 +670,10 @@ export default function Outfits() {
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: '#6B7C4E' }} />
                 <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Event</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ background: TRIP_CAL_COLOR }} />
+                <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Trip</span>
               </div>
             </div>
           </div>
@@ -719,19 +758,31 @@ export default function Outfits() {
               <div key={trip.id} className="rounded-2xl overflow-hidden"
                 style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <div className="px-4 pt-4 pb-3 flex items-start justify-between">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <MapPin size={13} style={{ color: '#6B7C4E' }} />
-                      <p className="font-semibold text-sm" style={{ color: '#2B2B2B', letterSpacing: '-0.2px' }}>{trip.destination}</p>
+                      <p className="font-semibold text-sm truncate" style={{ color: '#2B2B2B', letterSpacing: '-0.2px' }}>{trip.destination}</p>
+                      {trip.season && (
+                        <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(129,140,248,0.12)', color: '#6366F1' }}>
+                          {SEASON_EMOJI[trip.season]} {trip.season}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs pl-5" style={{ color: 'var(--text-secondary)' }}>
                       {fmtShortDate(trip.startDate)} – {fmtShortDate(trip.endDate)}
                     </p>
                   </div>
-                  <button onClick={() => setTrips(prev => prev.filter(t => t.id !== trip.id))}
-                    className="p-1" style={{ color: 'var(--text-secondary)' }}>
-                    <X size={14} />
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    <button onClick={() => openEditTrip(trip)}
+                      className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => setTrips(prev => prev.filter(t => t.id !== trip.id))}
+                      className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
                 {items.length > 0 ? (
                   <div className="px-4 pb-4">
@@ -847,6 +898,18 @@ export default function Outfits() {
           onClose={() => setSelectedDay(null)}
           title={new Date(selectedDay + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         >
+          {/* Trip banner */}
+          {selectedDay && tripOnDate(selectedDay) && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4"
+              style={{ background: 'rgba(129,140,248,0.12)' }}>
+              <Plane size={14} style={{ color: '#6366F1' }} />
+              <span className="text-xs font-semibold" style={{ color: '#6366F1' }}>
+                {tripOnDate(selectedDay)!.destination}
+                {tripOnDate(selectedDay)!.season && ` · ${SEASON_EMOJI[tripOnDate(selectedDay)!.season!]} ${tripOnDate(selectedDay)!.season}`}
+              </span>
+            </div>
+          )}
+
           {/* Outfit log */}
           <div className="mb-5">
             <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Outfit</p>
@@ -982,7 +1045,7 @@ export default function Outfits() {
 
       {/* Add trip */}
       {showAddTrip && (
-        <ModalSheet onClose={() => setShowAddTrip(false)} title="Add trip">
+        <ModalSheet onClose={() => { setShowAddTrip(false); setTripDest(''); setTripStart(''); setTripEnd(''); setTripSeason(''); }} title="Add trip">
           <div className="space-y-3">
             <input value={tripDest} onChange={e => setTripDest(e.target.value)}
               placeholder="Destination (e.g. New York)"
@@ -1002,8 +1065,68 @@ export default function Outfits() {
                   style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
               </div>
             </div>
+            <div>
+              <label className="font-bold uppercase block mb-1.5" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Season</label>
+              <div className="flex gap-2">
+                {TRIP_SEASONS.map(s => (
+                  <button key={s} onClick={() => setTripSeason(tripSeason === s ? '' : s)}
+                    className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all active:scale-[0.97]"
+                    style={{
+                      background: tripSeason === s ? '#6366F1' : 'var(--surface)',
+                      color: tripSeason === s ? '#FFFFFF' : 'var(--text-secondary)',
+                      border: `1px solid ${tripSeason === s ? '#6366F1' : 'rgba(43,43,43,0.12)'}`,
+                    }}>
+                    {SEASON_EMOJI[s]} {s}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button onClick={addTrip} className="w-full py-3.5 rounded-full font-semibold transition-all active:scale-[0.98]"
               style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Save trip</button>
+          </div>
+        </ModalSheet>
+      )}
+
+      {/* Edit trip */}
+      {editingTrip && (
+        <ModalSheet onClose={closeEditTrip} title="Edit trip">
+          <div className="space-y-3">
+            <input value={tripDest} onChange={e => setTripDest(e.target.value)}
+              placeholder="Destination (e.g. New York)"
+              className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+              style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="font-bold uppercase block mb-1" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>From</label>
+                <input type="date" value={tripStart} onChange={e => setTripStart(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
+              </div>
+              <div className="flex-1">
+                <label className="font-bold uppercase block mb-1" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>To</label>
+                <input type="date" value={tripEnd} onChange={e => setTripEnd(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ border: '1px solid rgba(43,43,43,0.12)', background: 'var(--surface)' }} />
+              </div>
+            </div>
+            <div>
+              <label className="font-bold uppercase block mb-1.5" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Season</label>
+              <div className="flex gap-2">
+                {TRIP_SEASONS.map(s => (
+                  <button key={s} onClick={() => setTripSeason(tripSeason === s ? '' : s)}
+                    className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all active:scale-[0.97]"
+                    style={{
+                      background: tripSeason === s ? '#6366F1' : 'var(--surface)',
+                      color: tripSeason === s ? '#FFFFFF' : 'var(--text-secondary)',
+                      border: `1px solid ${tripSeason === s ? '#6366F1' : 'rgba(43,43,43,0.12)'}`,
+                    }}>
+                    {SEASON_EMOJI[s]} {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button onClick={saveEditTrip} className="w-full py-3.5 rounded-full font-semibold transition-all active:scale-[0.98]"
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Save changes</button>
           </div>
         </ModalSheet>
       )}
