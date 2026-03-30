@@ -32,9 +32,9 @@ const MONTH_NAMES = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
 ];
-const EVENT_COLORS = ['#C8B6FF','#B8F2E6','#FFF3B0','#A78BFA','#DB2777','#059669'];
+const EVENT_COLORS = ['#6B7C4E','#B8F2E6','#FFF3B0','#6B7C4E','#DB2777','#059669'];
 const DEFAULT_FOLDERS: MoodFolder[] = [
-  { id: 'f_inspo',   name: 'Inspo',   color: '#C8B6FF' },
+  { id: 'f_inspo',   name: 'Inspo',   color: '#6B7C4E' },
   { id: 'f_minimal', name: 'Minimal', color: '#B8F2E6' },
   { id: 'f_bold',    name: 'Bold',    color: '#FFF3B0' },
 ];
@@ -293,7 +293,7 @@ export default function Outfits() {
   // ── JSX ──────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="pb-4">
+    <div className="pb-4" style={{ background: '#F5F0FF', minHeight: '100vh' }}>
       <div className="px-4 flex items-start justify-between mb-5 pt-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#2B2B2B', letterSpacing: '-0.5px' }}>
@@ -313,9 +313,9 @@ export default function Outfits() {
             onClick={() => setTab(t)}
             className="flex-1 py-2.5 rounded-full text-xs font-semibold transition-all"
             style={{
-              background: tab === t ? '#C8B6FF' : 'transparent',
-              color:      tab === t ? '#2B2B2B' : '#2B2B2B',
-              border:     `1.5px solid ${tab === t ? '#C8B6FF' : 'rgba(43,43,43,0.12)'}`,
+              background: tab === t ? '#6B7C4E' : 'transparent',
+              color:      tab === t ? '#FFFFFF' : '#2B2B2B',
+              border:     `1.5px solid ${tab === t ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
             }}
           >
             {t === 'outfits' ? 'Outfits' : t === 'trips' ? 'My Trips' : 'Moodboard'}
@@ -339,7 +339,7 @@ export default function Outfits() {
                   {weatherInfo.temp}°C · {weatherInfo.description}
                   {weatherCity && <span className="font-normal" style={{ color: 'var(--text-secondary)' }}> in {weatherCity}</span>}
                 </p>
-                {weatherInfo.isRainy && <p className="text-xs mt-0.5" style={{ color: '#A78BFA' }}>Rain forecast -- grab an umbrella!</p>}
+                {weatherInfo.isRainy && <p className="text-xs mt-0.5" style={{ color: '#6B7C4E' }}>Rain forecast -- grab an umbrella!</p>}
               </div>
             </div>
           )}
@@ -351,7 +351,7 @@ export default function Outfits() {
                 <ChevronLeft size={16} />
               </button>
               <div className="flex items-center gap-2">
-                <CalendarDays size={14} style={{ color: 'var(--accent)' }} />
+                <CalendarDays size={14} style={{ color: '#6B7C4E' }} />
                 <span className="text-sm font-semibold" style={{ color: '#2B2B2B', letterSpacing: '-0.3px' }}>
                   {MONTH_NAMES[calMonth]} {calYear}
                 </span>
@@ -383,11 +383,11 @@ export default function Outfits() {
                     onClick={() => openDay(ds)}
                     className="flex flex-col items-center py-1.5 rounded-full transition-all active:scale-95"
                     style={{
-                      background: isToday ? '#C8B6FF' : 'transparent',
+                      background: isToday ? '#6B7C4E' : 'transparent',
                     }}
                   >
                     <span className={`text-[11px] leading-none mb-0.5 ${isToday ? 'font-semibold' : 'font-medium'}`}
-                      style={{ color: isToday ? '#2B2B2B' : '#2B2B2B' }}>
+                      style={{ color: isToday ? '#FFFFFF' : '#2B2B2B' }}>
                       {d}
                     </span>
                     <div className="flex gap-0.5 justify-center min-h-[6px]">
@@ -408,7 +408,7 @@ export default function Outfits() {
                 <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Outfit logged</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)' }} />
+                <span className="w-2 h-2 rounded-full" style={{ background: '#6B7C4E' }} />
                 <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Event</span>
               </div>
             </div>
@@ -465,7 +465,7 @@ export default function Outfits() {
                       <>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                           style={{ background: 'var(--accent-light)' }}>
-                          <Plus size={16} style={{ color: 'var(--accent)' }} />
+                          <Plus size={16} style={{ color: '#6B7C4E' }} />
                         </div>
                         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add {label}</p>
                       </>
@@ -482,9 +482,9 @@ export default function Outfits() {
                 <button key={occ} onClick={() => setOccasion(occ)}
                   className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                   style={{
-                    background: occasion === occ ? '#C8B6FF' : 'transparent',
-                    color:      occasion === occ ? '#2B2B2B' : '#2B2B2B',
-                    border:     `1.5px solid ${occasion === occ ? '#C8B6FF' : 'rgba(43,43,43,0.12)'}`,
+                    background: occasion === occ ? '#6B7C4E' : 'transparent',
+                    color:      occasion === occ ? '#FFFFFF' : '#2B2B2B',
+                    border:     `1.5px solid ${occasion === occ ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
                   }}>{occ}</button>
               ))}
             </div>
@@ -498,9 +498,9 @@ export default function Outfits() {
                 <button key={w} onClick={() => setWeather(w)}
                   className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                   style={{
-                    background: weather === w ? '#C8B6FF' : 'transparent',
-                    color:      weather === w ? '#2B2B2B' : '#2B2B2B',
-                    border:     `1.5px solid ${weather === w ? '#C8B6FF' : 'rgba(43,43,43,0.12)'}`,
+                    background: weather === w ? '#6B7C4E' : 'transparent',
+                    color:      weather === w ? '#FFFFFF' : '#2B2B2B',
+                    border:     `1.5px solid ${weather === w ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
                   }}>{w}</button>
               ))}
             </div>
@@ -508,7 +508,7 @@ export default function Outfits() {
             {/* Dress me button */}
             <button onClick={generate} disabled={loading}
               className="w-full py-3.5 rounded-full font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-              style={{ background: '#C8B6FF', color: '#2B2B2B' }}>
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>
               {loading
                 ? <><Loader2 size={18} className="animate-spin" /> Styling…</>
                 : <><Sparkles size={18} /> {outfits.length > 0 ? 'Dress me again' : 'Dress me'}</>}
@@ -560,7 +560,7 @@ export default function Outfits() {
           {/* Ask Anera CTA */}
           <button onClick={() => navigate('/ask')}
             className="w-full py-3.5 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-[0.98]"
-            style={{ background: '#EDE9FE', color: '#2B2B2B', border: '1.5px solid #C8B6FF' }}>
+            style={{ background: '#F0F4E8', color: '#2B2B2B', border: '1.5px solid #6B7C4E' }}>
             <MessageCircle size={16} /> Ask Anera anything about style
           </button>
         </div>
@@ -575,7 +575,7 @@ export default function Outfits() {
             </p>
             <button onClick={() => setShowAddTrip(true)}
               className="flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-[0.97]"
-              style={{ background: '#C8B6FF', color: '#2B2B2B' }}>
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>
               <Plus size={12} /> Add trip
             </button>
           </div>
@@ -597,7 +597,7 @@ export default function Outfits() {
                 <div className="px-4 pt-4 pb-3 flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <MapPin size={13} style={{ color: 'var(--accent)' }} />
+                      <MapPin size={13} style={{ color: '#6B7C4E' }} />
                       <p className="font-semibold text-sm" style={{ color: '#2B2B2B', letterSpacing: '-0.2px' }}>{trip.destination}</p>
                     </div>
                     <p className="text-xs pl-5" style={{ color: 'var(--text-secondary)' }}>
@@ -642,9 +642,9 @@ export default function Outfits() {
             <button onClick={() => setActiveFolder('all')}
               className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all"
               style={{
-                background: activeFolder === 'all' ? '#C8B6FF' : 'transparent',
-                color:      activeFolder === 'all' ? '#2B2B2B' : '#2B2B2B',
-                border:     `1.5px solid ${activeFolder === 'all' ? '#C8B6FF' : 'rgba(43,43,43,0.12)'}`,
+                background: activeFolder === 'all' ? '#6B7C4E' : 'transparent',
+                color:      activeFolder === 'all' ? '#FFFFFF' : '#2B2B2B',
+                border:     `1.5px solid ${activeFolder === 'all' ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
               }}>All</button>
 
             {folders.map(f => (
@@ -674,7 +674,7 @@ export default function Outfits() {
               <p className="text-xs mb-4" style={{ color: 'rgba(43,43,43,0.45)' }}>Save outfit inspiration to your moodboard</p>
               <button onClick={() => setShowAddPin(true)}
                 className="px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-[0.97]"
-                style={{ background: '#C8B6FF', color: '#2B2B2B' }}>Add your first pin</button>
+                style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Add your first pin</button>
             </div>
           ) : (
             <div className="columns-2 gap-3">
@@ -709,7 +709,7 @@ export default function Outfits() {
           {/* FAB */}
           <button onClick={() => setShowAddPin(true)}
             className="fixed z-40 w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95"
-            style={{ bottom: '88px', right: '16px', background: '#C8B6FF', color: '#2B2B2B', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+            style={{ bottom: '88px', right: '16px', background: '#6B7C4E', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <Plus size={20} />
           </button>
         </div>
@@ -760,7 +760,7 @@ export default function Outfits() {
                     <span className="flex-1 text-xs capitalize text-left" style={{ color: 'var(--text-primary)' }}>
                       {item.color} {item.subcategory}
                     </span>
-                    {dayItemIds.includes(item.id) && <Check size={14} style={{ color: 'var(--accent)' }} />}
+                    {dayItemIds.includes(item.id) && <Check size={14} style={{ color: '#6B7C4E' }} />}
                   </button>
                 ))}
               </div>
@@ -772,7 +772,7 @@ export default function Outfits() {
             <div className="flex items-center justify-between mb-2">
               <p className="font-bold uppercase" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Events</p>
               <button onClick={() => setShowAddEvent(p => !p)}
-                className="flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--accent)' }}>
+                className="flex items-center gap-1 text-xs font-medium" style={{ color: '#6B7C4E' }}>
                 <Plus size={12} /> Add
               </button>
             </div>
@@ -804,7 +804,7 @@ export default function Outfits() {
                   ))}
                 </div>
                 <button onClick={addCalEvent} className="w-full py-2.5 rounded-full text-sm font-semibold transition-all active:scale-[0.98]"
-                  style={{ background: '#C8B6FF', color: '#2B2B2B' }}>Save event</button>
+                  style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Save event</button>
                 <button
                   onClick={() => alert('Google Calendar sync coming soon! 🗓️')}
                   className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
@@ -821,7 +821,7 @@ export default function Outfits() {
             )}
           </div>
           <button onClick={saveDayLog} className="w-full py-3.5 rounded-full font-semibold transition-all active:scale-[0.98]"
-            style={{ background: '#C8B6FF', color: '#2B2B2B' }}>Save</button>
+            style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Save</button>
         </ModalSheet>
       )}
 
@@ -879,7 +879,7 @@ export default function Outfits() {
               </div>
             </div>
             <button onClick={addTrip} className="w-full py-3.5 rounded-full font-semibold transition-all active:scale-[0.98]"
-              style={{ background: '#C8B6FF', color: '#2B2B2B' }}>Save trip</button>
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Save trip</button>
           </div>
         </ModalSheet>
       )}
@@ -911,7 +911,7 @@ export default function Outfits() {
               </div>
             </div>
             <button onClick={addPin} className="w-full py-3.5 rounded-full font-semibold transition-all active:scale-[0.98]"
-              style={{ background: '#C8B6FF', color: '#2B2B2B' }}>Pin it</button>
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Pin it</button>
           </div>
         </ModalSheet>
       )}
@@ -934,7 +934,7 @@ export default function Outfits() {
               ))}
             </div>
             <button onClick={addFolder} className="w-full py-3.5 rounded-full font-semibold transition-all active:scale-[0.98]"
-              style={{ background: '#C8B6FF', color: '#2B2B2B' }}>Create folder</button>
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>Create folder</button>
           </div>
         </ModalSheet>
       )}
