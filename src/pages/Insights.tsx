@@ -153,11 +153,33 @@ export default function Insights() {
     const unwornCount = items.filter(i => i.wearCount === 0).length;
     const dormantCount = items.filter(i => daysSince(i.lastWorn) > 90).length;
 
-    const categories = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery'] as const;
+    const categories = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'] as const;
+    // Matching colors from Wardrobe page CATEGORY_TAG_COLORS
+    const CAT_CHART_COLORS: Record<string, string> = {
+      top:       '#C8B6FF',  // lilac
+      bottom:    '#93C5FD',  // sky blue
+      footwear:  '#A7F3D0',  // green
+      outerwear: '#FECACA',  // rose
+      dress:     '#F9A8D4',  // pink
+      bag:       '#FDE68A',  // amber
+      jewellery: '#FCD34D',  // gold
+      belt:      '#D4C5A9',  // tan
+      hat:       '#C4B5FD',  // violet
+    };
+    const CAT_CHART_TEXT: Record<string, string> = {
+      top:       '#5B21B6',
+      bottom:    '#1E40AF',
+      footwear:  '#065F46',
+      outerwear: '#991B1B',
+      dress:     '#9D174D',
+      bag:       '#92400E',
+      jewellery: '#78350F',
+      belt:      '#5C4A26',
+      hat:       '#4C1D95',
+    };
     const catCounts  = categories
       .map(c => ({ label: c, count: items.filter(i => i.category === c).length }))
       .filter(c => c.count > 0);
-    const maxCount = Math.max(...catCounts.map(c => c.count));
 
     const withCPW = items
       .filter(i => i.estimatedValue > 0 && i.wearCount > 0)
@@ -237,23 +259,65 @@ export default function Insights() {
           </p>
         </div>
 
-        {/* Category breakdown */}
-        <div className="rounded-2xl px-5 py-4 mb-4"
+        {/* Category breakdown — doughnut chart */}
+        <div className="rounded-2xl px-5 py-5 mb-4"
           style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
-          <p className="text-sm mb-4" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
-          <div className="space-y-3">
-            {catCounts.map(({ label, count }) => (
-              <div key={label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="capitalize" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.4px' }}>{label}s</span>
-                  <span className="text-xs font-medium" style={{ color: '#2B2B2B' }}>{count}</span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ background: '#F3F0FF' }}>
-                  <div className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${(count / maxCount) * 100}%`, background: LILAC }} />
-                </div>
+          <p className="text-sm mb-5" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
+
+          <div className="flex items-center gap-6">
+            {/* SVG doughnut */}
+            <div className="flex-shrink-0 relative" style={{ width: 140, height: 140 }}>
+              <svg viewBox="0 0 100 100" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                {(() => {
+                  const total = catCounts.reduce((s, c) => s + c.count, 0);
+                  const R = 38;
+                  const CIRC = 2 * Math.PI * R;
+                  const GAP = 2; // gap in dasharray units
+                  let offset = 0;
+                  return catCounts.map(({ label, count }) => {
+                    const pct = count / total;
+                    const len = pct * CIRC - GAP;
+                    const el = (
+                      <circle
+                        key={label}
+                        cx="50" cy="50" r={R}
+                        fill="none"
+                        stroke={CAT_CHART_COLORS[label] || '#E5E7EB'}
+                        strokeWidth="12"
+                        strokeDasharray={`${Math.max(len, 0)} ${CIRC}`}
+                        strokeDashoffset={-offset}
+                        strokeLinecap="round"
+                        style={{ transition: 'stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease' }}
+                      />
+                    );
+                    offset += pct * CIRC;
+                    return el;
+                  });
+                })()}
+              </svg>
+              {/* Center label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xl font-bold" style={{ color: '#2B2B2B', lineHeight: 1 }}>{items.length}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: 'rgba(43,43,43,0.4)' }}>items</span>
               </div>
-            ))}
+            </div>
+
+            {/* Legend */}
+            <div className="flex-1 space-y-2">
+              {catCounts.map(({ label, count }) => {
+                const pct = Math.round((count / items.length) * 100);
+                return (
+                  <div key={label} className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: CAT_CHART_COLORS[label] }} />
+                    <span className="capitalize text-xs flex-1" style={{ color: '#2B2B2B' }}>{label}s</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: CAT_CHART_COLORS[label], color: CAT_CHART_TEXT[label] }}>
+                      {count} <span className="font-normal">({pct}%)</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
