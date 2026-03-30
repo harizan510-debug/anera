@@ -344,6 +344,110 @@ export default function Outfits() {
             </div>
           )}
 
+          {/* ── Occasion + Weather + Dress me ── */}
+          <div>
+            {/* Occasion */}
+            <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Occasion</p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {OCCASIONS.map(occ => (
+                <button key={occ} onClick={() => setOccasion(occ)}
+                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
+                  style={{
+                    background: occasion === occ ? '#6B7C4E' : 'transparent',
+                    color:      occasion === occ ? '#FFFFFF' : '#2B2B2B',
+                    border:     `1.5px solid ${occasion === occ ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
+                  }}>{occ}</button>
+              ))}
+            </div>
+
+            {/* Weather chips */}
+            <p className="font-bold uppercase mb-2 flex items-center gap-1.5" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
+              <CloudSun size={11} /> Weather
+            </p>
+            <div className="flex flex-wrap gap-2 mb-5">
+              {WEATHERS.map(w => (
+                <button key={w} onClick={() => setWeather(w)}
+                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
+                  style={{
+                    background: weather === w ? '#6B7C4E' : 'transparent',
+                    color:      weather === w ? '#FFFFFF' : '#2B2B2B',
+                    border:     `1.5px solid ${weather === w ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
+                  }}>{w}</button>
+              ))}
+            </div>
+
+            {/* Dress me button */}
+            <button onClick={generate} disabled={loading}
+              className="w-full py-3.5 rounded-full font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>
+              {loading
+                ? <><Loader2 size={18} className="animate-spin" /> Styling…</>
+                : <><Sparkles size={18} /> {outfits.length > 0 ? 'Dress me again' : 'Dress me'}</>}
+            </button>
+          </div>
+
+          {/* ── Dress me slots ── */}
+          <div>
+            <p className="font-bold uppercase mb-3" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
+              Build your outfit
+            </p>
+
+            <div className="flex gap-4 mb-4 items-start">
+              {/* Avatar silhouette */}
+              <div className="flex-shrink-0 w-[60px] flex justify-center pt-1">
+                <svg viewBox="0 0 60 128" fill="none" className="w-full h-auto">
+                  <circle cx="30" cy="13" r="11" fill="#E5E7EB" />
+                  <path d="M12 42 Q18 28 30 28 Q42 28 48 42 L52 84 L8 84 Z" fill="#D1D5DB" />
+                  <path d="M12 42 L4 72 L13 74 L17 48" fill="#D1D5DB" />
+                  <path d="M48 42 L56 72 L47 74 L43 48" fill="#D1D5DB" />
+                  <rect x="9"  y="84" width="18" height="40" rx="5" fill="#9CA3AF" />
+                  <rect x="33" y="84" width="18" height="40" rx="5" fill="#9CA3AF" />
+                </svg>
+              </div>
+
+              {/* Slots */}
+              <div className="flex-1 space-y-2">
+                {slotRows.map(({ slot, label, item }) => (
+                  <div
+                    key={slot}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer active:scale-[0.98] transition-transform"
+                    style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
+                    onClick={() => setPickingSlot(slot)}
+                  >
+                    {item ? (
+                      <>
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                          {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-sm opacity-40">👕</div>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium capitalize truncate" style={{ color: 'var(--text-primary)' }}>
+                            {item.color} {item.subcategory}
+                          </p>
+                          <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{label}</p>
+                        </div>
+                        <button
+                          onClick={e => { e.stopPropagation(); clearSlot(slot); }}
+                          className="p-1 rounded-full flex-shrink-0"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          <X size={12} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'var(--accent-light)' }}>
+                          <Plus size={16} style={{ color: '#6B7C4E' }} />
+                        </div>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add {label}</p>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* ── Calendar ── */}
           <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(43,43,43,0.06)' }}>
@@ -412,107 +516,6 @@ export default function Outfits() {
                 <span className="text-[10px] font-medium" style={{ color: 'rgba(43,43,43,0.45)' }}>Event</span>
               </div>
             </div>
-          </div>
-
-          {/* ── Dress me ── */}
-          <div>
-            <p className="font-bold uppercase mb-3" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
-              Dress me
-            </p>
-
-            <div className="flex gap-4 mb-4 items-start">
-              {/* Avatar silhouette */}
-              <div className="flex-shrink-0 w-[60px] flex justify-center pt-1">
-                <svg viewBox="0 0 60 128" fill="none" className="w-full h-auto">
-                  <circle cx="30" cy="13" r="11" fill="#E5E7EB" />
-                  <path d="M12 42 Q18 28 30 28 Q42 28 48 42 L52 84 L8 84 Z" fill="#D1D5DB" />
-                  <path d="M12 42 L4 72 L13 74 L17 48" fill="#D1D5DB" />
-                  <path d="M48 42 L56 72 L47 74 L43 48" fill="#D1D5DB" />
-                  <rect x="9"  y="84" width="18" height="40" rx="5" fill="#9CA3AF" />
-                  <rect x="33" y="84" width="18" height="40" rx="5" fill="#9CA3AF" />
-                </svg>
-              </div>
-
-              {/* Slots */}
-              <div className="flex-1 space-y-2">
-                {slotRows.map(({ slot, label, item }) => (
-                  <div
-                    key={slot}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer active:scale-[0.98] transition-transform"
-                    style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
-                    onClick={() => setPickingSlot(slot)}
-                  >
-                    {item ? (
-                      <>
-                        <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                          {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-sm opacity-40">👕</div>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium capitalize truncate" style={{ color: 'var(--text-primary)' }}>
-                            {item.color} {item.subcategory}
-                          </p>
-                          <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{label}</p>
-                        </div>
-                        <button
-                          onClick={e => { e.stopPropagation(); clearSlot(slot); }}
-                          className="p-1 rounded-full flex-shrink-0"
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          <X size={12} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: 'var(--accent-light)' }}>
-                          <Plus size={16} style={{ color: '#6B7C4E' }} />
-                        </div>
-                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add {label}</p>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Occasion */}
-            <p className="font-bold uppercase mb-2" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>Occasion</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {OCCASIONS.map(occ => (
-                <button key={occ} onClick={() => setOccasion(occ)}
-                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
-                  style={{
-                    background: occasion === occ ? '#6B7C4E' : 'transparent',
-                    color:      occasion === occ ? '#FFFFFF' : '#2B2B2B',
-                    border:     `1.5px solid ${occasion === occ ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
-                  }}>{occ}</button>
-              ))}
-            </div>
-
-            {/* Weather */}
-            <p className="font-bold uppercase mb-2 flex items-center gap-1.5" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', letterSpacing: '0.8px' }}>
-              <CloudSun size={11} /> Weather
-            </p>
-            <div className="flex flex-wrap gap-2 mb-5">
-              {WEATHERS.map(w => (
-                <button key={w} onClick={() => setWeather(w)}
-                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
-                  style={{
-                    background: weather === w ? '#6B7C4E' : 'transparent',
-                    color:      weather === w ? '#FFFFFF' : '#2B2B2B',
-                    border:     `1.5px solid ${weather === w ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
-                  }}>{w}</button>
-              ))}
-            </div>
-
-            {/* Dress me button */}
-            <button onClick={generate} disabled={loading}
-              className="w-full py-3.5 rounded-full font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>
-              {loading
-                ? <><Loader2 size={18} className="animate-spin" /> Styling…</>
-                : <><Sparkles size={18} /> {outfits.length > 0 ? 'Dress me again' : 'Dress me'}</>}
-            </button>
           </div>
 
           {genError && (
