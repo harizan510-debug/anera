@@ -119,38 +119,39 @@ function inferLifetime(name: string, p: number): number {
 const REC = {
   'no brainer': {
     label: 'No brainer',
-    color: '#15803D',
-    bg: 'linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%)',
-    glow: '0 0 48px rgba(22,163,74,0.28)',
-    border: '#86EFAC',
+    color: '#6D28D9',
+    bg: 'linear-gradient(135deg, #EDE9FE 0%, #C8B6FF 100%)',
+    glow: '0 0 48px rgba(167,139,250,0.3)',
+    border: '#C8B6FF',
   },
   'why not': {
     label: 'Why not',
-    color: '#1D4ED8',
-    bg: 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)',
-    glow: '0 0 48px rgba(29,78,216,0.2)',
-    border: '#93C5FD',
+    color: '#047857',
+    bg: 'linear-gradient(135deg, #D1FAE5 0%, #B8F2E6 100%)',
+    glow: '0 0 48px rgba(184,242,230,0.3)',
+    border: '#B8F2E6',
   },
   'maybe consider if you need it': {
     label: 'Maybe consider\nif you need it',
-    color: '#C2410C',
-    bg: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
-    glow: '0 0 48px rgba(217,119,6,0.24)',
-    border: '#FCD34D',
+    color: '#92400E',
+    bg: 'linear-gradient(135deg, #FFF3B0 0%, #FDE68A 100%)',
+    glow: '0 0 48px rgba(255,243,176,0.35)',
+    border: '#FFF3B0',
   },
 } as const;
 
 const PLASTIC = {
-  'plastic-free': { label: 'Plastic-free', dot: '#15803D' },
-  'low':          { label: 'Low impact',   dot: '#CA8A04' },
-  'medium':       { label: 'Medium impact',dot: '#EA580C' },
+  'plastic-free': { label: 'Plastic-free', dot: '#A78BFA' },
+  'low':          { label: 'Low impact',   dot: '#6EE7B7' },
+  'medium':       { label: 'Medium impact',dot: '#FDE68A' },
   'high':         { label: 'High impact',  dot: '#DC2626' },
 } as const;
 
 const fieldStyle = {
-  background: 'var(--surface)',
-  border: '1px solid rgba(43,43,43,0.12)',
-  color: 'var(--text-primary)',
+  background: '#FFFFFF',
+  border: '1px solid rgba(43,43,43,0.08)',
+  color: '#2B2B2B',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
 } as const;
 
 const labelStyle = {
@@ -380,9 +381,10 @@ export default function Purchase() {
                 onClick={() => setMethod(id)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                 style={{
-                  background: active ? 'var(--accent)' : 'transparent',
-                  border: active ? '1px solid var(--accent)' : '1px solid rgba(43,43,43,0.12)',
-                  color: active ? '#fff' : 'var(--text-secondary)',
+                  background: active ? '#C8B6FF' : '#FFFFFF',
+                  border: active ? '1px solid #C8B6FF' : '1px solid rgba(43,43,43,0.08)',
+                  color: active ? '#2B2B2B' : 'var(--text-secondary)',
+                  boxShadow: active ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
                 }}
               >
                 <Icon size={14} />
@@ -398,9 +400,10 @@ export default function Purchase() {
             onClick={() => (method === 'photo' ? photoRef : scanRef).current?.click()}
             className="w-full rounded-2xl cursor-pointer mb-5 overflow-hidden relative flex items-center justify-center"
             style={{
-              border: imagePreview ? 'none' : '1.5px dashed rgba(43,43,43,0.12)',
-              background: imagePreview ? 'transparent' : 'var(--surface)',
+              border: imagePreview ? 'none' : '1.5px dashed rgba(200,182,255,0.5)',
+              background: imagePreview ? 'transparent' : '#FFFFFF',
               minHeight: '200px',
+              boxShadow: imagePreview ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
             }}
           >
             {imagePreview ? (
@@ -421,10 +424,10 @@ export default function Purchase() {
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 py-10">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: '#EDE9FE' }}>
                   {method === 'scan'
-                    ? <ScanLine size={24} style={{ color: 'var(--accent)' }} />
-                    : <Upload   size={24} style={{ color: 'var(--accent)' }} />
+                    ? <ScanLine size={24} style={{ color: '#A78BFA' }} />
+                    : <Upload   size={24} style={{ color: '#A78BFA' }} />
                   }
                 </div>
                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -455,7 +458,7 @@ export default function Purchase() {
                 Product URL
               </label>
               {urlDetecting && (
-                <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+                <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#A78BFA' }}>
                   <Loader2 size={10} className="animate-spin" /> Detecting name, price, fabric…
                 </span>
               )}
@@ -481,7 +484,7 @@ export default function Purchase() {
                 <button
                   onClick={() => detectFromUrl(link)}
                   className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
+                  style={{ background: '#EDE9FE', color: '#A78BFA' }}
                 >
                   Retry
                 </button>
@@ -489,8 +492,8 @@ export default function Purchase() {
             )}
             {urlDetecting && (
               <div className="mt-2 px-1">
-                <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--accent-light)' }}>
-                  <div className="h-full rounded-full animate-pulse" style={{ background: 'var(--accent)', width: '60%' }} />
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: '#EDE9FE' }}>
+                  <div className="h-full rounded-full animate-pulse" style={{ background: '#C8B6FF', width: '60%' }} />
                 </div>
               </div>
             )}
@@ -558,7 +561,7 @@ export default function Purchase() {
               Fabric composition
             </label>
             {fabricLoading && (
-              <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--accent)' }}>
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: '#A78BFA' }}>
                 <Loader2 size={10} className="animate-spin" /> Detecting…
               </span>
             )}
@@ -592,7 +595,7 @@ export default function Purchase() {
             />
             {fabricLoading && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Loader2 size={14} className="animate-spin" style={{ color: 'var(--accent)' }} />
+                <Loader2 size={14} className="animate-spin" style={{ color: '#A78BFA' }} />
               </div>
             )}
           </div>
@@ -621,8 +624,8 @@ export default function Purchase() {
         <button
           onClick={analyse}
           disabled={loading}
-          className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2"
-          style={{ background: 'var(--accent)' }}
+          className="w-full py-4 rounded-full font-semibold flex items-center justify-center gap-2"
+          style={{ background: '#C8B6FF', color: '#2B2B2B' }}
         >
           {loading
             ? <><Loader2 size={18} className="animate-spin" />Analysing…</>
@@ -653,8 +656,9 @@ export default function Purchase() {
         <div
           className="w-full rounded-2xl overflow-hidden flex items-center justify-center"
           style={{
-            background: analysis.imageUrl ? 'transparent' : '#F8F8F8',
-            border: analysis.imageUrl ? 'none' : '1px solid rgba(43,43,43,0.06)',
+            background: analysis.imageUrl ? 'transparent' : '#FFFFFF',
+            border: analysis.imageUrl ? 'none' : '1px solid rgba(0,0,0,0.04)',
+            boxShadow: analysis.imageUrl ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
             minHeight: '220px',
           }}
         >
@@ -667,8 +671,8 @@ export default function Purchase() {
             />
           ) : (
             <div className="flex flex-col items-center gap-3 py-14">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
-                <ShoppingBag size={28} style={{ color: 'var(--accent)' }} />
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: '#EDE9FE' }}>
+                <ShoppingBag size={28} style={{ color: '#A78BFA' }} />
               </div>
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{analysis.itemName}</p>
             </div>
@@ -720,7 +724,7 @@ export default function Purchase() {
           <div
             key={stat.label}
             className="rounded-2xl px-3 py-4 text-center"
-            style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}
+            style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
           >
             <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
             <p className="text-[11px] font-semibold mt-0.5 uppercase" style={{ color: 'rgba(43,43,43,0.45)', letterSpacing: '0.3px' }}>{stat.label}</p>
@@ -730,7 +734,7 @@ export default function Purchase() {
 
       {/* ── 4. Plastic impact bar ── */}
       <div className="px-4 mb-5">
-        <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+        <div className="rounded-2xl px-4 py-4" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <div className="flex items-center gap-2 mb-3">
             <Leaf size={14} style={{ color: '#16A34A' }} />
             <span className="text-xs font-semibold" style={{ color: '#2B2B2B' }}>Plastic impact</span>
@@ -766,14 +770,14 @@ export default function Purchase() {
 
       {/* ── 5. Investment insight ── */}
       <div className="px-4 mb-5">
-        <div className="rounded-2xl px-4 py-4" style={{ background: '#F0FDF4', border: '1px solid rgba(43,43,43,0.06)' }}>
+        <div className="rounded-2xl px-4 py-4" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#DCFCE7' }}>
-              <TrendingUp size={15} style={{ color: '#15803D' }} />
+            <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#EDE9FE' }}>
+              <TrendingUp size={15} style={{ color: '#A78BFA' }} />
             </div>
             <div>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#15803D' }}>Investment insight</p>
-              <p className="text-xs leading-relaxed" style={{ color: '#166534' }}>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#A78BFA' }}>Investment insight</p>
+              <p className="text-xs leading-relaxed" style={{ color: '#2B2B2B' }}>
                 If invested instead, this{' '}
                 <span className="font-semibold">{analysis.currency}{analysis.price}</span>{' '}
                 could grow to approximately{' '}
@@ -787,7 +791,7 @@ export default function Purchase() {
 
       {/* ── 6. Reasoning ── */}
       <div className="px-4 mb-6">
-        <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.06)' }}>
+        <div className="rounded-2xl px-4 py-4" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <p className="text-sm leading-relaxed" style={{ color: '#2B2B2B' }}>{analysis.reasoning}</p>
         </div>
       </div>
@@ -796,20 +800,21 @@ export default function Purchase() {
       <div className="px-4 flex gap-3">
         <button
           onClick={() => setWished(v => !v)}
-          className="flex-1 py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+          className="flex-1 py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all"
           style={{
-            background: wished ? '#FEE2E2' : 'var(--surface)',
-            border: `1px solid ${wished ? '#FECACA' : 'rgba(43,43,43,0.12)'}`,
-            color: wished ? '#DC2626' : '#2B2B2B',
+            background: wished ? '#EDE9FE' : '#FFFFFF',
+            border: `1px solid ${wished ? '#C8B6FF' : 'rgba(0,0,0,0.08)'}`,
+            color: wished ? '#A78BFA' : '#2B2B2B',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
           }}
         >
-          <Heart size={15} fill={wished ? '#DC2626' : 'none'} strokeWidth={wished ? 0 : 2} />
-          {wished ? 'Saved ✓' : 'Save to wishlist'}
+          <Heart size={15} fill={wished ? '#A78BFA' : 'none'} strokeWidth={wished ? 0 : 2} />
+          {wished ? 'Saved' : 'Save to wishlist'}
         </button>
         <button
           onClick={reset}
-          className="flex-1 py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
-          style={{ background: 'var(--surface)', border: '1px solid rgba(43,43,43,0.12)', color: '#2B2B2B' }}
+          className="flex-1 py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2"
+          style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#2B2B2B', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
         >
           <RefreshCw size={15} />
           Compare another
