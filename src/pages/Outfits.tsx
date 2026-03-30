@@ -6,7 +6,7 @@ import {
   Wind, Sun, Umbrella, Thermometer, Pencil, Plane,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUser, genId } from '../store';
+import { useUser, genId, incrementWearCount } from '../store';
 import type { WardrobeItem } from '../types';
 import { generateOutfitRecommendations } from '../api';
 import { hasClaudeKey } from '../apiHelper';
@@ -223,6 +223,12 @@ export default function Outfits() {
 
   const saveDayLog = () => {
     if (!selectedDay) return;
+    // Find which items are newly added (not in previous log for this day)
+    const prevLog = logs.find(l => l.date === selectedDay);
+    const prevIds = new Set(prevLog?.itemIds || []);
+    const newIds = dayItemIds.filter(id => !prevIds.has(id));
+    // Increment wear count for newly logged items
+    newIds.forEach(id => incrementWearCount(id));
     setLogs(prev => {
       const rest = prev.filter(l => l.date !== selectedDay);
       return dayItemIds.length === 0
