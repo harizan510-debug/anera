@@ -80,7 +80,7 @@ export default function Social() {
   };
 
   return (
-    <div className="pb-4">
+    <div className="pb-4" style={{ background: '#FAFAFA', minHeight: '100%' }}>
       {/* Header */}
       <div className="px-4 pt-4 pb-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
         <div>
@@ -90,13 +90,13 @@ export default function Social() {
         {session ? (
           <button onClick={() => setShowNewPost(true)}
             className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--accent)', color: 'white' }}>
+            style={{ background: '#C8B6FF', color: '#1F2937' }}>
             <Plus size={18} />
           </button>
         ) : (
           <button onClick={() => setShowAuth(true)}
-            className="px-4 py-2 rounded-full text-xs font-medium text-white"
-            style={{ background: 'var(--accent)' }}>
+            className="px-4 py-2 rounded-full text-xs font-medium"
+            style={{ background: '#C8B6FF', color: '#1F2937' }}>
             Sign in
           </button>
         )}
@@ -113,13 +113,13 @@ export default function Social() {
           <p className="font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>No OOTDs yet</p>
           <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>Be the first to share your outfit of the day!</p>
           <button onClick={() => session ? setShowNewPost(true) : setShowAuth(true)}
-            className="px-6 py-3 rounded-2xl text-sm font-medium text-white"
-            style={{ background: 'var(--accent)' }}>
+            className="px-6 py-3 rounded-full text-sm font-medium"
+            style={{ background: '#C8B6FF', color: '#1F2937' }}>
             Post your OOTD
           </button>
         </div>
       ) : (
-        <div>
+        <div className="pt-4" style={{ background: '#FAFAFA' }}>
           {posts.map(post => (
             <PostCard key={post.id} post={post}
               onLike={() => toggleLike(post)}
@@ -154,7 +154,7 @@ function PostCard({ post, onLike, onComment, onShare }: {
     .filter(h => h.handle);
 
   return (
-    <div className="mb-0.5" style={{ borderBottom: '1px solid var(--border)' }}>
+    <div className="mx-4 mb-4 rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
       {/* Author row */}
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-semibold"
@@ -165,7 +165,7 @@ function PostCard({ post, onLike, onComment, onShare }: {
           <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             {profile?.display_name ?? profile?.username ?? 'Anonymous'}
           </p>
-          {post.occasion && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{post.occasion}</p>}
+          {post.occasion && <span className="text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-0.5" style={{ background: '#FFF3B0', color: '#374151' }}>{post.occasion}</span>}
         </div>
         {/* Social handle badges */}
         {socialLinks.length > 0 && (
@@ -202,8 +202,8 @@ function PostCard({ post, onLike, onComment, onShare }: {
       <div className="px-4 py-3">
         <div className="flex items-center gap-4 mb-2">
           <button onClick={onLike} className="flex items-center gap-1.5 transition-transform active:scale-90">
-            <Heart size={22} fill={post.user_has_liked ? '#E84393' : 'none'}
-              stroke={post.user_has_liked ? '#E84393' : 'var(--text-primary)'} strokeWidth={1.8} />
+            <Heart size={22} fill={post.user_has_liked ? '#C8B6FF' : 'none'}
+              stroke={post.user_has_liked ? '#C8B6FF' : 'var(--text-primary)'} strokeWidth={1.8} />
             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{post.likes_count ?? 0}</span>
           </button>
           <button onClick={onComment} className="flex items-center gap-1.5">
@@ -212,7 +212,7 @@ function PostCard({ post, onLike, onComment, onShare }: {
           </button>
           {typeof navigator.share === 'function' && (
             <button onClick={onShare} className="ml-auto px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: 'var(--accent-light)', color: 'var(--accent-dark)' }}>
+              style={{ background: '#C8B6FF', color: '#1F2937' }}>
               Share
             </button>
           )}
@@ -224,7 +224,7 @@ function PostCard({ post, onLike, onComment, onShare }: {
         )}
         {post.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
-            {post.tags.map(tag => <span key={tag} className="text-xs" style={{ color: 'var(--accent)' }}>#{tag}</span>)}
+            {post.tags.map((tag, i) => <span key={tag} className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: i % 2 === 0 ? '#B8F2E6' : '#FFF3B0', color: '#374151' }}>#{tag}</span>)}
           </div>
         )}
         <p className="text-xs mt-1.5" style={{ color: 'var(--text-secondary)' }}>{formatTimeAgo(post.created_at)}</p>
@@ -301,9 +301,9 @@ function NewPostModal({ userId, onClose, onPosted }: {
             <button key={type} onClick={() => { setAcceptType(type === 'image' ? 'image/*' : 'video/*'); }}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
               style={{
-                background: mediaType === type ? 'var(--accent)' : 'var(--bg)',
-                color: mediaType === type ? 'white' : 'var(--text-secondary)',
-                border: `1px solid ${mediaType === type ? 'var(--accent)' : 'var(--border)'}`,
+                background: mediaType === type ? '#C8B6FF' : 'var(--bg)',
+                color: mediaType === type ? '#1F2937' : 'var(--text-secondary)',
+                border: `1px solid ${mediaType === type ? '#C8B6FF' : 'var(--border)'}`,
               }}>
               {type === 'image' ? <Image size={15} /> : <Video size={15} />}
               {type === 'image' ? 'Photo' : 'Video'}
@@ -352,8 +352,8 @@ function NewPostModal({ userId, onClose, onPosted }: {
         {error && <div className="rounded-xl px-4 py-3 mb-3 text-sm" style={{ background: '#FEE2E2', color: '#DC2626' }}>{error}</div>}
 
         <button onClick={submit} disabled={loading || !media}
-          className="w-full py-4 rounded-2xl font-medium text-white flex items-center justify-center gap-2 disabled:opacity-40"
-          style={{ background: 'var(--accent)' }}>
+          className="w-full py-4 rounded-full font-medium flex items-center justify-center gap-2 disabled:opacity-40"
+          style={{ background: '#C8B6FF', color: '#1F2937' }}>
           {loading ? <Loader2 size={18} className="animate-spin" /> : <><Send size={16} /> Post OOTD</>}
         </button>
       </div>
@@ -426,8 +426,8 @@ function CommentsModal({ postId, currentUserId, onClose, onAuthRequired }: {
             onKeyDown={e => e.key === 'Enter' && addComment()} />
           <button onClick={addComment} disabled={!newComment.trim() || loading}
             className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-40"
-            style={{ background: 'var(--accent)' }}>
-            {loading ? <Loader2 size={15} color="white" className="animate-spin" /> : <Send size={15} color="white" />}
+            style={{ background: '#C8B6FF' }}>
+            {loading ? <Loader2 size={15} color="#1F2937" className="animate-spin" /> : <Send size={15} color="#1F2937" />}
           </button>
         </div>
       </div>

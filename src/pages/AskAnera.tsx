@@ -79,7 +79,7 @@ export default function AskAnera() {
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 'calc(100dvh - 80px)' }}>
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
+      <div className="px-4 pt-4 pb-3 flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB', background: '#FAFAFA' }}>
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -107,11 +107,10 @@ export default function AskAnera() {
               <button
                 key={prompt}
                 onClick={() => send(prompt)}
-                className="px-3 py-1.5 rounded-full text-xs"
+                className="px-3 py-1.5 rounded-full text-xs font-medium"
                 style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-secondary)',
+                  background: '#B8F2E6',
+                  color: '#374151',
                 }}
               >
                 {prompt}
@@ -137,8 +136,8 @@ export default function AskAnera() {
               className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
               style={
                 msg.role === 'user'
-                  ? { background: 'var(--accent)', color: 'white', borderBottomRightRadius: '6px' }
-                  : { background: 'var(--surface)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderBottomLeftRadius: '6px' }
+                  ? { background: '#C8B6FF', color: '#1F2937', borderBottomRightRadius: '6px' }
+                  : { background: '#FFFFFF', color: 'var(--text-primary)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderBottomLeftRadius: '6px' }
               }
             >
               {msg.content}
@@ -156,7 +155,7 @@ export default function AskAnera() {
             </div>
             <div
               className="px-4 py-3 rounded-2xl"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
             >
               <div className="flex gap-1 items-center">
                 <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: '0ms' }} />
@@ -173,7 +172,7 @@ export default function AskAnera() {
       {/* Input */}
       <div
         className="flex-shrink-0 px-4 py-3 flex gap-3 items-end"
-        style={{ borderTop: '1px solid var(--border)', background: 'var(--bg)' }}
+        style={{ borderTop: '1px solid #E5E7EB', background: '#FAFAFA' }}
       >
         <textarea
           ref={inputRef}
@@ -189,19 +188,20 @@ export default function AskAnera() {
           rows={1}
           className="flex-1 resize-none outline-none text-sm px-4 py-3 rounded-2xl"
           style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
+            background: '#FFFFFF',
+            border: '1.5px solid #E5E7EB',
             color: 'var(--text-primary)',
             maxHeight: '120px',
+            borderRadius: '20px',
           }}
         />
         <button
           onClick={() => send(input)}
           disabled={!input.trim() || loading}
           className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40"
-          style={{ background: 'var(--accent)' }}
+          style={{ background: '#C8B6FF' }}
         >
-          {loading ? <Loader2 size={17} color="white" className="animate-spin" /> : <Send size={17} color="white" />}
+          {loading ? <Loader2 size={17} color="#1F2937" className="animate-spin" /> : <Send size={17} color="#1F2937" />}
         </button>
       </div>
     </div>
