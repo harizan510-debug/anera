@@ -3,16 +3,28 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #FFFFFF;
+  --bg: #FAFAFA;
   --surface: #FFFFFF;
-  --border: rgba(43, 43, 43, 0.08);
+  --border: rgba(43, 43, 43, 0.06);
   --text-primary: #2B2B2B;
-  --text-secondary: rgba(43, 43, 43, 0.5);
-  --radius: 12px;
+  --text-secondary: rgba(43, 43, 43, 0.45);
+  --radius: 16px;
+  --radius-lg: 20px;
   --radius-full: 9999px;
-  --accent: #5B9BD5;
-  --accent-dark: #2F72B3;
-  --accent-light: #E1EFFA;
+
+  /* Accent palette */
+  --accent: #C8B6FF;          /* soft lilac — primary */
+  --accent-dark: #A78BFA;     /* deeper lilac for hover */
+  --accent-light: #EDE9FE;    /* very light lilac bg */
+  --mint: #B8F2E6;            /* mint green — secondary */
+  --mint-dark: #6EE7B7;       /* deeper mint */
+  --yellow: #FFF3B0;          /* butter yellow — highlight */
+  --yellow-dark: #FDE68A;     /* deeper yellow */
+
+  /* Soft shadow */
+  --shadow: 0 4px 20px rgba(0,0,0,0.05);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
 }
 
 * {
@@ -45,15 +57,15 @@ input, textarea, button { font-family: inherit; }
 /* ── Basics horizontal scroll — thin visible track ───────── */
 .basics-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(43,43,43,0.15) transparent;
+  scrollbar-color: rgba(200,182,255,0.3) transparent;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
 .basics-scroll > * { scroll-snap-align: start; }
 .basics-scroll::-webkit-scrollbar { height: 3px; }
-.basics-scroll::-webkit-scrollbar-track { background: rgba(43,43,43,0.06); border-radius: 3px; margin: 0 4px; }
-.basics-scroll::-webkit-scrollbar-thumb { background: rgba(43,43,43,0.18); border-radius: 3px; }
-.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(43,43,43,0.3); }
+.basics-scroll::-webkit-scrollbar-track { background: rgba(200,182,255,0.1); border-radius: 3px; margin: 0 4px; }
+.basics-scroll::-webkit-scrollbar-thumb { background: rgba(200,182,255,0.35); border-radius: 3px; }
+.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(200,182,255,0.5); }
 
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes badge-pop {
@@ -68,11 +80,64 @@ input, textarea, button { font-family: inherit; }
   to   { transform: translateY(0px);  opacity: 1; }
 }
 
-/* ── Hausfinde-inspired label style ───────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Label style ───────────────────────────────────────────── */
 .label-style {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
+}
+
+/* ── Anera card ────────────────────────────────────────────── */
+.anera-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+/* ── Anera button (primary lilac pill) ─────────────────────── */
+.anera-btn {
+  background: var(--accent);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  padding: 12px 28px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.anera-btn:hover {
+  background: var(--accent-dark);
+  box-shadow: var(--shadow);
+}
+.anera-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Anera tag (mint/yellow pill) ──────────────────────────── */
+.anera-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--mint);
+  color: #1a5c4a;
+}
+.anera-tag--yellow {
+  background: var(--yellow);
+  color: #7c6a1a;
+}
+.anera-tag--lilac {
+  background: var(--accent-light);
+  color: #5b21b6;
 }
