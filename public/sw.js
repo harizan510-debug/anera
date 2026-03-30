@@ -1,5 +1,5 @@
 // Anera Service Worker — Cache-first for assets, network-first for API
-const CACHE_NAME = 'anera-v2';
+const CACHE_NAME = 'anera-v3';
 const PRECACHE_URLS = ['/', '/index.html'];
 
 // Install: precache shell
