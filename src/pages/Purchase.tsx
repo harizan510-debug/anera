@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Upload, Link2, ScanLine, Pencil,
   TrendingUp, Leaf, Heart, RefreshCw,
-  Loader2, X, ShoppingBag, Sparkles,
+  Loader2, X, CircleDollarSign, Sparkles,
 } from 'lucide-react';
 import { useUser, fileToBase64 } from '../store';
 import { analyzePurchase, detectFabricFromImage, detectFabricFromUrl } from '../api';
@@ -286,22 +286,24 @@ export default function Purchase() {
     setLoading(true);
     try {
       const priceNum = parseFloat(price);
-      const description =
+      // For Claude API: include URL for context. For display: use item name only.
+      const apiDescription =
         method === 'link'
           ? `Product URL: ${link}${itemName ? ` — ${itemName}` : ''}`
           : itemName || (method === 'scan' || method === 'photo' ? 'Item in photo' : 'Unknown item');
+      const displayName = itemName || (method === 'link' ? 'Linked item' : method === 'scan' || method === 'photo' ? 'Item in photo' : 'Unknown item');
 
       const hasKey = hasClaudeKey();
 
       if (hasKey) {
         const result = await analyzePurchase(
-          description, priceNum, currency,
+          apiDescription, priceNum, currency,
           user.wardrobeItems,
           imageBase64 || undefined,
           estimatedWears ? parseInt(estimatedWears) : undefined,
           fabric || undefined,
         );
-        setAnalysis({ ...result, itemName: description, price: priceNum, currency, imageUrl: imagePreview || '' });
+        setAnalysis({ ...result, itemName: displayName, price: priceNum, currency, imageUrl: imagePreview || '' });
       } else {
         // Demo fallback
         await new Promise(r => setTimeout(r, 1500));
@@ -326,19 +328,19 @@ export default function Purchase() {
           }
         } else {
           // No fabric provided — infer from item name/description
-          plastic = inferSyntheticFromItem(description);
+          plastic = inferSyntheticFromItem(apiDescription);
         }
 
         const impact: PurchaseAnalysis['plastic_impact'] =
           plastic <= 0 ? 'plastic-free' : plastic <= 30 ? 'low' : plastic <= 70 ? 'medium' : 'high';
         const impactCol: PurchaseAnalysis['impact_colour'] =
           plastic <= 0 ? 'green' : plastic <= 30 ? 'yellow' : plastic <= 70 ? 'orange' : 'red';
-        const lifetime = lifetimeYrs ? parseFloat(lifetimeYrs) : inferLifetime(description, priceNum);
+        const lifetime = lifetimeYrs ? parseFloat(lifetimeYrs) : inferLifetime(apiDescription, priceNum);
         const fv = Math.round(priceNum * Math.pow(1.07, lifetime) * 100) / 100;
         const rec: PurchaseAnalysis['recommendation'] =
           cpw < 8 ? 'no brainer' : cpw < 25 ? 'why not' : 'maybe consider if you need it';
         setAnalysis({
-          itemName: description, price: priceNum, currency, imageUrl: imagePreview || '',
+          itemName: displayName, price: priceNum, currency, imageUrl: imagePreview || '',
           cost_per_wear: cpw, estimated_wears: ew,
           plastic_percentage: plastic, plastic_impact: impact, impact_colour: impactCol,
           estimated_lifetime_years: lifetime, future_value_if_invested: fv, recommendation: rec,
@@ -687,7 +689,7 @@ export default function Purchase() {
           ) : (
             <div className="flex flex-col items-center gap-2 py-8">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: '#F0F4E8' }}>
-                <ShoppingBag size={24} style={{ color: '#6B7C4E' }} />
+                <CircleDollarSign size={24} style={{ color: '#6B7C4E' }} />
               </div>
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{analysis.itemName}</p>
             </div>
@@ -800,7 +802,7 @@ export default function Purchase() {
                   style={{ maxHeight: '130px' }}
                 />
               ) : (
-                <ShoppingBag size={32} style={{ color: '#6B7C4E' }} />
+                <CircleDollarSign size={32} style={{ color: '#6B7C4E' }} />
               )}
             </div>
 
@@ -827,8 +829,8 @@ export default function Purchase() {
                   ({((analysis.future_value_if_invested / analysis.price - 1) * 100).toFixed(1)}%)
                 </span>
               </div>
-              {/* Mini growth chart */}
-              <InvestmentSparkline
+              {/* Mini bar chart — compound growth over time */}
+              <InvestmentBarChart
                 startVal={analysis.price}
                 endVal={analysis.future_value_if_invested}
                 years={analysis.estimated_lifetime_years}
@@ -877,44 +879,50 @@ export default function Purchase() {
   );
 }
 
-// ── Investment sparkline chart (compound growth curve) ─────────────────────
-function InvestmentSparkline({ startVal, endVal, years }: { startVal: number; endVal: number; years: number }) {
-  const W = 160;
-  const H = 36;
-  const PAD = 2;
-  const steps = Math.max(Math.round(years * 2), 6); // at least 6 points for a smooth curve
-
-  // Build compound-growth points
-  const points: string[] = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const val = startVal * Math.pow(endVal / startVal, t);
-    const x = PAD + t * (W - PAD * 2);
-    const y = H - PAD - ((val - startVal) / (endVal - startVal)) * (H - PAD * 2);
-    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+// ── Investment bar chart (compound growth bars like "Contributions Over Time") ──
+function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; endVal: number; years: number }) {
+  // Generate yearly values via compound growth
+  const barCount = Math.max(Math.min(Math.round(years), 10), 3); // 3-10 bars
+  const bars: number[] = [];
+  for (let i = 0; i <= barCount; i++) {
+    const t = i / barCount;
+    bars.push(startVal * Math.pow(endVal / startVal, t));
   }
-  const polyline = points.join(' ');
+  const maxVal = bars[bars.length - 1];
 
-  // Gradient area: close the path at the bottom
-  const areaPath = `M ${PAD},${H} ` + points.map((p, i) => (i === 0 ? `L ${p}` : `L ${p}`)).join(' ') + ` L ${W - PAD},${H} Z`;
+  const W = 160;
+  const H = 44;
+  const PAD_X = 2;
+  const PAD_TOP = 2;
+  const gap = 2;
+  const barW = (W - PAD_X * 2 - gap * (bars.length - 1)) / bars.length;
 
   return (
     <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block">
       <defs>
-        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#16A34A" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#16A34A" stopOpacity="0" />
+        <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7C3AED" />
+          <stop offset="100%" stopColor="#C8B6FF" />
         </linearGradient>
       </defs>
-      <path d={areaPath} fill="url(#sparkGrad)" />
-      <polyline
-        points={polyline}
-        fill="none"
-        stroke="#16A34A"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {bars.map((val, i) => {
+        const barH = Math.max(3, ((val - startVal * 0.5) / (maxVal - startVal * 0.5)) * (H - PAD_TOP - 2));
+        const x = PAD_X + i * (barW + gap);
+        const y = H - barH;
+        const isLast = i === bars.length - 1;
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={y}
+            width={barW}
+            height={barH}
+            rx={barW > 6 ? 3 : 1.5}
+            fill={isLast ? '#7C3AED' : 'url(#barGrad)'}
+            opacity={isLast ? 1 : 0.5 + (i / bars.length) * 0.5}
+          />
+        );
+      })}
     </svg>
   );
 }
