@@ -13,81 +13,104 @@ const navItems = [
 
 const INACTIVE_COLOR = 'rgba(43,43,43,0.32)';
 
-/* Semi-circle notch radius — matches the elevated icon bubble */
-const NOTCH_R = 30;
-const NOTCH_CURVE = 6; // extra smooth ease-in on each side
+/* Dome radius — the convex bump that rises above the bar to house the Outfits icon */
+const DOME_R = 28;
+const DOME_CURVE = 8; // cubic ease-in width on each side
 
 /**
- * SVG path for the top edge of the nav bar with a centred semi-circle notch.
- * Viewbox width is 400 (arbitrary, will stretch via preserveAspectRatio="none").
- * The notch sits at x=200 (centre).
+ * SVG path for the nav bar background with a convex dome bump in the centre.
+ * The dome arcs UPWARD (negative y) so the top border line wraps over the icon.
+ * viewBox: 0 -DOME_R  400  (60 + DOME_R)
  */
-function notchPath(vw: number, r: number, curve: number) {
-  const cy = 0;           // top of the bar
+function domePath(vw: number, r: number, curve: number) {
+  const topY = 0;         // flat top edge of the bar
   const cx = vw / 2;      // horizontal centre
   const left = cx - r - curve;
   const right = cx + r + curve;
-  // Start top-left, line to notch approach, cubic ease into the arc,
-  // semi-circle arc downward, cubic ease out, line to top-right,
-  // then down and across the bottom to close.
+  // Path: left edge → approach dome → cubic up into arc → arc apex at -r → cubic back down → right edge → bottom
   return [
-    `M 0,${cy}`,
-    `L ${left},${cy}`,
-    `C ${left + curve},${cy} ${cx - r},${r} ${cx},${r}`,
-    `C ${cx + r},${r} ${right - curve},${cy} ${right},${cy}`,
-    `L ${vw},${cy}`,
+    `M 0,${topY}`,
+    `L ${left},${topY}`,
+    `C ${left + curve},${topY} ${cx - r},${-r} ${cx},${-r}`,
+    `C ${cx + r},${-r} ${right - curve},${topY} ${right},${topY}`,
+    `L ${vw},${topY}`,
     `L ${vw},60`,
     `L 0,60`,
     'Z',
   ].join(' ');
 }
 
+/** Normalised 0-1 version of the dome path for clipPath */
+function normaliseDomePath(vw: number, totalH: number, r: number, curve: number) {
+  const topY = r;  // in normalised space, 0 is the top of viewBox, so flat bar top is at r
+  const cx = vw / 2;
+  const left = cx - r - curve;
+  const right = cx + r + curve;
+
+  const n = (x: number, y: number) =>
+    `${(x / vw).toFixed(4)},${(y / totalH).toFixed(4)}`;
+
+  return [
+    `M ${n(0, topY)}`,
+    `L ${n(left, topY)}`,
+    `C ${n(left + curve, topY)} ${n(cx - r, 0)} ${n(cx, 0)}`,
+    `C ${n(cx + r, 0)} ${n(right - curve, topY)} ${n(right, topY)}`,
+    `L ${n(vw, topY)}`,
+    `L ${n(vw, totalH)}`,
+    `L ${n(0, totalH)}`,
+    'Z',
+  ].join(' ');
+}
+
 export default function BottomNav() {
+  const totalH = 60 + DOME_R; // viewBox height
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-      {/* SVG notch shape — acts as background + border */}
+    <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom" style={{ marginTop: `-${DOME_R}px` }}>
+      {/* SVG dome shape — acts as background */}
       <svg
-        viewBox={`0 -1 400 62`}
+        viewBox={`0 ${-DOME_R} 400 ${totalH}`}
         preserveAspectRatio="none"
         className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ filter: 'drop-shadow(0 -1px 0 rgba(0,0,0,0.04))' }}
+        style={{ filter: 'drop-shadow(0 -1px 2px rgba(0,0,0,0.06))' }}
       >
         <path
-          d={notchPath(400, NOTCH_R, NOTCH_CURVE)}
-          fill="rgba(255,255,255,0.72)"
+          d={domePath(400, DOME_R, DOME_CURVE)}
+          fill="rgba(255,255,255,0.82)"
         />
       </svg>
 
-      {/* Frost / blur layer behind everything */}
+      {/* Frost / blur layer clipped to dome shape */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          // Use same SVG notch as a clip so the blur follows the cutout shape
-          clipPath: `url(#navClip)`,
+          clipPath: 'url(#navDomeClip)',
         }}
       />
       <svg width="0" height="0" className="absolute">
         <defs>
-          <clipPath id="navClip" clipPathUnits="objectBoundingBox">
-            {/* Normalised 0-1 version of the notch */}
-            <path d={normaliseNotchPath(400, 61, NOTCH_R, NOTCH_CURVE)} />
+          <clipPath id="navDomeClip" clipPathUnits="objectBoundingBox">
+            <path d={normaliseDomePath(400, totalH, DOME_R, DOME_CURVE)} />
           </clipPath>
         </defs>
       </svg>
 
-      <nav className="relative flex items-center justify-around px-2 py-1.5">
+      {/* Nav items — padded top to account for dome space */}
+      <nav
+        className="relative flex items-end justify-around px-2"
+        style={{ paddingTop: `${DOME_R}px`, paddingBottom: '6px' }}
+      >
         {navItems.map(({ to, icon: Icon, label, color, bg, main }) => (
           <NavLink
             key={to}
             to={to}
-            className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl transition-all duration-200 min-w-0 flex-1"
+            className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-2xl transition-all duration-200 min-w-0 flex-1"
           >
             {({ isActive }) => (
               <>
                 <div
-                  className={`${main ? 'p-2.5 -mt-5 rounded-full shadow-lg' : 'p-1.5 rounded-2xl'} transition-all duration-200`}
+                  className={`${main ? 'p-2.5 rounded-full shadow-md -mt-7' : 'p-1.5 rounded-2xl'} transition-all duration-200`}
                   style={
                     isActive
                       ? { background: main ? color : bg, color: main ? '#fff' : color }
@@ -113,25 +136,4 @@ export default function BottomNav() {
       </nav>
     </div>
   );
-}
-
-/** Convert the notch path to normalised 0-1 coordinates for clipPath */
-function normaliseNotchPath(vw: number, vh: number, r: number, curve: number) {
-  const cy = 0;
-  const cx = vw / 2;
-  const left = cx - r - curve;
-  const right = cx + r + curve;
-
-  const n = (x: number, y: number) => `${(x / vw).toFixed(4)},${((y + 1) / (vh + 1)).toFixed(4)}`;
-
-  return [
-    `M ${n(0, cy)}`,
-    `L ${n(left, cy)}`,
-    `C ${n(left + curve, cy)} ${n(cx - r, r)} ${n(cx, r)}`,
-    `C ${n(cx + r, r)} ${n(right - curve, cy)} ${n(right, cy)}`,
-    `L ${n(vw, cy)}`,
-    `L ${n(vw, 60)}`,
-    `L ${n(0, 60)}`,
-    'Z',
-  ].join(' ');
 }

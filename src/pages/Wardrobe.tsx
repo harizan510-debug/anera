@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { Plus, Search, X, Trash2, Check, Sparkles, Link2, Camera, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Plus, Search, X, Trash2, Check, Sparkles, Link2, Camera, Loader2, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { hasClaudeKey } from '../apiHelper';
 import { useUser, addWardrobeItem, updateWardrobeItem, deleteWardrobeItem, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
@@ -9,6 +9,8 @@ import { cropImage } from '../utils/cropImage';
 import { processClothingImage } from '../pipeline/clothingPipeline';
 import MultiItemReview from '../components/MultiItemReview';
 import PageHeader from '../components/PageHeader';
+import ProfileDrawer from '../components/ProfileDrawer';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 /**
  * Compress a File (image) down to maxDim before converting to base64.
@@ -466,7 +468,24 @@ export default function Wardrobe() {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkLoading, setLinkLoading] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load avatar from Supabase if available
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: prof } = await supabase
+            .from('profiles').select('avatar_url').eq('id', session.user.id).maybeSingle();
+          if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
+        }
+      } catch { /* ignore */ }
+    })();
+  }, []);
 
   const items = user.wardrobeItems;
 
@@ -682,6 +701,22 @@ export default function Wardrobe() {
       <PageHeader
         title="Wardrobe"
         subtitle={items.length > 0 ? `You own ${summary()}` : 'No items yet — add your first piece'}
+        leftIcon={
+          <button
+            onClick={() => setProfileOpen(true)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden"
+            style={{
+              background: avatarUrl ? undefined : '#C8B6FF',
+              boxShadow: '0 2px 8px rgba(200,182,255,0.4)',
+            }}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User size={17} color="#7C3AED" strokeWidth={2.2} />
+            )}
+          </button>
+        }
         action={
           <div className="relative">
             <button
@@ -1028,6 +1063,9 @@ export default function Wardrobe() {
           </div>
         </div>
       )}
+
+      {/* Profile drawer */}
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }
