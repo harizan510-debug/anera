@@ -375,6 +375,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ text: '', error: 'Could not fetch page (blocked or timeout)' });
     }
 
+    // ── Extract structured product data from JSON-LD / meta tags ─────────
+    // This is the fallback when AJAX/Shopify handlers fail
+    let productName: string | undefined;
+    let productPrice: number | undefined;
+    let productCurrency: string | undefined;
+
+    // Try JSON-LD first (most reliable)
+    if (structuredData) {
+      try {
+        const parsed = JSON.parse(structuredData);
+        const product = findProduct(parsed);
+        if (product) {
+          if (product.name && typeof product.name === 'string') productName = product.name;
+          // Extract price from offers
+          const offers = product.offers as Record<string, unknown> | Record<string, unknown>[] | undefined;
+          const offer = Array.isArray(offers) ? offers[0] : offers;
+          if (offer) {
+            const p = parseFloat(String(offer.price || ''));
+            if (p > 0) productPrice = p;
+            if (offer.priceCurrency) productCurrency = String(offer.priceCurrency);
+          }
+        }
+      } catch { /* JSON-LD parse failed */ }
+    }
+
+    // Fall back to meta tags
+    if (!productName && ogTitleMatch) productName = ogTitleMatch[1];
+    if (!productPrice && metaPriceMatch) {
+      const p = parseFloat(metaPriceMatch[1]);
+      if (p > 0) productPrice = p;
+    }
+    if (!productCurrency && metaCurrencyMatch) productCurrency = metaCurrencyMatch[1];
+
     // Truncate
     const maxTextLen = 3000;
     const maxStructuredLen = 2000;
@@ -385,6 +418,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       text,
       structuredData: structuredData || undefined,
       imageUrl: imageUrl || undefined,
+      productName: productName || undefined,
+      productPrice: productPrice || undefined,
+      productCurrency: productCurrency || undefined,
     });
   } catch (err) {
     return res.status(200).json({ text: '', error: String(err) });

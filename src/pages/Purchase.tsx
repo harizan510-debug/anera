@@ -685,14 +685,14 @@ export default function Purchase() {
 
   return (
     <div className="pb-24" style={{ background: '#F5F0FF', minHeight: '100vh' }}>
-      <div className="px-4 mb-3 pt-4">
+      <div className="px-4 mb-4 pt-5">
         <h1 className="text-xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
           {analysis.itemName.length > 50 ? analysis.itemName.slice(0, 50) + '…' : analysis.itemName}
         </h1>
       </div>
 
       {/* ── Decision badge ── */}
-      <div className="flex flex-col items-center px-4 mb-5">
+      <div className="flex flex-col items-center px-4 mb-6">
         <div
           style={{
             background: rec.bg,
