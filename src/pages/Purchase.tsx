@@ -175,6 +175,7 @@ export default function Purchase() {
   const [currency, setCurrency]         = useState('£');
   const [estimatedWears, setEstWears]   = useState('');
   const [fabric, setFabric]             = useState('');
+  const [lifetimeYrs, setLifetimeYrs]   = useState('');   // optional item lifetime in years
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageBase64, setImageBase64]   = useState<string | null>(null);
 
@@ -332,7 +333,7 @@ export default function Purchase() {
           plastic <= 0 ? 'plastic-free' : plastic <= 30 ? 'low' : plastic <= 70 ? 'medium' : 'high';
         const impactCol: PurchaseAnalysis['impact_colour'] =
           plastic <= 0 ? 'green' : plastic <= 30 ? 'yellow' : plastic <= 70 ? 'orange' : 'red';
-        const lifetime = inferLifetime(description, priceNum);
+        const lifetime = lifetimeYrs ? parseFloat(lifetimeYrs) : inferLifetime(description, priceNum);
         const fv = Math.round(priceNum * Math.pow(1.07, lifetime) * 100) / 100;
         const rec: PurchaseAnalysis['recommendation'] =
           cpw < 8 ? 'no brainer' : cpw < 25 ? 'why not' : 'maybe consider if you need it';
@@ -352,7 +353,7 @@ export default function Purchase() {
 
   const reset = () => {
     setAnalysis(null); setWished(false); setBadgeReady(false);
-    setItemName(''); setLink(''); setPrice(''); setFabric(''); setEstWears('');
+    setItemName(''); setLink(''); setPrice(''); setFabric(''); setEstWears(''); setLifetimeYrs('');
     setImagePreview(null); setImageBase64(null); setError('');
     setFabricLoading(false); setFabricSource(null);
     setUrlDetecting(false); setUrlDetected(false); setUrlError('');
@@ -601,18 +602,32 @@ export default function Purchase() {
           </div>
         </div>
 
-        {/* Estimated wears — optional */}
-        <div className="mb-5">
-          <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>
-            Estimated wears <span style={{ fontWeight: 400, textTransform: 'none' as const }}>(optional)</span>
-          </label>
-          <input
-            type="number" value={estimatedWears} onChange={e => setEstWears(e.target.value)}
-            placeholder="e.g. 40 — Anera will infer if left blank"
-            min="1"
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-            style={fieldStyle}
-          />
+        {/* Estimated wears + Item lifetime row */}
+        <div className="flex gap-2 mb-5">
+          <div className="flex-1">
+            <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>
+              Est. wears <span style={{ fontWeight: 400, textTransform: 'none' as const }}>(optional)</span>
+            </label>
+            <input
+              type="number" value={estimatedWears} onChange={e => setEstWears(e.target.value)}
+              placeholder="e.g. 40"
+              min="1"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+              style={fieldStyle}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-[11px] font-bold uppercase mb-1.5" style={labelStyle}>
+              Lifetime yrs <span style={{ fontWeight: 400, textTransform: 'none' as const }}>(optional)</span>
+            </label>
+            <input
+              type="number" value={lifetimeYrs} onChange={e => setLifetimeYrs(e.target.value)}
+              placeholder="e.g. 5"
+              min="0.5" step="0.5"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+              style={fieldStyle}
+            />
+          </div>
         </div>
 
         {error && (
@@ -652,27 +667,27 @@ export default function Purchase() {
       </div>
 
       {/* ── 1. Hero image ── */}
-      <div className="px-4 mb-6">
+      <div className="px-4 mb-5">
         <div
           className="w-full rounded-2xl overflow-hidden flex items-center justify-center"
           style={{
             background: analysis.imageUrl ? 'transparent' : '#FFFFFF',
             border: analysis.imageUrl ? 'none' : '1px solid rgba(0,0,0,0.04)',
             boxShadow: analysis.imageUrl ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
-            minHeight: '220px',
+            minHeight: '160px',
           }}
         >
           {analysis.imageUrl ? (
             <img
               src={analysis.imageUrl}
               className="w-full object-cover rounded-2xl"
-              style={{ maxHeight: '300px' }}
+              style={{ maxHeight: '220px' }}
               alt={analysis.itemName}
             />
           ) : (
-            <div className="flex flex-col items-center gap-3 py-14">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: '#F0F4E8' }}>
-                <ShoppingBag size={28} style={{ color: '#6B7C4E' }} />
+            <div className="flex flex-col items-center gap-2 py-8">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: '#F0F4E8' }}>
+                <ShoppingBag size={24} style={{ color: '#6B7C4E' }} />
               </div>
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{analysis.itemName}</p>
             </div>
@@ -768,21 +783,59 @@ export default function Purchase() {
         </div>
       </div>
 
-      {/* ── 5. Investment insight ── */}
+      {/* ── 5. Investment insight — stock ticker style ── */}
       <div className="px-4 mb-5">
-        <div className="rounded-2xl px-4 py-4" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#F0F4E8' }}>
-              <TrendingUp size={15} style={{ color: '#6B7C4E' }} />
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div className="flex">
+            {/* Left — Item image or icon */}
+            <div
+              className="w-[110px] flex-shrink-0 flex items-center justify-center"
+              style={{ background: analysis.imageUrl ? '#FAFAFA' : '#F0F4E8', minHeight: '130px' }}
+            >
+              {analysis.imageUrl ? (
+                <img
+                  src={analysis.imageUrl}
+                  className="w-full h-full object-contain p-2"
+                  alt={analysis.itemName}
+                  style={{ maxHeight: '130px' }}
+                />
+              ) : (
+                <ShoppingBag size={32} style={{ color: '#6B7C4E' }} />
+              )}
             </div>
-            <div>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#6B7C4E' }}>Investment insight</p>
-              <p className="text-xs leading-relaxed" style={{ color: '#2B2B2B' }}>
-                If invested instead, this{' '}
-                <span className="font-semibold">{analysis.currency}{analysis.price}</span>{' '}
-                could grow to approximately{' '}
-                <span className="font-semibold">{analysis.currency}{analysis.future_value_if_invested.toFixed(0)}</span>{' '}
-                over ~{analysis.estimated_lifetime_years} years at 7% annual return.
+
+            {/* Right — stock ticker content */}
+            <div className="flex-1 px-3.5 py-3">
+              {/* Header: name + badge */}
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{ background: '#F0F4E8', color: '#6B7C4E' }}>
+                  Investment
+                </span>
+              </div>
+              {/* Price — large, stock-style */}
+              <p className="text-xl font-bold tracking-tight" style={{ color: '#1A1A1A' }}>
+                {analysis.currency}{analysis.future_value_if_invested.toFixed(2)}
+              </p>
+              {/* Growth badge */}
+              <div className="flex items-center gap-1 mt-0.5 mb-2">
+                <TrendingUp size={11} style={{ color: '#16A34A' }} />
+                <span className="text-xs font-semibold" style={{ color: '#16A34A' }}>
+                  +{analysis.currency}{(analysis.future_value_if_invested - analysis.price).toFixed(2)}
+                </span>
+                <span className="text-[10px]" style={{ color: 'rgba(43,43,43,0.4)' }}>
+                  ({((analysis.future_value_if_invested / analysis.price - 1) * 100).toFixed(1)}%)
+                </span>
+              </div>
+              {/* Mini growth chart */}
+              <InvestmentSparkline
+                startVal={analysis.price}
+                endVal={analysis.future_value_if_invested}
+                years={analysis.estimated_lifetime_years}
+              />
+              {/* Subtitle */}
+              <p className="text-[10px] mt-1.5 leading-snug" style={{ color: 'rgba(43,43,43,0.5)' }}>
+                {analysis.currency}{analysis.price} invested at 7% p.a. over {analysis.estimated_lifetime_years} yrs
               </p>
             </div>
           </div>
@@ -821,5 +874,47 @@ export default function Purchase() {
         </button>
       </div>
     </div>
+  );
+}
+
+// ── Investment sparkline chart (compound growth curve) ─────────────────────
+function InvestmentSparkline({ startVal, endVal, years }: { startVal: number; endVal: number; years: number }) {
+  const W = 160;
+  const H = 36;
+  const PAD = 2;
+  const steps = Math.max(Math.round(years * 2), 6); // at least 6 points for a smooth curve
+
+  // Build compound-growth points
+  const points: string[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const val = startVal * Math.pow(endVal / startVal, t);
+    const x = PAD + t * (W - PAD * 2);
+    const y = H - PAD - ((val - startVal) / (endVal - startVal)) * (H - PAD * 2);
+    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  const polyline = points.join(' ');
+
+  // Gradient area: close the path at the bottom
+  const areaPath = `M ${PAD},${H} ` + points.map((p, i) => (i === 0 ? `L ${p}` : `L ${p}`)).join(' ') + ` L ${W - PAD},${H} Z`;
+
+  return (
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block">
+      <defs>
+        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#16A34A" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#16A34A" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill="url(#sparkGrad)" />
+      <polyline
+        points={polyline}
+        fill="none"
+        stroke="#16A34A"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
