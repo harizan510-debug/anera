@@ -526,7 +526,14 @@ async function tryAjaxEndpoints(parsedUrl: URL, originalUrl: string): Promise<{ 
             // Build synthetic HTML so the Claude prompt can parse it
             const currency = parsedUrl.searchParams.get('currency') || 'GBP';
             const currencySymbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency;
-            const priceVal = variant?.price || '0';
+            // Shopify returns price as a string — some stores use cents (e.g. "14500")
+            // while others use decimal (e.g. "145.00"). Normalise to decimal format.
+            let priceVal = variant?.price || '0';
+            const priceNum = parseFloat(priceVal);
+            if (priceNum > 0 && !priceVal.includes('.') && priceNum > 999) {
+              // Likely in cents/pence — convert to major currency unit
+              priceVal = (priceNum / 100).toFixed(2);
+            }
             const bodyText = (p.body_html || '')
               .replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
               .replace(/\s+/g, ' ').trim();
