@@ -1,5 +1,5 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages.mjs';
-import { claudeMessage, scrapeUrl } from './apiHelper';
+import { claudeMessage, scrapeUrl, type ScrapeResult } from './apiHelper';
 import type { WardrobeItem, BoundingBox } from './types';
 
 /** Detect image media type from a data URI or default to JPEG */
@@ -476,22 +476,20 @@ Return ONLY JSON (no markdown):
 }
 
 // ── Auto-detect fabric from a product URL ────────────────────────────────────
-export async function detectFabricFromUrl(url: string): Promise<FabricDetection> {
-  // Step 1: Try to scrape the actual page content (via server-side proxy)
+export async function detectFabricFromUrl(url: string, preScraped?: ScrapeResult): Promise<FabricDetection> {
+  // Use pre-scraped data if provided (avoids duplicate /api/scrape calls)
   let pageText = '';
   let structuredData = '';
   let scrapedName = '';
   let scrapedPrice = 0;
   let scrapedCurrency = '';
-  try {
-    const scraped = await scrapeUrl(url);
-    pageText = scraped.text || '';
-    structuredData = scraped.structuredData || '';
-    // Use structured product data directly from scraper (Shopify, AJAX, etc.)
-    if (scraped.productName) scrapedName = scraped.productName;
-    if (scraped.productPrice && scraped.productPrice > 0) scrapedPrice = scraped.productPrice;
-    if (scraped.productCurrency) scrapedCurrency = scraped.productCurrency;
-  } catch { /* scraping failed — will infer from URL alone */ }
+
+  const scraped = preScraped ?? await scrapeUrl(url).catch(() => ({ text: '' } as ScrapeResult));
+  pageText = scraped.text || '';
+  structuredData = scraped.structuredData || '';
+  if (scraped.productName) scrapedName = scraped.productName;
+  if (scraped.productPrice && scraped.productPrice > 0) scrapedPrice = scraped.productPrice;
+  if (scraped.productCurrency) scrapedCurrency = scraped.productCurrency;
 
   const hasPageContent = pageText.length > 50;
 

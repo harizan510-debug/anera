@@ -216,36 +216,33 @@ export default function Purchase() {
     try {
       let detected = false;
 
-      // Step 1: Try scraper first for structured data (Shopify, etc.)
-      // This is fast and reliable — doesn't need Claude API
-      let gotScrapedPrice = false;
-      try {
-        const scraped = await scrapeUrl(url);
-        if (scraped.productName) { setItemName(scraped.productName); detected = true; }
-        if (scraped.productPrice && scraped.productPrice > 0) {
-          setPrice(String(scraped.productPrice));
-          gotScrapedPrice = true;
-          detected = true;
-        }
-        if (scraped.productCurrency) {
-          const sym = scraped.productCurrency === 'GBP' ? '£' : scraped.productCurrency === 'USD' ? '$' : scraped.productCurrency === 'EUR' ? '€' : scraped.productCurrency;
-          setCurrency(sym);
-        }
-        // If we got an image URL, store it for later use
-        if (scraped.imageUrl && !imagePreview) {
-          setImagePreview(scraped.imageUrl);
-        }
-      } catch { /* scraper failed — continue to Claude */ }
+      // Step 1: Scrape once — reuse for both structured data + Claude fabric call
+      const scraped = await scrapeUrl(url).catch(() => ({ text: '' } as Awaited<ReturnType<typeof scrapeUrl>>));
 
-      // Step 2: Use Claude API for fabric + any missing fields
+      // Use structured product data directly (Shopify, AJAX handlers, etc.)
+      if (scraped.productName) { setItemName(scraped.productName); detected = true; }
+      if (scraped.productPrice && scraped.productPrice > 0) {
+        setPrice(String(scraped.productPrice));
+        detected = true;
+      }
+      if (scraped.productCurrency) {
+        const sym = scraped.productCurrency === 'GBP' ? '£' : scraped.productCurrency === 'USD' ? '$' : scraped.productCurrency === 'EUR' ? '€' : scraped.productCurrency;
+        setCurrency(sym);
+      }
+
+      // Step 2: Use Claude API for fabric + any fields still missing
+      // Pass pre-scraped data so it doesn't call /api/scrape a second time
       const hasKey = hasClaudeKey();
       if (hasKey) {
         try {
-          const res = await detectFabricFromUrl(url);
+          const res = await detectFabricFromUrl(url, scraped);
           if (res.fabric) { setFabric(res.fabric); setFabricSource(res.source || 'inferred'); detected = true; }
           if (res.itemName) { setItemName(res.itemName); detected = true; }
           // Only use Claude's price if scraper didn't already provide one
-          if (res.price && res.price > 0 && !gotScrapedPrice) { setPrice(String(res.price)); detected = true; }
+          if (res.price && res.price > 0 && !(scraped.productPrice && scraped.productPrice > 0)) {
+            setPrice(String(res.price));
+            detected = true;
+          }
           if (res.currency) { setCurrency(res.currency); }
         } catch (e) {
           // Claude failed but we may already have scraped data
@@ -694,21 +691,7 @@ export default function Purchase() {
         </h1>
       </div>
 
-      {/* ── 1. Hero image or item name ── */}
-      {analysis.imageUrl ? (
-        <div className="px-4 mb-4">
-          <div className="w-full rounded-2xl overflow-hidden flex items-center justify-center">
-            <img
-              src={analysis.imageUrl}
-              className="w-full object-cover rounded-2xl"
-              style={{ maxHeight: '180px' }}
-              alt={analysis.itemName}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {/* ── 2. Decision badge ── */}
+      {/* ── Decision badge ── */}
       <div className="flex flex-col items-center px-4 mb-5">
         <div
           style={{
