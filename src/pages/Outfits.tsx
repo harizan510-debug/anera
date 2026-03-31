@@ -98,10 +98,14 @@ export default function Outfits() {
   const [weatherLoading, setWeatherLoading] = useState(true);
 
   // Dress-me slots
-  const [slotTop,      setSlotTop]      = useState<WardrobeItem | null>(null);
-  const [slotBottom,   setSlotBottom]   = useState<WardrobeItem | null>(null);
-  const [slotFootwear, setSlotFootwear] = useState<WardrobeItem | null>(null);
-  const [pickingSlot,  setPickingSlot]  = useState<'top' | 'bottom' | 'footwear' | null>(null);
+  const [slotTop,        setSlotTop]        = useState<WardrobeItem | null>(null);
+  const [slotBottom,     setSlotBottom]     = useState<WardrobeItem | null>(null);
+  const [slotFootwear,   setSlotFootwear]   = useState<WardrobeItem | null>(null);
+  const [slotOuterwear,  setSlotOuterwear]  = useState<WardrobeItem | null>(null);
+  const [slotAccessory,  setSlotAccessory]  = useState<WardrobeItem | null>(null);
+  type SlotKey = 'top' | 'bottom' | 'footwear' | 'outerwear' | 'accessory';
+  const [pickingSlot,    setPickingSlot]    = useState<SlotKey | null>(null);
+  const [accSubTab,      setAccSubTab]      = useState<'jewellery' | 'bag' | 'belt' | 'hat'>('jewellery');
 
   // Calendar
   const now = new Date();
@@ -290,9 +294,11 @@ export default function Outfits() {
         ? `${weather} — ${weatherInfo.temp}°C (feels ${weatherInfo.feelsLike}°C), ${weatherInfo.description}, wind ${weatherInfo.windSpeed}km/h, UV ${weatherInfo.uvIndex}${weatherInfo.isRainy ? `. Rain: ${weatherInfo.rainMm}mm.` : ''}`
         : weather;
       const noteParts = [
-        slotTop      ? `Top: ${slotTop.color} ${slotTop.subcategory}`           : null,
-        slotBottom   ? `Bottom: ${slotBottom.color} ${slotBottom.subcategory}`   : null,
-        slotFootwear ? `Footwear: ${slotFootwear.color} ${slotFootwear.subcategory}` : null,
+        slotTop        ? `Top: ${slotTop.color} ${slotTop.subcategory}`               : null,
+        slotBottom     ? `Bottom: ${slotBottom.color} ${slotBottom.subcategory}`       : null,
+        slotFootwear   ? `Footwear: ${slotFootwear.color} ${slotFootwear.subcategory}` : null,
+        slotOuterwear  ? `Outerwear: ${slotOuterwear.color} ${slotOuterwear.subcategory}` : null,
+        slotAccessory  ? `Accessory: ${slotAccessory.color} ${slotAccessory.subcategory}` : null,
       ].filter((s): s is string => s !== null);
       const styleNotes = noteParts.length > 0 ? noteParts.join(', ') : undefined;
 
@@ -316,6 +322,8 @@ export default function Outfits() {
           else if (bottoms.length)                 outfit.push(bottoms[i % bottoms.length]);
           if (slotFootwear)                        outfit.push(slotFootwear);
           else if (shoes.length)                   outfit.push(shoes[i % shoes.length]);
+          if (slotOuterwear) outfit.push(slotOuterwear);
+          if (slotAccessory) outfit.push(slotAccessory);
           if (outfit.length > 0) demo.push({
             items: outfit,
             note: `Perfect for ${occasion.toLowerCase()} in ${weather.toLowerCase()} weather.${weatherInfo?.isRainy ? ' ☂️ Grab an umbrella!' : ''}`,
@@ -327,22 +335,29 @@ export default function Outfits() {
     setLoading(false);
   };
 
-  const slotPool = (slot: 'top' | 'bottom' | 'footwear') =>
-    slot === 'top'      ? wardrobeItems.filter(i => i.category === 'top' || i.category === 'dress')
-    : slot === 'bottom' ? wardrobeItems.filter(i => i.category === 'bottom')
-    :                     wardrobeItems.filter(i => i.category === 'footwear');
+  const ACC_CATS = ['jewellery', 'bag', 'belt', 'hat'] as const;
+  const slotPool = (slot: SlotKey) =>
+    slot === 'top'       ? wardrobeItems.filter(i => i.category === 'top' || i.category === 'dress')
+    : slot === 'bottom'  ? wardrobeItems.filter(i => i.category === 'bottom')
+    : slot === 'footwear'? wardrobeItems.filter(i => i.category === 'footwear')
+    : slot === 'outerwear' ? wardrobeItems.filter(i => i.category === 'outerwear')
+    :                     wardrobeItems.filter(i => ACC_CATS.includes(i.category as typeof ACC_CATS[number]));
 
   const pickSlot = (item: WardrobeItem) => {
-    if (pickingSlot === 'top')      setSlotTop(item);
-    if (pickingSlot === 'bottom')   setSlotBottom(item);
-    if (pickingSlot === 'footwear') setSlotFootwear(item);
+    if (pickingSlot === 'top')        setSlotTop(item);
+    if (pickingSlot === 'bottom')     setSlotBottom(item);
+    if (pickingSlot === 'footwear')   setSlotFootwear(item);
+    if (pickingSlot === 'outerwear')  setSlotOuterwear(item);
+    if (pickingSlot === 'accessory')  setSlotAccessory(item);
     setPickingSlot(null);
   };
 
-  const clearSlot = (slot: 'top' | 'bottom' | 'footwear') => {
-    if (slot === 'top')      setSlotTop(null);
-    if (slot === 'bottom')   setSlotBottom(null);
-    if (slot === 'footwear') setSlotFootwear(null);
+  const clearSlot = (slot: SlotKey) => {
+    if (slot === 'top')        setSlotTop(null);
+    if (slot === 'bottom')     setSlotBottom(null);
+    if (slot === 'footwear')   setSlotFootwear(null);
+    if (slot === 'outerwear')  setSlotOuterwear(null);
+    if (slot === 'accessory')  setSlotAccessory(null);
   };
 
   // Trips
@@ -401,10 +416,12 @@ export default function Outfits() {
   const visiblePins = activeFolder === 'all' ? pins : pins.filter(p => p.folderId === activeFolder);
 
   // Slot rows config
-  const slotRows = [
-    { slot: 'top'      as const, label: 'Top',      item: slotTop },
-    { slot: 'bottom'   as const, label: 'Bottom',   item: slotBottom },
-    { slot: 'footwear' as const, label: 'Footwear', item: slotFootwear },
+  const slotRows: { slot: SlotKey; label: string; item: WardrobeItem | null }[] = [
+    { slot: 'top',        label: 'Top',         item: slotTop },
+    { slot: 'bottom',     label: 'Bottom',      item: slotBottom },
+    { slot: 'footwear',   label: 'Footwear',    item: slotFootwear },
+    { slot: 'outerwear',  label: 'Outerwear',   item: slotOuterwear },
+    { slot: 'accessory',  label: 'Accessories', item: slotAccessory },
   ];
 
   // ── JSX ──────────────────────────────────────────────────────────────────────
@@ -1063,31 +1080,55 @@ export default function Outfits() {
 
       {/* Slot picker */}
       {pickingSlot && (
-        <ModalSheet onClose={() => setPickingSlot(null)} title={`Pick ${pickingSlot}`}>
-          <div style={{ maxHeight: '50vh', overflowY: 'auto' }}>
-            {slotPool(pickingSlot).length === 0 ? (
-              <p className="text-sm text-center py-8" style={{ color: 'var(--text-secondary)' }}>
-                No {pickingSlot} items in your wardrobe yet.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {slotPool(pickingSlot).map(item => (
-                  <button key={item.id} onClick={() => pickSlot(item)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl active:scale-[0.98] transition-transform"
-                    style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
-                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-                      {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
-                        {item.color} {item.subcategory}
-                      </p>
-                      {item.brand && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.brand}</p>}
-                    </div>
-                  </button>
+        <ModalSheet onClose={() => setPickingSlot(null)} title={pickingSlot === 'accessory' ? 'Pick Accessory' : `Pick ${pickingSlot}`}>
+          <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+            {/* Accessory sub-tabs */}
+            {pickingSlot === 'accessory' && (
+              <div className="flex gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid rgba(43,43,43,0.06)' }}>
+                {([
+                  { id: 'jewellery' as const, label: '💎 Jewellery' },
+                  { id: 'bag'       as const, label: '👜 Bags' },
+                  { id: 'belt'      as const, label: '🪢 Belts' },
+                  { id: 'hat'       as const, label: '🎩 Hats' },
+                ]).map(t => (
+                  <button key={t.id} onClick={() => setAccSubTab(t.id)}
+                    className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
+                    style={{
+                      background: accSubTab === t.id ? '#6B7C4E' : 'transparent',
+                      color:      accSubTab === t.id ? '#FFFFFF' : '#2B2B2B',
+                      border:     `1.5px solid ${accSubTab === t.id ? '#6B7C4E' : 'rgba(43,43,43,0.12)'}`,
+                    }}>{t.label}</button>
                 ))}
               </div>
             )}
+            {(() => {
+              const pool = pickingSlot === 'accessory'
+                ? wardrobeItems.filter(i => i.category === accSubTab)
+                : slotPool(pickingSlot);
+              return pool.length === 0 ? (
+                <p className="text-sm text-center py-8" style={{ color: 'var(--text-secondary)' }}>
+                  No {pickingSlot === 'accessory' ? accSubTab : pickingSlot} items in your wardrobe yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {pool.map(item => (
+                    <button key={item.id} onClick={() => pickSlot(item)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl active:scale-[0.98] transition-transform"
+                      style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                        {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
+                          {item.color} {item.subcategory}
+                        </p>
+                        {item.brand && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.brand}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </ModalSheet>
       )}
