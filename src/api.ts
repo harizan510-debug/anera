@@ -480,10 +480,17 @@ export async function detectFabricFromUrl(url: string): Promise<FabricDetection>
   // Step 1: Try to scrape the actual page content (via server-side proxy)
   let pageText = '';
   let structuredData = '';
+  let scrapedName = '';
+  let scrapedPrice = 0;
+  let scrapedCurrency = '';
   try {
     const scraped = await scrapeUrl(url);
     pageText = scraped.text || '';
     structuredData = scraped.structuredData || '';
+    // Use structured product data directly from scraper (Shopify, AJAX, etc.)
+    if (scraped.productName) scrapedName = scraped.productName;
+    if (scraped.productPrice && scraped.productPrice > 0) scrapedPrice = scraped.productPrice;
+    if (scraped.productCurrency) scrapedCurrency = scraped.productCurrency;
   } catch { /* scraping failed — will infer from URL alone */ }
 
   const hasPageContent = pageText.length > 50;
@@ -561,9 +568,25 @@ For currency: use the currency from the domain (.co.uk=£, .com=$, .de/.fr/.it=�
   const urlText = response.content[0].type === 'text' ? response.content[0].text : '';
   try {
     const clean = urlText.replace(/```json\n?|\n?```/g, '').trim();
-    return JSON.parse(clean);
+    const parsed = JSON.parse(clean) as FabricDetection;
+    // Override with structured scraper data when available (more reliable than Claude parsing)
+    if (scrapedName && (!parsed.itemName || parsed.itemName.length < 3)) parsed.itemName = scrapedName;
+    if (scrapedPrice > 0 && (!parsed.price || parsed.price <= 0)) parsed.price = scrapedPrice;
+    if (scrapedCurrency && !parsed.currency) {
+      const sym = scrapedCurrency === 'GBP' ? '£' : scrapedCurrency === 'USD' ? '$' : scrapedCurrency === 'EUR' ? '€' : scrapedCurrency;
+      parsed.currency = sym;
+    }
+    return parsed;
   } catch {
-    return { fabric: '', itemName: '', source: 'inferred' };
+    // Claude failed to parse — return structured scraper data if available
+    const currencySymbol = scrapedCurrency === 'GBP' ? '£' : scrapedCurrency === 'USD' ? '$' : scrapedCurrency === 'EUR' ? '€' : scrapedCurrency || '£';
+    return {
+      fabric: '',
+      itemName: scrapedName || '',
+      source: 'inferred',
+      price: scrapedPrice || undefined,
+      currency: currencySymbol,
+    };
   }
 }
 

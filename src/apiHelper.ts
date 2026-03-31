@@ -137,6 +137,10 @@ export interface ScrapeResult {
   structuredData?: string;
   imageUrl?: string;
   error?: string;
+  // Structured product data — returned directly by Shopify/AJAX handlers
+  productName?: string;
+  productPrice?: number;
+  productCurrency?: string;
 }
 
 /**

@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // If AJAX gave us an image, we can skip slow direct fetches for bot-protected sites
     // and just get text from Microlink
-    if (earlyImage) {
+    if (earlyImage || ajaxResult.productPrice) {
       // Try Microlink for text/description if we don't have good text
       let text = earlyText;
       let structuredData = earlyStructured;
@@ -75,7 +75,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({
         text,
         structuredData: structuredData || undefined,
-        imageUrl: earlyImage,
+        imageUrl: earlyImage || undefined,
+        // Pass through structured product data from AJAX/Shopify
+        productName: ajaxResult.productName || undefined,
+        productPrice: ajaxResult.productPrice || undefined,
+        productCurrency: ajaxResult.productCurrency || undefined,
       });
     }
 
@@ -449,7 +453,15 @@ function findProductImage(html: string): string | null {
  * Try site-specific AJAX/API endpoints that bypass anti-bot protections.
  * These are the same endpoints the site's own JavaScript uses.
  */
-async function tryAjaxEndpoints(parsedUrl: URL, originalUrl: string): Promise<{ imageUrl?: string; html?: string }> {
+interface AjaxResult {
+  imageUrl?: string;
+  html?: string;
+  productName?: string;
+  productPrice?: number;
+  productCurrency?: string;
+}
+
+async function tryAjaxEndpoints(parsedUrl: URL, originalUrl: string): Promise<AjaxResult> {
   const host = parsedUrl.hostname.toLowerCase();
   const path = parsedUrl.pathname;
 
@@ -566,7 +578,13 @@ async function tryAjaxEndpoints(parsedUrl: URL, originalUrl: string): Promise<{ 
               `</div>`,
             ].join('\n');
 
-            return { imageUrl, html: syntheticHtml };
+            return {
+              imageUrl,
+              html: syntheticHtml,
+              productName: p.title || undefined,
+              productPrice: parseFloat(priceVal) || undefined,
+              productCurrency: currency,
+            };
           }
         }
       } catch { /* Shopify JSON failed — fall through to normal scraping */ }

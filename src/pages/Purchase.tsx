@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useUser, fileToBase64 } from '../store';
 import { analyzePurchase, detectFabricFromImage, detectFabricFromUrl } from '../api';
-import { hasClaudeKey } from '../apiHelper';
+import { hasClaudeKey, scrapeUrl } from '../apiHelper';
 import type { PurchaseAnalysis } from '../api';
 
 
@@ -214,25 +214,54 @@ export default function Purchase() {
     setFabricLoading(true);
     setFabricSource(null);
     try {
+      let detected = false;
+
+      // Step 1: Try scraper first for structured data (Shopify, etc.)
+      // This is fast and reliable — doesn't need Claude API
+      let gotScrapedPrice = false;
+      try {
+        const scraped = await scrapeUrl(url);
+        if (scraped.productName) { setItemName(scraped.productName); detected = true; }
+        if (scraped.productPrice && scraped.productPrice > 0) {
+          setPrice(String(scraped.productPrice));
+          gotScrapedPrice = true;
+          detected = true;
+        }
+        if (scraped.productCurrency) {
+          const sym = scraped.productCurrency === 'GBP' ? '£' : scraped.productCurrency === 'USD' ? '$' : scraped.productCurrency === 'EUR' ? '€' : scraped.productCurrency;
+          setCurrency(sym);
+        }
+        // If we got an image URL, store it for later use
+        if (scraped.imageUrl && !imagePreview) {
+          setImagePreview(scraped.imageUrl);
+        }
+      } catch { /* scraper failed — continue to Claude */ }
+
+      // Step 2: Use Claude API for fabric + any missing fields
       const hasKey = hasClaudeKey();
       if (hasKey) {
-        const res = await detectFabricFromUrl(url);
-        let detected = false;
-        if (res.fabric) { setFabric(res.fabric); setFabricSource(res.source || 'inferred'); detected = true; }
-        if (res.itemName) { setItemName(res.itemName); detected = true; }
-        if (res.price && res.price > 0) { setPrice(String(res.price)); detected = true; }
-        if (res.currency) { setCurrency(res.currency); }
-        if (detected) {
-          setUrlDetected(true);
-        } else {
-          setUrlError('Could not detect details from this URL. Please fill in manually.');
+        try {
+          const res = await detectFabricFromUrl(url);
+          if (res.fabric) { setFabric(res.fabric); setFabricSource(res.source || 'inferred'); detected = true; }
+          if (res.itemName) { setItemName(res.itemName); detected = true; }
+          // Only use Claude's price if scraper didn't already provide one
+          if (res.price && res.price > 0 && !gotScrapedPrice) { setPrice(String(res.price)); detected = true; }
+          if (res.currency) { setCurrency(res.currency); }
+        } catch (e) {
+          // Claude failed but we may already have scraped data
+          console.warn('[Purchase] Claude detection failed:', e);
         }
-      } else {
+      } else if (!detected) {
         // Demo: keyword match on URL
         const lower = url.toLowerCase();
         const hit = URL_FABRIC_HINTS.find(([k]) => lower.includes(k));
-        if (hit) { setFabric(hit[1]); setFabricSource('inferred'); setUrlDetected(true); }
-        else { setUrlError('API key not configured. Please fill in details manually.'); }
+        if (hit) { setFabric(hit[1]); setFabricSource('inferred'); detected = true; }
+      }
+
+      if (detected) {
+        setUrlDetected(true);
+      } else {
+        setUrlError('Could not detect details from this URL. Please fill in manually.');
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
