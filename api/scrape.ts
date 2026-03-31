@@ -494,10 +494,100 @@ async function tryAjaxEndpoints(parsedUrl: URL, originalUrl: string): Promise<{ 
     }
   }
 
+  // ── Shopify stores ──────────────────────────────────────────────────────
+  // Shopify has a public .json product API that works on ANY Shopify store.
+  // Pattern: /products/slug → /products/slug.json
+  // This bypasses all bot protection and returns full structured data.
+  {
+    const shopifyMatch = path.match(/\/products\/([^/?#]+)/);
+    if (shopifyMatch) {
+      const productSlug = shopifyMatch[1].replace(/\.json$/, '');
+      const jsonUrl = `https://${host}/products/${productSlug}.json`;
+      try {
+        const sjRes = await fetch(jsonUrl, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (sjRes.ok) {
+          const sjData = await sjRes.json() as { product?: ShopifyProduct };
+          if (sjData.product) {
+            const p = sjData.product;
+            // Pick variant from URL ?variant= param, or first variant
+            const variantParam = parsedUrl.searchParams.get('variant');
+            const variant = variantParam
+              ? p.variants?.find((v: ShopifyVariant) => String(v.id) === variantParam) || p.variants?.[0]
+              : p.variants?.[0];
+
+            const imageUrl = p.image?.src || p.images?.[0]?.src || undefined;
+
+            // Build synthetic HTML so the Claude prompt can parse it
+            const currency = parsedUrl.searchParams.get('currency') || 'GBP';
+            const currencySymbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency;
+            const priceVal = variant?.price || '0';
+            const bodyText = (p.body_html || '')
+              .replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+              .replace(/\s+/g, ' ').trim();
+
+            const syntheticHtml = [
+              `<title>${p.title || ''}</title>`,
+              `<meta property="og:title" content="${p.title || ''}" />`,
+              `<meta property="product:price:amount" content="${priceVal}" />`,
+              `<meta property="product:price:currency" content="${currency}" />`,
+              imageUrl ? `<meta property="og:image" content="${imageUrl}" />` : '',
+              `<script type="application/ld+json">${JSON.stringify({
+                '@type': 'Product',
+                name: p.title,
+                description: bodyText.slice(0, 500),
+                brand: { '@type': 'Brand', name: p.vendor || '' },
+                image: imageUrl || '',
+                offers: {
+                  '@type': 'Offer',
+                  price: priceVal,
+                  priceCurrency: currency,
+                },
+              })}</script>`,
+              `<div class="product-description">`,
+              `<h1>${p.title}</h1>`,
+              `<p>Brand: ${p.vendor || 'Unknown'}</p>`,
+              `<p>Price: ${currencySymbol}${priceVal}</p>`,
+              `<p>Type: ${p.product_type || ''}</p>`,
+              `<p>Tags: ${(p.tags || []).join(', ')}</p>`,
+              `<p>${bodyText}</p>`,
+              `</div>`,
+            ].join('\n');
+
+            return { imageUrl, html: syntheticHtml };
+          }
+        }
+      } catch { /* Shopify JSON failed — fall through to normal scraping */ }
+    }
+  }
+
   // Generic Demandware/SFCC sites (many fashion brands use this platform)
   // Pattern: hostname + /on/demandware.store/Sites-XXX-Site/default/Product-Variation?pid=XXX
   // We'd need to know the site ID, so skip for now
 
   void originalUrl; // suppress unused param warning
   return {};
+}
+
+// ── Shopify types ───────────────────────────────────────────────────────────
+interface ShopifyVariant {
+  id: number;
+  title: string;
+  price: string;
+  sku: string;
+}
+interface ShopifyProduct {
+  title: string;
+  vendor: string;
+  product_type: string;
+  body_html: string;
+  tags: string[];
+  image?: { src: string };
+  images?: { src: string }[];
+  variants?: ShopifyVariant[];
 }
