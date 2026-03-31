@@ -998,6 +998,15 @@ export default function Wardrobe() {
                   placeholder="0"
                 />
               </FieldRow>
+              <FieldRow label="Materials">
+                <input
+                  value={editModal.item.materials || ''}
+                  onChange={e => setEditModal(m => m && ({ ...m, item: { ...m.item, materials: e.target.value } }))}
+                  style={fieldStyle}
+                  className="field-input"
+                  placeholder="e.g. 100% Cotton, 80% Polyester 20% Elastane"
+                />
+              </FieldRow>
             </div>
 
             <div className="flex gap-3 mt-6" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: '16px' }}>

@@ -10,6 +10,7 @@ export interface WardrobeItem {
   wearCount: number;
   lastWorn: string | null;
   estimatedValue: number;
+  materials?: string;          // e.g. "100% Cotton", "80% Polyester, 20% Elastane"
   tags: string[];
 }
 

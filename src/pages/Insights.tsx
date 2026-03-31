@@ -37,7 +37,19 @@ function getScoreLabel(score: number): { label: string; color: string; bg: strin
 
 // ── Plastic / sustainability helpers ─────────────────────────────────────────
 
-// Subcategory keywords that strongly suggest synthetic fibres
+const SYNTHETIC_KEYWORDS = [
+  'polyester', 'nylon', 'acrylic', 'spandex', 'elastane', 'lycra',
+  'polyamide', 'polypropylene', 'pvc', 'vinyl', 'pleather', 'faux leather',
+  'microfiber', 'microfibre', 'viscose rayon', 'acetate',
+];
+
+const NATURAL_KEYWORDS = [
+  'cotton', 'linen', 'silk', 'wool', 'cashmere', 'hemp', 'bamboo',
+  'mohair', 'alpaca', 'merino', 'leather', 'suede', 'denim',
+  'tweed', 'flannel', 'muslin', 'organza', 'chiffon',
+];
+
+// Subcategory keywords that strongly suggest synthetic fibres (fallback when no materials set)
 const PLASTIC_SUBCATEGORY_KEYWORDS = [
   'legging', 'yoga', 'cycling short', 'athletic', 'activewear', 'gym',
   'sports bra', 'sports top', 'track pant', 'track suit',
@@ -53,6 +65,32 @@ const PLASTIC_TAGS = new Set([
 ]);
 
 function estimatePlastic(item: WardrobeItem): { likely: boolean; reason: string } {
+  // 1. If materials field is set, use it as the primary source
+  const mat = (item.materials || '').toLowerCase();
+  if (mat.length > 0) {
+    const hasSynthetic = SYNTHETIC_KEYWORDS.some(kw => mat.includes(kw));
+    const hasNatural   = NATURAL_KEYWORDS.some(kw => mat.includes(kw));
+
+    if (hasSynthetic && !hasNatural) {
+      const matched = SYNTHETIC_KEYWORDS.find(kw => mat.includes(kw))!;
+      return { likely: true, reason: `Contains ${matched}` };
+    }
+    if (hasSynthetic && hasNatural) {
+      // Mixed blend — check if synthetic percentage is dominant
+      const synMatch = mat.match(/(\d+)\s*%\s*(polyester|nylon|acrylic|spandex|elastane|lycra|polyamide)/i);
+      if (synMatch && parseInt(synMatch[1]) >= 50) {
+        return { likely: true, reason: `${synMatch[1]}% ${synMatch[2]} — mostly synthetic` };
+      }
+      const matched = SYNTHETIC_KEYWORDS.find(kw => mat.includes(kw))!;
+      return { likely: true, reason: `Synthetic blend (contains ${matched})` };
+    }
+    if (hasNatural) {
+      const matched = NATURAL_KEYWORDS.find(kw => mat.includes(kw))!;
+      return { likely: false, reason: `${matched.charAt(0).toUpperCase() + matched.slice(1)} — natural fibre` };
+    }
+  }
+
+  // 2. Fallback: guess from subcategory and tags
   const sub  = item.subcategory.toLowerCase();
   const tags = item.tags.map(t => t.toLowerCase());
 
@@ -66,7 +104,7 @@ function estimatePlastic(item: WardrobeItem): { likely: boolean; reason: string 
       return { likely: true, reason: `Tagged as "${tag}"` };
     }
   }
-  return { likely: false, reason: 'Likely natural fibres' };
+  return { likely: false, reason: mat ? 'Likely natural fibres' : 'Unknown — add materials to get an accurate result' };
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
