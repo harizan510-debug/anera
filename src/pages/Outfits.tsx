@@ -102,7 +102,7 @@ export default function Outfits() {
   const [slotBottom,     setSlotBottom]     = useState<WardrobeItem | null>(null);
   const [slotFootwear,   setSlotFootwear]   = useState<WardrobeItem | null>(null);
   const [slotOuterwear,  setSlotOuterwear]  = useState<WardrobeItem | null>(null);
-  const [slotAccessory,  setSlotAccessory]  = useState<WardrobeItem | null>(null);
+  const [slotAccessories, setSlotAccessories] = useState<WardrobeItem[]>([]);
   type SlotKey = 'top' | 'bottom' | 'footwear' | 'outerwear' | 'accessory';
   const [pickingSlot,    setPickingSlot]    = useState<SlotKey | null>(null);
   const [accSubTab,      setAccSubTab]      = useState<'jewellery' | 'bag' | 'belt' | 'hat'>('jewellery');
@@ -298,7 +298,7 @@ export default function Outfits() {
         slotBottom     ? `Bottom: ${slotBottom.color} ${slotBottom.subcategory}`       : null,
         slotFootwear   ? `Footwear: ${slotFootwear.color} ${slotFootwear.subcategory}` : null,
         slotOuterwear  ? `Outerwear: ${slotOuterwear.color} ${slotOuterwear.subcategory}` : null,
-        slotAccessory  ? `Accessory: ${slotAccessory.color} ${slotAccessory.subcategory}` : null,
+        ...slotAccessories.map(a => `Accessory: ${a.color} ${a.subcategory}`),
       ].filter((s): s is string => s !== null);
       const styleNotes = noteParts.length > 0 ? noteParts.join(', ') : undefined;
 
@@ -323,7 +323,7 @@ export default function Outfits() {
           if (slotFootwear)                        outfit.push(slotFootwear);
           else if (shoes.length)                   outfit.push(shoes[i % shoes.length]);
           if (slotOuterwear) outfit.push(slotOuterwear);
-          if (slotAccessory) outfit.push(slotAccessory);
+          slotAccessories.forEach(a => outfit.push(a));
           if (outfit.length > 0) demo.push({
             items: outfit,
             note: `Perfect for ${occasion.toLowerCase()} in ${weather.toLowerCase()} weather.${weatherInfo?.isRainy ? ' ☂️ Grab an umbrella!' : ''}`,
@@ -344,12 +344,19 @@ export default function Outfits() {
     :                     wardrobeItems.filter(i => ACC_CATS.includes(i.category as typeof ACC_CATS[number]));
 
   const pickSlot = (item: WardrobeItem) => {
-    if (pickingSlot === 'top')        setSlotTop(item);
-    if (pickingSlot === 'bottom')     setSlotBottom(item);
-    if (pickingSlot === 'footwear')   setSlotFootwear(item);
-    if (pickingSlot === 'outerwear')  setSlotOuterwear(item);
-    if (pickingSlot === 'accessory')  setSlotAccessory(item);
-    setPickingSlot(null);
+    if (pickingSlot === 'top')        { setSlotTop(item); setPickingSlot(null); }
+    if (pickingSlot === 'bottom')     { setSlotBottom(item); setPickingSlot(null); }
+    if (pickingSlot === 'footwear')   { setSlotFootwear(item); setPickingSlot(null); }
+    if (pickingSlot === 'outerwear')  { setSlotOuterwear(item); setPickingSlot(null); }
+    if (pickingSlot === 'accessory') {
+      // Toggle: add if not present, remove if already selected
+      setSlotAccessories(prev =>
+        prev.some(a => a.id === item.id)
+          ? prev.filter(a => a.id !== item.id)
+          : [...prev, item]
+      );
+      // Don't close the modal — let user pick multiple
+    }
   };
 
   const clearSlot = (slot: SlotKey) => {
@@ -357,7 +364,11 @@ export default function Outfits() {
     if (slot === 'bottom')     setSlotBottom(null);
     if (slot === 'footwear')   setSlotFootwear(null);
     if (slot === 'outerwear')  setSlotOuterwear(null);
-    if (slot === 'accessory')  setSlotAccessory(null);
+    if (slot === 'accessory')  setSlotAccessories([]);
+  };
+
+  const removeAccessory = (id: string) => {
+    setSlotAccessories(prev => prev.filter(a => a.id !== id));
   };
 
   // Trips
@@ -415,13 +426,12 @@ export default function Outfits() {
 
   const visiblePins = activeFolder === 'all' ? pins : pins.filter(p => p.folderId === activeFolder);
 
-  // Slot rows config
+  // Slot rows config (single-item slots only — accessories rendered separately)
   const slotRows: { slot: SlotKey; label: string; item: WardrobeItem | null }[] = [
     { slot: 'top',        label: 'Top',         item: slotTop },
     { slot: 'bottom',     label: 'Bottom',      item: slotBottom },
     { slot: 'footwear',   label: 'Footwear',    item: slotFootwear },
     { slot: 'outerwear',  label: 'Outerwear',   item: slotOuterwear },
-    { slot: 'accessory',  label: 'Accessories', item: slotAccessory },
   ];
 
   // ── JSX ──────────────────────────────────────────────────────────────────────
@@ -654,6 +664,57 @@ export default function Outfits() {
                     )}
                   </div>
                 ))}
+
+                {/* Accessories — multi-select */}
+                <div
+                  className="rounded-2xl overflow-hidden"
+                  style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
+                >
+                  {slotAccessories.length > 0 ? (
+                    <div className="px-3 py-2 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold uppercase" style={{ color: 'var(--text-secondary)', letterSpacing: '0.4px' }}>
+                          Accessories ({slotAccessories.length})
+                        </p>
+                        <div className="flex gap-1.5">
+                          <button onClick={() => setPickingSlot('accessory')}
+                            className="p-1 rounded-full" style={{ color: '#6B7C4E' }}>
+                            <Plus size={12} />
+                          </button>
+                          <button onClick={() => setSlotAccessories([])}
+                            className="p-1 rounded-full" style={{ color: 'var(--text-secondary)' }}>
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      {slotAccessories.map(acc => (
+                        <div key={acc.id} className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+                            {acc.imageUrl ? <img src={acc.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-[10px] opacity-40">👕</div>}
+                          </div>
+                          <p className="flex-1 text-[11px] font-medium capitalize truncate" style={{ color: 'var(--text-primary)' }}>
+                            {acc.color} {acc.subcategory}
+                          </p>
+                          <button onClick={() => removeAccessory(acc.id)}
+                            className="p-0.5 rounded-full flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      className="flex items-center gap-2 px-3 py-2 cursor-pointer active:scale-[0.98] transition-transform"
+                      onClick={() => setPickingSlot('accessory')}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'var(--accent-light)' }}>
+                        <Plus size={16} style={{ color: '#6B7C4E' }} />
+                      </div>
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add Accessories</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1080,7 +1141,7 @@ export default function Outfits() {
 
       {/* Slot picker */}
       {pickingSlot && (
-        <ModalSheet onClose={() => setPickingSlot(null)} title={pickingSlot === 'accessory' ? 'Pick Accessory' : `Pick ${pickingSlot}`}>
+        <ModalSheet onClose={() => setPickingSlot(null)} title={pickingSlot === 'accessory' ? 'Pick Accessories' : `Pick ${pickingSlot}`}>
           <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
             {/* Accessory sub-tabs */}
             {pickingSlot === 'accessory' && (
@@ -1111,25 +1172,40 @@ export default function Outfits() {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {pool.map(item => (
-                    <button key={item.id} onClick={() => pickSlot(item)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl active:scale-[0.98] transition-transform"
-                      style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
-                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-                        {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
-                          {item.color} {item.subcategory}
-                        </p>
-                        {item.brand && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.brand}</p>}
-                      </div>
-                    </button>
-                  ))}
+                  {pool.map(item => {
+                    const isSelected = pickingSlot === 'accessory' && slotAccessories.some(a => a.id === item.id);
+                    return (
+                      <button key={item.id} onClick={() => pickSlot(item)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl active:scale-[0.98] transition-transform"
+                        style={{
+                          border: isSelected ? '1.5px solid #6B7C4E' : '1px solid rgba(43,43,43,0.06)',
+                          background: isSelected ? 'rgba(107,124,78,0.06)' : 'transparent',
+                        }}>
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                          {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
+                            {item.color} {item.subcategory}
+                          </p>
+                          {item.brand && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.brand}</p>}
+                        </div>
+                        {isSelected && <Check size={16} style={{ color: '#6B7C4E', flexShrink: 0 }} />}
+                      </button>
+                    );
+                  })}
                 </div>
               );
             })()}
           </div>
+          {/* Done button for accessories */}
+          {pickingSlot === 'accessory' && slotAccessories.length > 0 && (
+            <button onClick={() => setPickingSlot(null)}
+              className="w-full mt-4 py-3 rounded-full font-semibold text-sm transition-all active:scale-[0.98]"
+              style={{ background: '#6B7C4E', color: '#FFFFFF' }}>
+              Done ({slotAccessories.length} selected)
+            </button>
+          )}
         </ModalSheet>
       )}
 
