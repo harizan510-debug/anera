@@ -132,7 +132,7 @@ const REC = {
     border: '#B8F2E6',
   },
   'maybe consider if you need it': {
-    label: 'Maybe consider\nif you need it',
+    label: 'Maybe consider if you need it',
     color: '#92400E',
     bg: 'linear-gradient(135deg, #FFF3B0 0%, #FDE68A 100%)',
     glow: '0 0 48px rgba(255,243,176,0.35)',
@@ -687,79 +687,52 @@ export default function Purchase() {
   const plastic = PLASTIC[analysis.plastic_impact];
 
   return (
-    <div className="pb-28" style={{ background: '#F5F0FF', minHeight: '100vh' }}>
-      <div className="px-4 mb-5 pt-4">
-        <h1 className="text-2xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
-          Buy decision
+    <div className="pb-24" style={{ background: '#F5F0FF', minHeight: '100vh' }}>
+      <div className="px-4 mb-3 pt-4">
+        <h1 className="text-xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
+          {analysis.itemName.length > 50 ? analysis.itemName.slice(0, 50) + '…' : analysis.itemName}
         </h1>
-        <p className="text-sm mt-0.5" style={{ color: 'rgba(43,43,43,0.45)' }}>
-          {analysis.itemName.length > 42 ? analysis.itemName.slice(0, 42) + '…' : analysis.itemName}
-        </p>
       </div>
 
-      {/* ── 1. Hero image ── */}
-      <div className="px-4 mb-5">
-        <div
-          className="w-full rounded-2xl overflow-hidden flex items-center justify-center"
-          style={{
-            background: analysis.imageUrl ? 'transparent' : '#FFFFFF',
-            border: analysis.imageUrl ? 'none' : '1px solid rgba(0,0,0,0.04)',
-            boxShadow: analysis.imageUrl ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
-            minHeight: '160px',
-          }}
-        >
-          {analysis.imageUrl ? (
+      {/* ── 1. Hero image or item name ── */}
+      {analysis.imageUrl ? (
+        <div className="px-4 mb-4">
+          <div className="w-full rounded-2xl overflow-hidden flex items-center justify-center">
             <img
               src={analysis.imageUrl}
               className="w-full object-cover rounded-2xl"
-              style={{ maxHeight: '220px' }}
+              style={{ maxHeight: '180px' }}
               alt={analysis.itemName}
             />
-          ) : (
-            <div className="flex flex-col items-center gap-2 py-8">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: '#F0F4E8' }}>
-                <CircleDollarSign size={24} style={{ color: '#6B7C4E' }} />
-              </div>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{analysis.itemName}</p>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* ── 2. Decision badge ── */}
-      <div className="flex flex-col items-center px-4 mb-7">
+      <div className="flex flex-col items-center px-4 mb-5">
         <div
           style={{
             background: rec.bg,
             border: `2px solid ${rec.border}`,
             boxShadow: badgeReady ? rec.glow : 'none',
             borderRadius: '9999px',
-            padding: '16px 36px',
+            padding: '14px 28px',
             animation: badgeReady ? 'badge-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'none',
             opacity: badgeReady ? undefined : 0,
           }}
         >
           <p
-            className="text-2xl font-bold text-center tracking-tight"
-            style={{ color: rec.color, whiteSpace: 'pre-line', lineHeight: 1.25 }}
+            className="text-xl font-bold text-center tracking-tight"
+            style={{ color: rec.color, lineHeight: 1.3 }}
           >
             {rec.label}
           </p>
         </div>
-        <p
-          className="text-xs mt-2.5"
-          style={{
-            color: 'rgba(43,43,43,0.45)',
-            animation: badgeReady ? 'fade-up 0.4s ease 0.3s both' : 'none',
-          }}
-        >
-          {analysis.currency}{analysis.price} · {analysis.currency}{analysis.cost_per_wear.toFixed(2)} per wear
-        </p>
       </div>
 
       {/* ── 3. Stat cards ── */}
       <div
-        className="grid grid-cols-3 gap-3 px-4 mb-5"
+        className="grid grid-cols-3 gap-2.5 px-4 mb-4"
         style={{ animation: badgeReady ? 'fade-up 0.4s ease 0.2s both' : 'none' }}
       >
         {[
@@ -769,32 +742,32 @@ export default function Purchase() {
         ].map(stat => (
           <div
             key={stat.label}
-            className="rounded-2xl px-3 py-4 text-center"
+            className="rounded-2xl px-3 py-3 text-center"
             style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
           >
             <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
-            <p className="text-[11px] font-semibold mt-0.5 uppercase" style={{ color: 'rgba(43,43,43,0.45)', letterSpacing: '0.3px' }}>{stat.label}</p>
+            <p className="text-[10px] font-semibold mt-0.5 uppercase" style={{ color: 'rgba(43,43,43,0.45)', letterSpacing: '0.3px' }}>{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* ── 4. Plastic impact bar ── */}
-      <div className="px-4 mb-5">
-        <div className="rounded-2xl px-4 py-4" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Leaf size={14} style={{ color: '#16A34A' }} />
+      <div className="px-4 mb-4">
+        <div className="rounded-2xl px-4 py-3" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Leaf size={13} style={{ color: '#16A34A' }} />
             <span className="text-xs font-semibold" style={{ color: '#2B2B2B' }}>Plastic impact</span>
-            <span className="ml-auto text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style={{ color: plastic.dot, background: `${plastic.dot}14` }}>{plastic.label}</span>
+            <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: plastic.dot, background: `${plastic.dot}14` }}>{plastic.label}</span>
           </div>
           <div
-            className="relative h-3 rounded-full mb-2"
+            className="relative h-2.5 rounded-full mb-1.5"
             style={{
               background: 'linear-gradient(to right, #16A34A 0%, #CA8A04 30%, #EA580C 70%, #DC2626 100%)',
               overflow: 'visible',
             }}
           >
             <div
-              className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md"
+              className="absolute w-4 h-4 rounded-full border-2 border-white shadow-md"
               style={{
                 left: `${Math.min(100, Math.max(0, analysis.plastic_percentage))}%`,
                 top: '50%',
@@ -804,10 +777,10 @@ export default function Purchase() {
               }}
             />
           </div>
-          <div className="flex justify-between text-[9px] mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <div className="flex justify-between text-[8px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
             <span>0%</span><span>30%</span><span>70%</span><span>100%</span>
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--text-secondary)' }}>
             ~{analysis.plastic_percentage}% synthetic materials
             {analysis.plastic_percentage === 0 && ' — fully natural fibres 🌿'}
           </p>
@@ -815,41 +788,38 @@ export default function Purchase() {
       </div>
 
       {/* ── 5. Investment insight — stock ticker style ── */}
-      <div className="px-4 mb-5">
+      <div className="px-4 mb-4">
         <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <div className="flex">
-            {/* Left — Item image or icon */}
+            {/* Left — $ icon + invested amount */}
             <div
-              className="w-[110px] flex-shrink-0 flex items-center justify-center"
-              style={{ background: analysis.imageUrl ? '#FAFAFA' : '#F0F4E8', minHeight: '130px' }}
+              className="w-[90px] flex-shrink-0 flex flex-col items-center justify-center gap-1.5"
+              style={{ background: '#F0F4E8', minHeight: '110px' }}
             >
-              {analysis.imageUrl ? (
-                <img
-                  src={analysis.imageUrl}
-                  className="w-full h-full object-contain p-2"
-                  alt={analysis.itemName}
-                  style={{ maxHeight: '130px' }}
-                />
-              ) : (
-                <CircleDollarSign size={32} style={{ color: '#6B7C4E' }} />
-              )}
+              <CircleDollarSign size={28} style={{ color: '#6B7C4E' }} />
+              <p className="text-sm font-bold" style={{ color: '#6B7C4E' }}>
+                {analysis.currency}{analysis.price}
+              </p>
+              <p className="text-[9px] font-medium" style={{ color: 'rgba(107,124,78,0.7)' }}>
+                invested
+              </p>
             </div>
 
             {/* Right — stock ticker content */}
-            <div className="flex-1 px-3.5 py-3">
-              {/* Header: name + badge */}
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+            <div className="flex-1 px-3.5 py-2.5">
+              {/* Header: badge */}
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
                   style={{ background: '#F0F4E8', color: '#6B7C4E' }}>
                   Investment
                 </span>
               </div>
-              {/* Price — large, stock-style */}
+              {/* Future value — large, stock-style */}
               <p className="text-xl font-bold tracking-tight" style={{ color: '#1A1A1A' }}>
                 {analysis.currency}{analysis.future_value_if_invested.toFixed(2)}
               </p>
               {/* Growth badge */}
-              <div className="flex items-center gap-1 mt-0.5 mb-2">
+              <div className="flex items-center gap-1 mt-0.5 mb-1.5">
                 <TrendingUp size={11} style={{ color: '#16A34A' }} />
                 <span className="text-xs font-semibold" style={{ color: '#16A34A' }}>
                   +{analysis.currency}{(analysis.future_value_if_invested - analysis.price).toFixed(2)}
@@ -858,15 +828,15 @@ export default function Purchase() {
                   ({((analysis.future_value_if_invested / analysis.price - 1) * 100).toFixed(1)}%)
                 </span>
               </div>
-              {/* Mini bar chart — compound growth over time */}
+              {/* Mini bar chart — two-tone: dark purple = principal, light = gains */}
               <InvestmentBarChart
                 startVal={analysis.price}
                 endVal={analysis.future_value_if_invested}
                 years={analysis.estimated_lifetime_years}
               />
               {/* Subtitle */}
-              <p className="text-[10px] mt-1.5 leading-snug" style={{ color: 'rgba(43,43,43,0.5)' }}>
-                {analysis.currency}{analysis.price} invested at 7% p.a. over {analysis.estimated_lifetime_years} yrs
+              <p className="text-[9px] mt-1 leading-snug" style={{ color: 'rgba(43,43,43,0.5)' }}>
+                7% p.a. over {analysis.estimated_lifetime_years} yrs
               </p>
             </div>
           </div>
@@ -874,9 +844,9 @@ export default function Purchase() {
       </div>
 
       {/* ── 6. Reasoning ── */}
-      <div className="px-4 mb-6">
-        <div className="rounded-2xl px-4 py-4" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-          <p className="text-sm leading-relaxed" style={{ color: '#2B2B2B' }}>{analysis.reasoning}</p>
+      <div className="px-4 mb-4">
+        <div className="rounded-2xl px-4 py-3" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <p className="text-[13px] leading-relaxed" style={{ color: '#2B2B2B' }}>{analysis.reasoning}</p>
         </div>
       </div>
 
@@ -884,7 +854,7 @@ export default function Purchase() {
       <div className="px-4 flex gap-3">
         <button
           onClick={() => setWished(v => !v)}
-          className="flex-1 py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+          className="flex-1 py-3 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all"
           style={{
             background: wished ? 'rgba(107,124,78,0.12)' : '#FFFFFF',
             border: `1px solid ${wished ? '#6B7C4E' : 'rgba(0,0,0,0.08)'}`,
@@ -892,15 +862,15 @@ export default function Purchase() {
             boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
           }}
         >
-          <Heart size={15} fill={wished ? '#6B7C4E' : 'none'} strokeWidth={wished ? 0 : 2} />
+          <Heart size={14} fill={wished ? '#6B7C4E' : 'none'} strokeWidth={wished ? 0 : 2} />
           {wished ? 'Saved' : 'Save to wishlist'}
         </button>
         <button
           onClick={reset}
-          className="flex-1 py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2"
+          className="flex-1 py-3 rounded-full font-semibold text-sm flex items-center justify-center gap-2"
           style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', color: '#2B2B2B', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
         >
-          <RefreshCw size={15} />
+          <RefreshCw size={14} />
           Compare another
         </button>
       </div>
@@ -908,48 +878,69 @@ export default function Purchase() {
   );
 }
 
-// ── Investment bar chart (compound growth bars like "Contributions Over Time") ──
+// ── Investment bar chart — two-tone: dark purple = principal, lilac = gains ──
 function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; endVal: number; years: number }) {
-  // Generate yearly values via compound growth
-  const barCount = Math.max(Math.min(Math.round(years), 10), 3); // 3-10 bars
+  const barCount = Math.max(Math.min(Math.round(years), 10), 3);
   const bars: number[] = [];
   for (let i = 0; i <= barCount; i++) {
     const t = i / barCount;
     bars.push(startVal * Math.pow(endVal / startVal, t));
   }
   const maxVal = bars[bars.length - 1];
+  const minDisplay = startVal * 0.5;
+  const range = maxVal - minDisplay;
 
   const W = 160;
-  const H = 44;
+  const H = 40;
   const PAD_X = 2;
   const PAD_TOP = 2;
   const gap = 2;
   const barW = (W - PAD_X * 2 - gap * (bars.length - 1)) / bars.length;
+  const rx = barW > 6 ? 3 : 1.5;
 
   return (
     <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block">
-      <defs>
-        <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7C3AED" />
-          <stop offset="100%" stopColor="#C8B6FF" />
-        </linearGradient>
-      </defs>
       {bars.map((val, i) => {
-        const barH = Math.max(3, ((val - startVal * 0.5) / (maxVal - startVal * 0.5)) * (H - PAD_TOP - 2));
+        const totalH = Math.max(3, ((val - minDisplay) / range) * (H - PAD_TOP - 2));
+        const principalH = Math.max(2, ((startVal - minDisplay) / range) * (H - PAD_TOP - 2));
+        const gainsH = Math.max(0, totalH - principalH);
         const x = PAD_X + i * (barW + gap);
-        const y = H - barH;
-        const isLast = i === bars.length - 1;
+        const yTotal = H - totalH;
+
         return (
-          <rect
-            key={i}
-            x={x}
-            y={y}
-            width={barW}
-            height={barH}
-            rx={barW > 6 ? 3 : 1.5}
-            fill={isLast ? '#7C3AED' : 'url(#barGrad)'}
-            opacity={isLast ? 1 : 0.5 + (i / bars.length) * 0.5}
-          />
+          <g key={i}>
+            {/* Gains portion (top — lighter lilac) */}
+            {gainsH > 0 && (
+              <rect
+                x={x} y={yTotal}
+                width={barW} height={gainsH}
+                rx={rx} ry={rx}
+                fill="#C8B6FF"
+              />
+            )}
+            {/* Principal portion (bottom — dark purple) */}
+            <rect
+              x={x} y={H - principalH}
+              width={barW} height={principalH}
+              rx={rx} ry={rx}
+              fill="#7C3AED"
+            />
+            {/* Cover the gap between the two rects with a flat join */}
+            {gainsH > 1 && (
+              <rect
+                x={x} y={H - principalH - Math.min(rx, gainsH)}
+                width={barW} height={Math.min(rx * 2, gainsH + rx)}
+                fill="#C8B6FF"
+              />
+            )}
+            {gainsH > 1 && (
+              <rect
+                x={x} y={H - principalH}
+                width={barW} height={Math.min(rx, principalH)}
+                fill="#7C3AED"
+              />
+            )}
+          </g>
         );
       })}
     </svg>
