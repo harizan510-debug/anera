@@ -4,11 +4,11 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#C8B6FF', bg: 'rgba(200,182,255,0.18)' },
-  { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    color: '#F9A8D4', bg: 'rgba(249,168,212,0.15)' },
-  { to: '/social',    icon: Users,       label: 'Community',  color: '#6EE7B7', bg: 'rgba(110,231,183,0.15)' },
-  { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       color: '#FCD34D', bg: 'rgba(252,211,77,0.15)' },
-  { to: '/insights',  icon: BarChart2,   label: 'Insights',   color: '#93C5FD', bg: 'rgba(147,197,253,0.15)' },
+  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#C8B6FF', bg: 'rgba(200,182,255,0.18)', main: false },
+  { to: '/social',    icon: Users,       label: 'Community',  color: '#6EE7B7', bg: 'rgba(110,231,183,0.15)', main: false },
+  { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    color: '#F9A8D4', bg: 'rgba(249,168,212,0.15)', main: true  },
+  { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       color: '#FCD34D', bg: 'rgba(252,211,77,0.15)', main: false },
+  { to: '/insights',  icon: BarChart2,   label: 'Insights',   color: '#93C5FD', bg: 'rgba(147,197,253,0.15)', main: false },
 ];
 
 const INACTIVE_COLOR = 'rgba(43,43,43,0.32)';
@@ -25,7 +25,7 @@ export default function BottomNav() {
       }}
       className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-1.5 safe-area-bottom"
     >
-      {navItems.map(({ to, icon: Icon, label, color, bg }) => (
+      {navItems.map(({ to, icon: Icon, label, color, bg, main }) => (
         <NavLink
           key={to}
           to={to}
@@ -34,21 +34,21 @@ export default function BottomNav() {
           {({ isActive }) => (
             <>
               <div
-                className="p-1.5 rounded-2xl transition-all duration-200"
+                className={`${main ? 'p-2.5 -mt-4 rounded-full shadow-lg' : 'p-1.5 rounded-2xl'} transition-all duration-200`}
                 style={
                   isActive
-                    ? { background: bg, color }
-                    : { color: INACTIVE_COLOR }
+                    ? { background: main ? color : bg, color: main ? '#fff' : color }
+                    : { color: INACTIVE_COLOR, background: main ? 'rgba(249,168,212,0.12)' : undefined }
                 }
               >
                 <Icon
-                  size={18}
+                  size={main ? 26 : 18}
                   strokeWidth={isActive ? 2.4 : 1.7}
-                  color={isActive ? color : undefined}
+                  color={isActive ? (main ? '#fff' : color) : undefined}
                 />
               </div>
               <span
-                className="text-[10px] font-semibold tracking-wider uppercase transition-colors duration-200"
+                className={`${main ? 'text-[11px]' : 'text-[10px]'} font-semibold tracking-wider uppercase transition-colors duration-200`}
                 style={{ color: isActive ? color : INACTIVE_COLOR }}
               >
                 {label}
