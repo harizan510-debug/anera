@@ -294,9 +294,9 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </p>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: '📸 Instagram', field: 'instagram' as const },
-                { label: '🎵 TikTok', field: 'tiktok' as const },
-                { label: '👤 Facebook', field: 'facebook' as const },
+                { label: 'Instagram', field: 'instagram' as const },
+                { label: 'TikTok', field: 'tiktok' as const },
+                { label: 'Facebook', field: 'facebook' as const },
               ].map(({ label, field }) => (
                 <Field key={field} label={label}>
                   <input value={signup[field]} onChange={set(field)}

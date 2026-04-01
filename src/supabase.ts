@@ -152,12 +152,12 @@ async function fetchWeatherData(lat: number, lon: number, cityName: string): Pro
 }
 
 function getWeatherDesc(code: number): { description: string; icon: string } {
-  if (code === 0) return { description: 'Clear sky', icon: '☀️' };
-  if (code <= 2) return { description: 'Partly cloudy', icon: '⛅' };
-  if (code === 3) return { description: 'Overcast', icon: '☁️' };
-  if (code <= 57) return { description: 'Drizzle', icon: '🌦️' };
-  if (code <= 67) return { description: 'Rain', icon: '🌧️' };
-  if (code <= 77) return { description: 'Snow', icon: '❄️' };
-  if (code <= 82) return { description: 'Rain showers', icon: '🌧️' };
-  return { description: 'Thunderstorm', icon: '⛈️' };
+  if (code === 0) return { description: 'Clear sky', icon: 'clear' };
+  if (code <= 2) return { description: 'Partly cloudy', icon: 'cloudy' };
+  if (code === 3) return { description: 'Overcast', icon: 'overcast' };
+  if (code <= 57) return { description: 'Drizzle', icon: 'drizzle' };
+  if (code <= 67) return { description: 'Rain', icon: 'rain' };
+  if (code <= 77) return { description: 'Snow', icon: 'snow' };
+  if (code <= 82) return { description: 'Rain showers', icon: 'rain' };
+  return { description: 'Thunderstorm', icon: 'storm' };
 }

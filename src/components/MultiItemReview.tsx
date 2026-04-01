@@ -47,18 +47,18 @@ const CAT_LABELS: Record<WardrobeItem['category'], string> = {
 };
 
 // ── Design tokens ─────────────────────────────────────────────────────────
-const LILAC = '#C8B6FF';
-const LILAC_DARK = '#A78BFA';
-const LILAC_LIGHT = '#EDE7FF';
-const MINT = '#B8F2E6';
-const MINT_DARK = '#2D8B73';
-const BUTTER = '#FFF3B0';
-const BUTTER_DARK = '#92400E';
+const LILAC = '#A3B18A';
+const LILAC_DARK = '#8A9A72';
+const LILAC_LIGHT = '#DDE5D3';
+const MINT = '#DDE5D3';
+const MINT_DARK = '#4A5A38';
+const BUTTER = '#F0EDE8';
+const BUTTER_DARK = '#8B7A2B';
 const SURFACE = '#FFFFFF';
-const BG = '#FAFAFA';
+const BG = '#F8F7F4';
 const SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
 const SOFT_RED = '#FEE2E2';
-const SOFT_RED_TEXT = '#DC2626';
+const SOFT_RED_TEXT = '#EB5757';
 const SOFT_RED_BORDER = '#FECACA';
 
 // ── Confidence helpers ──────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ function avgConfidence(item: DetectedItem): number {
 function confidenceColor(item: DetectedItem): { bg: string; text: string; dot: string } {
   const mc = minConfidence(item);
   if (mc >= 0.85) return { bg: MINT, text: MINT_DARK, dot: MINT_DARK };
-  if (mc >= 0.6) return { bg: BUTTER, text: BUTTER_DARK, dot: '#D97706' };
+  if (mc >= 0.6) return { bg: BUTTER, text: BUTTER_DARK, dot: '#F2994A' };
   return { bg: SOFT_RED, text: SOFT_RED_TEXT, dot: SOFT_RED_TEXT };
 }
 
@@ -98,14 +98,14 @@ function ConfidenceField({ label, confidence, children }: ConfidenceFieldProps) 
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF' }}>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6F6F6F' }}>
           {label}
         </span>
         {isHigh && (
           <span style={{ fontSize: 11, color: MINT_DARK, opacity: 0.85, fontWeight: 700, lineHeight: 1 }}>&#10003;</span>
         )}
         {isMed && (
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#D97706', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F2994A', display: 'inline-block', flexShrink: 0 }} />
         )}
         {isLow && (
           <span style={{
@@ -135,7 +135,7 @@ function ConfidenceInputWrapper({ confidence, children }: { confidence: number; 
       borderRadius: 12,
       outline: isLow ? `1.5px solid ${BUTTER}` : undefined,
       background: isLow ? '#FFFDF5' : undefined,
-      borderBottom: isMed ? '2px solid #D97706' : undefined,
+      borderBottom: isMed ? '2px solid #F2994A' : undefined,
       overflow: 'hidden',
     }}>
       {children}
@@ -147,11 +147,11 @@ function ConfidenceInputWrapper({ confidence, children }: { confidence: number; 
 
 const inputStyle: React.CSSProperties = {
   background: BG,
-  border: '1.5px solid #E5E7EB',
+  border: '1.5px solid #E8E8E8',
   borderRadius: 12,
   padding: '10px 12px',
   fontSize: 13,
-  color: '#1F2937',
+  color: '#1A1A1A',
   outline: 'none',
   width: '100%',
   transition: 'border-color 0.2s, box-shadow 0.2s',
@@ -280,10 +280,10 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
       <div className="flex items-center justify-between px-5 py-3.5 flex-shrink-0"
         style={{ background: SURFACE, boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
         <button onClick={onCancel} className="flex items-center gap-1.5 text-sm"
-          style={{ color: '#9CA3AF' }}>
+          style={{ color: '#6F6F6F' }}>
           <X size={18} /> Cancel
         </button>
-        <p className="text-sm font-semibold" style={{ color: '#1F2937' }}>
+        <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>
           {editItems.length} item{editItems.length !== 1 ? 's' : ''} detected
         </p>
         <button onClick={handleConfirm} disabled={editItems.length === 0 || saving}
@@ -295,13 +295,13 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
 
       {/* ── Legend ── */}
       <div className="px-5 pt-3 pb-2 flex-shrink-0 flex items-center gap-4 flex-wrap">
-        <span className="text-xs font-medium" style={{ color: '#9CA3AF' }}>Confidence:</span>
+        <span className="text-xs font-medium" style={{ color: '#6F6F6F' }}>Confidence:</span>
         <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: MINT_DARK }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: MINT, border: `1.5px solid ${MINT_DARK}`, display: 'inline-block' }} />
           High
         </span>
-        <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#D97706' }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: BUTTER, border: '1.5px solid #D97706', display: 'inline-block' }} />
+        <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#F2994A' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: BUTTER, border: '1.5px solid #F2994A', display: 'inline-block' }} />
           Unsure
         </span>
         <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: SOFT_RED_TEXT }}>
@@ -315,7 +315,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
         {editItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-2xl mb-3" role="img" aria-label="dress">&#128087;</p>
-            <p className="text-sm" style={{ color: '#9CA3AF' }}>All items removed. Tap Cancel to go back.</p>
+            <p className="text-sm" style={{ color: '#6F6F6F' }}>All items removed. Tap Cancel to go back.</p>
           </div>
         )}
 
@@ -362,7 +362,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                 {/* Summary text */}
                 <div className="flex-1 min-w-0 py-0.5">
                   <p className="text-sm font-semibold capitalize leading-tight mb-1.5"
-                    style={{ color: '#1F2937' }}>
+                    style={{ color: '#1A1A1A' }}>
                     {item.color} {item.subcategory}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -372,7 +372,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                     </span>
                     {item.brand && (
                       <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
-                        style={{ background: BG, color: '#6B7280', border: '1px solid #E5E7EB' }}>
+                        style={{ background: BG, color: '#6F6F6F', border: '1px solid #E8E8E8' }}>
                         {item.brand}
                       </span>
                     )}
@@ -395,7 +395,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                     onClick={() => toggleExpand(item.tempId)}
                     className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-all"
                     style={{
-                      color: expanded ? '#6B7280' : LILAC_DARK,
+                      color: expanded ? '#6F6F6F' : LILAC_DARK,
                       background: expanded ? '#F3F4F6' : LILAC_LIGHT,
                     }}
                   >
@@ -411,7 +411,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                   {/* Cropped vs No-crop toggle */}
                   {item.croppedImageUrl && (item.bgRemovedImageUrl || item.originalImageUrl) && (
                     <div>
-                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6F6F6F', display: 'block', marginBottom: 8 }}>
                         Photo
                       </span>
                       <div className="flex gap-2">
@@ -420,9 +420,9 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                           style={{
                             background: !useOriginal[item.tempId] ? LILAC : BG,
-                            color: !useOriginal[item.tempId] ? '#1F2937' : '#9CA3AF',
-                            border: `1.5px solid ${!useOriginal[item.tempId] ? LILAC_DARK : '#E5E7EB'}`,
-                            boxShadow: !useOriginal[item.tempId] ? '0 2px 8px rgba(200,182,255,0.3)' : 'none',
+                            color: !useOriginal[item.tempId] ? '#1A1A1A' : '#6F6F6F',
+                            border: `1.5px solid ${!useOriginal[item.tempId] ? LILAC_DARK : '#E8E8E8'}`,
+                            boxShadow: !useOriginal[item.tempId] ? '0 2px 8px rgba(163,177,138,0.25)' : 'none',
                           }}
                         >
                           <Crop size={13} /> Cropped
@@ -432,9 +432,9 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                           style={{
                             background: useOriginal[item.tempId] ? LILAC : BG,
-                            color: useOriginal[item.tempId] ? '#1F2937' : '#9CA3AF',
-                            border: `1.5px solid ${useOriginal[item.tempId] ? LILAC_DARK : '#E5E7EB'}`,
-                            boxShadow: useOriginal[item.tempId] ? '0 2px 8px rgba(200,182,255,0.3)' : 'none',
+                            color: useOriginal[item.tempId] ? '#1A1A1A' : '#6F6F6F',
+                            border: `1.5px solid ${useOriginal[item.tempId] ? LILAC_DARK : '#E8E8E8'}`,
+                            boxShadow: useOriginal[item.tempId] ? '0 2px 8px rgba(163,177,138,0.25)' : 'none',
                           }}
                         >
                           <Maximize size={13} /> No crop
@@ -446,7 +446,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                   {/* Image upload (shown when no image or user clicks Add) */}
                   {(!item.croppedImageUrl && !item.originalImageUrl) || showImageInput[item.tempId] ? (
                     <div>
-                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6F6F6F', display: 'block', marginBottom: 8 }}>
                         Product image
                       </span>
                       <div className="flex gap-2">
@@ -497,7 +497,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                           Upload
                         </button>
                       </div>
-                      <p className="text-[10px] mt-1.5" style={{ color: '#9CA3AF' }}>
+                      <p className="text-[10px] mt-1.5" style={{ color: '#6F6F6F' }}>
                         Tip: Right-click the product image on the website, "Copy image address", paste here
                       </p>
                     </div>
@@ -553,7 +553,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
 
                   {/* Tags */}
                   <div>
-                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6F6F6F', display: 'block', marginBottom: 8 }}>
                       Style tags
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -583,7 +583,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
               {/* ── Card footer ── */}
               <div className="px-4 py-2.5 flex items-center justify-between"
                 style={{ borderTop: '1px solid #F3F4F6', background: BG }}>
-                <span className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                <span className="text-xs font-medium" style={{ color: '#6F6F6F' }}>
                   Item {idx + 1} of {editItems.length}
                 </span>
                 <button onClick={() => removeItem(item.tempId)}
@@ -606,8 +606,8 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
           className="w-full py-4 rounded-full font-semibold flex items-center justify-center gap-2.5 disabled:opacity-40 transition-all"
           style={{
             background: LILAC,
-            color: '#1F2937',
-            boxShadow: '0 4px 20px rgba(200,182,255,0.4)',
+            color: '#1A1A1A',
+            boxShadow: '0 4px 20px rgba(163,177,138,0.3)',
             fontSize: 15,
           }}
         >

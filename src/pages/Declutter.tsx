@@ -21,9 +21,9 @@ function getDeclutterScore(item: WardrobeItem): number {
 }
 
 function getScoreLabel(score: number): { label: string; color: string; bg: string } {
-  if (score >= 60) return { label: 'Let it go', color: '#DC2626', bg: '#FEE2E2' };
-  if (score >= 30) return { label: 'Consider it', color: '#D97706', bg: '#FEF3C7' };
-  return { label: 'Keep it', color: '#16A34A', bg: '#DCFCE7' };
+  if (score >= 60) return { label: 'Let it go', color: '#EB5757', bg: '#FEE2E2' };
+  if (score >= 30) return { label: 'Consider it', color: '#F2994A', bg: '#FDF6E3' };
+  return { label: 'Keep it', color: '#A3B18A', bg: '#DDE5D3' };
 }
 
 type Action = 'sell' | 'donate' | 'restyle' | null;
@@ -184,7 +184,7 @@ export default function Declutter() {
                   {[
                     { id: 'sell' as const, label: 'Sell', icon: ShoppingBag, color: '#2563EB', bg: '#EFF6FF' },
                     { id: 'donate' as const, label: 'Donate', icon: Heart, color: '#16A34A', bg: '#DCFCE7' },
-                    { id: 'restyle' as const, label: 'Restyle', icon: RefreshCw, color: '#7C3AED', bg: '#F5F3FF' },
+                    { id: 'restyle' as const, label: 'Restyle', icon: RefreshCw, color: '#6F6F6F', bg: '#F0EDE8' },
                   ].map(btn => {
                     const Icon = btn.icon;
                     return (

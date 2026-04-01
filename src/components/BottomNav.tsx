@@ -3,31 +3,29 @@ import {
   LayoutGrid, Sparkles, ShoppingBag, BarChart2, Users
 } from 'lucide-react';
 
+const SAGE = '#A3B18A';
+const SAGE_BG = 'rgba(163,177,138,0.15)';
+
 const navItems = [
-  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#C8B6FF', bg: 'rgba(200,182,255,0.18)', main: false },
-  { to: '/social',    icon: Users,       label: 'Community',  color: '#6EE7B7', bg: 'rgba(110,231,183,0.15)', main: false },
-  { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    color: '#F9A8D4', bg: 'rgba(249,168,212,0.15)', main: true  },
-  { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       color: '#FCD34D', bg: 'rgba(252,211,77,0.15)', main: false },
-  { to: '/insights',  icon: BarChart2,   label: 'Insights',   color: '#93C5FD', bg: 'rgba(147,197,253,0.15)', main: false },
+  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   main: false },
+  { to: '/social',    icon: Users,       label: 'Community',  main: false },
+  { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    main: true  },
+  { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       main: false },
+  { to: '/insights',  icon: BarChart2,   label: 'Insights',   main: false },
 ];
 
-const INACTIVE_COLOR = 'rgba(43,43,43,0.32)';
+const INACTIVE_COLOR = 'rgba(26,26,26,0.32)';
+const ACTIVE_COLOR = '#1A1A1A';
 
 /* Dome radius — the convex bump that rises above the bar to house the Outfits icon */
 const DOME_R = 28;
-const DOME_CURVE = 8; // cubic ease-in width on each side
+const DOME_CURVE = 8;
 
-/**
- * SVG path for the nav bar background with a convex dome bump in the centre.
- * The dome arcs UPWARD (negative y) so the top border line wraps over the icon.
- * viewBox: 0 -DOME_R  400  (60 + DOME_R)
- */
 function domePath(vw: number, r: number, curve: number) {
-  const topY = 0;         // flat top edge of the bar
-  const cx = vw / 2;      // horizontal centre
+  const topY = 0;
+  const cx = vw / 2;
   const left = cx - r - curve;
   const right = cx + r + curve;
-  // Path: left edge → approach dome → cubic up into arc → arc apex at -r → cubic back down → right edge → bottom
   return [
     `M 0,${topY}`,
     `L ${left},${topY}`,
@@ -40,9 +38,8 @@ function domePath(vw: number, r: number, curve: number) {
   ].join(' ');
 }
 
-/** Normalised 0-1 version of the dome path for clipPath */
 function normaliseDomePath(vw: number, totalH: number, r: number, curve: number) {
-  const topY = r;  // in normalised space, 0 is the top of viewBox, so flat bar top is at r
+  const topY = r;
   const cx = vw / 2;
   const left = cx - r - curve;
   const right = cx + r + curve;
@@ -63,7 +60,7 @@ function normaliseDomePath(vw: number, totalH: number, r: number, curve: number)
 }
 
 export default function BottomNav() {
-  const totalH = 60 + DOME_R; // viewBox height
+  const totalH = 60 + DOME_R;
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom" style={{ marginTop: `-${DOME_R}px` }}>
       {/* SVG dome shape — acts as background */}
@@ -71,11 +68,11 @@ export default function BottomNav() {
         viewBox={`0 ${-DOME_R} 400 ${totalH}`}
         preserveAspectRatio="none"
         className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ filter: 'drop-shadow(0 -1px 2px rgba(0,0,0,0.06))' }}
+        style={{ filter: 'drop-shadow(0 -1px 2px rgba(0,0,0,0.04))' }}
       >
         <path
           d={domePath(400, DOME_R, DOME_CURVE)}
-          fill="rgba(255,255,255,0.82)"
+          fill="rgba(255,255,255,0.92)"
         />
       </svg>
 
@@ -96,12 +93,12 @@ export default function BottomNav() {
         </defs>
       </svg>
 
-      {/* Nav items — padded top to account for dome space */}
+      {/* Nav items */}
       <nav
         className="relative flex items-end justify-around px-2"
         style={{ paddingTop: `${DOME_R}px`, paddingBottom: '6px' }}
       >
-        {navItems.map(({ to, icon: Icon, label, color, bg, main }) => (
+        {navItems.map(({ to, icon: Icon, label, main }) => (
           <NavLink
             key={to}
             to={to}
@@ -113,19 +110,19 @@ export default function BottomNav() {
                   className={`${main ? 'p-2.5 rounded-full shadow-md -mt-7' : 'p-1.5 rounded-2xl'} transition-all duration-200`}
                   style={
                     isActive
-                      ? { background: main ? color : bg, color: main ? '#fff' : color }
-                      : { color: INACTIVE_COLOR, background: main ? 'rgba(249,168,212,0.12)' : undefined }
+                      ? { background: main ? SAGE : SAGE_BG, color: main ? '#fff' : ACTIVE_COLOR }
+                      : { color: INACTIVE_COLOR, background: main ? 'rgba(163,177,138,0.10)' : undefined }
                   }
                 >
                   <Icon
                     size={main ? 26 : 18}
                     strokeWidth={isActive ? 2.4 : 1.7}
-                    color={isActive ? (main ? '#fff' : color) : undefined}
+                    color={isActive ? (main ? '#fff' : ACTIVE_COLOR) : undefined}
                   />
                 </div>
                 <span
                   className={`${main ? 'text-[11px]' : 'text-[10px]'} font-semibold tracking-wider uppercase transition-colors duration-200`}
-                  style={{ color: isActive ? color : INACTIVE_COLOR }}
+                  style={{ color: isActive ? ACTIVE_COLOR : INACTIVE_COLOR }}
                 >
                   {label}
                 </span>

@@ -121,7 +121,7 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
       {/* Drawer panel — slides in from left */}
       <div
         className="w-[82%] max-w-sm h-full flex flex-col animate-slideIn"
-        style={{ background: '#FAFAFA' }}
+        style={{ background: '#F8F7F4' }}
       >
         {/* Close button */}
         <div className="flex justify-end p-4">
@@ -151,7 +151,7 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     {/* Progress arc */}
                     <circle
                       cx="34" cy="34" r="30" fill="none"
-                      stroke="#7C3AED" strokeWidth="3" strokeLinecap="round"
+                      stroke="#A3B18A" strokeWidth="3" strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 30}`}
                       strokeDashoffset={`${2 * Math.PI * 30 * 0.85}`}
                       transform="rotate(-90 34 34)"
@@ -160,15 +160,15 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   <div
                     className="absolute inset-0 m-auto w-[52px] h-[52px] rounded-full flex items-center justify-center text-lg font-bold"
                     style={{
-                      background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : '#C8B6FF',
-                      color: profile.avatarUrl ? 'transparent' : '#5B21B6',
+                      background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : '#DDE5D3',
+                      color: profile.avatarUrl ? 'transparent' : '#4A5A38',
                     }}
                   >
                     {!profile.avatarUrl && initials}
                   </div>
                   <span
                     className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: '#7C3AED', color: 'white' }}
+                    style={{ background: '#A3B18A', color: 'white' }}
                   >
                     15%
                   </span>
@@ -268,7 +268,7 @@ function MenuItem({
   children?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const color = danger ? '#DC2626' : '#2B2B2B';
+  const color = danger ? '#DC2626' : '#1A1A1A';
 
   return (
     <>

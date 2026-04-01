@@ -116,10 +116,10 @@ interface ItemState { action: Action; dismissed: boolean }
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
-const LILAC = '#C8B6FF';
-const LILAC_DEEP = '#A78BFA';
-const MINT = '#B8F2E6';
-const BUTTER = '#FFF3B0';
+const LILAC = '#A3B18A';
+const LILAC_DEEP = '#8A9A72';
+const MINT = '#DDE5D3';
+const BUTTER = '#F0EDE8';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -154,8 +154,8 @@ export default function Insights() {
           className="px-5 py-2 rounded-full text-xs font-semibold transition-all capitalize"
           style={{
             background: activeTab === tab ? LILAC : 'transparent',
-            color: activeTab === tab ? '#2B2B2B' : 'var(--text-secondary)',
-            border: activeTab === tab ? `1px solid ${LILAC}` : '1px solid rgba(43,43,43,0.12)',
+            color: activeTab === tab ? '#1A1A1A' : 'var(--text-secondary)',
+            border: activeTab === tab ? `1px solid ${LILAC}` : '1px solid rgba(26,26,26,0.08)',
           }}
         >
           {tab === 'insights' ? 'Insights' : 'Declutter'}
@@ -174,8 +174,8 @@ export default function Insights() {
           className="rounded-2xl flex flex-col items-center py-16 text-center"
           style={{ background: '#FFFFFF', border: `1.5px dashed ${LILAC}`, boxShadow: CARD_SHADOW }}
         >
-          <div className="text-4xl mb-3">{activeTab === 'insights' ? '📊' : '🧹'}</div>
-          <p className="font-medium text-sm mb-1" style={{ color: '#2B2B2B' }}>No data yet</p>
+          <div className="text-4xl mb-3">{activeTab === 'insights' ? '—' : '—'}</div>
+          <p className="font-medium text-sm mb-1" style={{ color: '#1A1A1A' }}>No data yet</p>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Add items to your wardrobe first.</p>
         </div>
       </div>
@@ -194,15 +194,15 @@ export default function Insights() {
     const categories = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'] as const;
     // Matching colors from Wardrobe page CATEGORY_TAG_COLORS
     const CAT_CHART_COLORS: Record<string, string> = {
-      top:       '#7C3AED',  // deep purple
-      bottom:    '#3B82F6',  // blue
-      footwear:  '#059669',  // teal
-      outerwear: '#9F1239',  // burgundy
-      dress:     '#DB2777',  // pink
-      bag:       '#D97706',  // amber
-      jewellery: '#EAB308',  // gold
-      belt:      '#6B7C4E',  // olive
-      hat:       '#0EA5E9',  // sky blue
+      top:       '#1A1A1A',
+      bottom:    '#6F6F6F',
+      footwear:  '#A3B18A',
+      outerwear: '#4A5A38',
+      dress:     '#8A9A72',
+      bag:       '#B0B0B0',
+      jewellery: '#C4C4C4',
+      belt:      '#D4D4D4',
+      hat:       '#3A3A3A',
     };
     const CAT_CHART_TEXT: Record<string, string> = {
       top:       '#FFFFFF',
@@ -210,9 +210,9 @@ export default function Insights() {
       footwear:  '#FFFFFF',
       outerwear: '#FFFFFF',
       dress:     '#FFFFFF',
-      bag:       '#FFFFFF',
-      jewellery: '#422006',
-      belt:      '#FFFFFF',
+      bag:       '#1A1A1A',
+      jewellery: '#1A1A1A',
+      belt:      '#1A1A1A',
       hat:       '#FFFFFF',
     };
     const catCounts  = categories
@@ -243,8 +243,8 @@ export default function Insights() {
           ].map(s => (
             <div key={s.label} className="rounded-2xl px-3 py-4 text-center"
               style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
-              <p className="text-2xl font-semibold" style={{ color: '#2B2B2B' }}>{s.value}</p>
-              <p className="mt-1" style={{ color: 'rgba(43,43,43,0.45)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{s.label}</p>
+              <p className="text-2xl font-semibold" style={{ color: '#1A1A1A' }}>{s.value}</p>
+              <p className="mt-1" style={{ color: '#6F6F6F', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -300,7 +300,7 @@ export default function Insights() {
         {/* Category breakdown — doughnut chart */}
         <div className="rounded-2xl px-4 py-5 mb-4"
           style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
-          <p className="text-sm mb-4" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
+          <p className="text-sm mb-4" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.3px' }}>Wardrobe breakdown</p>
 
           <div className="flex items-center">
             {/* SVG doughnut — 50% */}
@@ -338,8 +338,8 @@ export default function Insights() {
               </svg>
               {/* Center label */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-bold" style={{ color: '#2B2B2B', lineHeight: 1 }}>{items.length}</span>
-                <span className="text-[9px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: 'rgba(43,43,43,0.4)' }}>items</span>
+                <span className="text-xl font-bold" style={{ color: '#1A1A1A', lineHeight: 1 }}>{items.length}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: '#6F6F6F' }}>items</span>
               </div>
             </div>
 
@@ -350,7 +350,7 @@ export default function Insights() {
                 return (
                   <div key={label} className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: CAT_CHART_COLORS[label] }} />
-                    <span className="capitalize text-[11px] flex-1 truncate" style={{ color: '#2B2B2B' }}>{label}s</span>
+                    <span className="capitalize text-[11px] flex-1 truncate" style={{ color: '#1A1A1A' }}>{label}s</span>
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap"
                       style={{ background: CAT_CHART_COLORS[label], color: CAT_CHART_TEXT[label] }}>
                       {count} ({pct}%)
@@ -368,7 +368,7 @@ export default function Insights() {
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp size={15} style={{ color: LILAC_DEEP }} />
-              <p className="text-sm" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn items</p>
+              <p className="text-sm" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn items</p>
             </div>
             {mostWorn[0].wearCount === 0 ? (
               <p className="text-xs py-2" style={{ color: 'var(--text-secondary)' }}>
@@ -383,17 +383,17 @@ export default function Insights() {
                   <div key={item.id}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
                     style={{
-                      background: isTop ? 'rgba(167,139,250,0.08)' : 'transparent',
-                      border: isTop ? '1px solid rgba(167,139,250,0.18)' : '1px solid transparent',
+                      background: isTop ? 'rgba(163,177,138,0.08)' : 'transparent',
+                      border: isTop ? '1px solid rgba(163,177,138,0.18)' : '1px solid transparent',
                     }}>
-                    <span className="text-sm font-bold w-5 text-center" style={{ color: isTop ? LILAC_DEEP : 'rgba(43,43,43,0.3)' }}>
+                    <span className="text-sm font-bold w-5 text-center" style={{ color: isTop ? LILAC_DEEP : 'rgba(26,26,26,0.25)' }}>
                       {idx + 1}
                     </span>
-                    <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#FAFAFA', border: '1px solid rgba(43,43,43,0.06)' }}>
-                      {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-sm opacity-40">👕</div>}
+                    <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#F8F7F4', border: '1px solid rgba(26,26,26,0.06)' }}>
+                      {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-sm opacity-40">—</div>}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold capitalize truncate" style={{ color: '#2B2B2B' }}>
+                      <p className="text-xs font-semibold capitalize truncate" style={{ color: '#1A1A1A' }}>
                         {item.color} {item.subcategory}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -402,7 +402,7 @@ export default function Insights() {
                         </span>
                         {cpw !== null && (
                           <>
-                            <span className="text-[10px]" style={{ color: 'rgba(43,43,43,0.2)' }}>·</span>
+                            <span className="text-[10px]" style={{ color: 'rgba(26,26,26,0.15)' }}>·</span>
                             <span className="text-[10px] font-semibold px-1.5 py-px rounded-full"
                               style={{ background: cpw <= 5 ? '#DCFCE7' : cpw <= 15 ? '#FEF3C7' : '#FEE2E2',
                                        color: cpw <= 5 ? '#15803D' : cpw <= 15 ? '#92400E' : '#DC2626' }}>
@@ -413,7 +413,7 @@ export default function Insights() {
                       </div>
                     </div>
                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{ background: isTop ? LILAC_DEEP : LILAC, color: isTop ? '#FFFFFF' : '#5B21B6' }}>
+                      style={{ background: isTop ? LILAC_DEEP : LILAC, color: isTop ? '#FFFFFF' : '#4A5A38' }}>
                       {item.wearCount}x
                     </span>
                   </div>
@@ -421,7 +421,7 @@ export default function Insights() {
               })}
               {!withCPW.length && (
                 <p className="text-[10px] text-center pt-1" style={{ color: 'var(--text-secondary)' }}>
-                  💡 Add estimated values to your items to see cost per wear
+                  Add estimated values to your items to see cost per wear
                 </p>
               )}
             </div>
@@ -434,14 +434,14 @@ export default function Insights() {
           <div className="rounded-2xl px-5 py-4 mb-4 flex items-center gap-4"
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
             <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-              {bestCPW.item.imageUrl ? <img src={bestCPW.item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+              {bestCPW.item.imageUrl ? <img src={bestCPW.item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">—</div>}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <Award size={13} style={{ color: LILAC_DEEP }} />
                 <p className="text-xs font-medium" style={{ color: LILAC_DEEP }}>Best cost per wear</p>
               </div>
-              <p className="font-semibold text-sm capitalize truncate" style={{ color: '#2B2B2B' }}>
+              <p className="font-semibold text-sm capitalize truncate" style={{ color: '#1A1A1A' }}>
                 {bestCPW.item.color} {bestCPW.item.subcategory}
               </p>
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -455,20 +455,20 @@ export default function Insights() {
         {leastWorn.length > 0 && (
           <div className="rounded-2xl px-5 py-4"
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
-            <p className="text-sm mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Gathering dust</p>
+            <p className="text-sm mb-3" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.3px' }}>Gathering dust</p>
             <div className="space-y-3">
               {leastWorn.map(item => {
                 const state = itemStates[item.id];
                 if (state?.dismissed) return null;
                 return (
                   <div key={item.id} className="rounded-xl overflow-hidden"
-                    style={{ border: '1px solid rgba(43,43,43,0.06)' }}>
+                    style={{ border: '1px solid rgba(26,26,26,0.06)' }}>
                     <div className="flex items-center gap-3 p-3">
                       <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-                        {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+                        {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">—</div>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm capitalize truncate" style={{ color: '#2B2B2B', fontWeight: 600 }}>
+                        <p className="text-sm capitalize truncate" style={{ color: '#1A1A1A', fontWeight: 600 }}>
                           {item.color} {item.subcategory}
                         </p>
                         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -484,7 +484,7 @@ export default function Insights() {
                     {!state?.action ? (
                       <div className="flex gap-2 px-3 pb-3">
                         {[
-                          { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: LILAC },
+                          { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#1A1A1A', bg: LILAC },
                           { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: MINT },
                           { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: BUTTER },
                         ].map(btn => (
@@ -502,8 +502,8 @@ export default function Insights() {
                     ) : (
                       <div className="px-3 pb-3">
                         <div className="rounded-xl px-3 py-2.5 flex items-center justify-between"
-                          style={{ background: '#FAFAFA' }}>
-                          <p className="text-xs font-medium capitalize" style={{ color: '#2B2B2B' }}>
+                          style={{ background: '#F8F7F4' }}>
+                          <p className="text-xs font-medium capitalize" style={{ color: '#1A1A1A' }}>
                             {state.action === 'sell' ? 'List for sale' : state.action === 'donate' ? 'Donate' : 'Restyle it'}
                           </p>
                           <div className="flex gap-2 ml-2">
@@ -516,7 +516,7 @@ export default function Insights() {
                             )}
                             <button onClick={() => dismiss(item.id)}
                               className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
-                              style={{ background: '#FFFFFF', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-secondary)' }}>
+                              style={{ background: '#FFFFFF', border: '1px solid rgba(26,26,26,0.08)', color: 'var(--text-secondary)' }}>
                               Done
                             </button>
                           </div>
@@ -600,8 +600,8 @@ export default function Insights() {
             style={{
               fontSize: '11px',
               background: filter === f.id ? LILAC : 'transparent',
-              color:      filter === f.id ? '#2B2B2B' : 'var(--text-secondary)',
-              border: filter === f.id ? `1px solid ${LILAC}` : '1px solid rgba(43,43,43,0.12)',
+              color:      filter === f.id ? '#1A1A1A' : 'var(--text-secondary)',
+              border: filter === f.id ? `1px solid ${LILAC}` : '1px solid rgba(26,26,26,0.08)',
             }}
           >
             {f.label}
@@ -613,7 +613,7 @@ export default function Insights() {
       {filter === 'plastic' && (
         <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-2"
           style={{ background: '#F0FDF4', border: '1px solid rgba(22,163,74,0.15)', boxShadow: CARD_SHADOW }}>
-          <span className="text-base flex-shrink-0">🌊</span>
+          <span className="text-base flex-shrink-0">i</span>
           <p className="text-xs leading-relaxed" style={{ color: '#166534' }}>
             Synthetic fabrics shed <strong>microplastics</strong> every time you wash them, ending up in oceans and food chains.
             Swapping these for natural fibres like cotton, linen, wool, or silk makes a real difference.
@@ -625,11 +625,8 @@ export default function Insights() {
       {filtered.length === 0 ? (
         <div className="rounded-2xl flex flex-col items-center py-16 text-center"
           style={{ background: '#FFFFFF', border: `1.5px dashed ${LILAC}`, boxShadow: CARD_SHADOW }}>
-          <div className="text-4xl mb-3">
-            {filter === 'plastic' ? '🌿' : '✨'}
-          </div>
-          <p className="font-medium text-sm mb-1" style={{ color: '#2B2B2B' }}>
-            {filter === 'plastic' ? 'No plastic items detected!' : 'Your wardrobe looks great!'}
+          <p className="font-semibold text-base mb-1" style={{ color: '#1A1A1A' }}>
+            {filter === 'plastic' ? 'No plastic items detected' : 'Your wardrobe looks great'}
           </p>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
             {filter === 'plastic'
@@ -651,10 +648,10 @@ export default function Insights() {
                 {/* Header */}
                 <div className="flex items-center gap-3 p-4">
                   <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-                    {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">👕</div>}
+                    {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.subcategory} /> : <div className="w-full h-full flex items-center justify-center text-xl opacity-40">—</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm capitalize truncate" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>
+                    <p className="text-sm capitalize truncate" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.3px' }}>
                       {item.color} {item.subcategory}
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
@@ -696,7 +693,7 @@ export default function Insights() {
                 {!state?.action ? (
                   <div className="flex gap-2 px-4 pb-4">
                     {[
-                      { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: LILAC },
+                      { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#1A1A1A', bg: LILAC },
                       { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: MINT },
                       { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: BUTTER },
                     ].map(btn => (
@@ -713,7 +710,7 @@ export default function Insights() {
                     <button
                       onClick={() => dismiss(item.id)}
                       className="px-3 py-2.5 rounded-full text-xs font-semibold transition-all"
-                      style={{ background: '#FAFAFA', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-secondary)' }}
+                      style={{ background: '#F8F7F4', border: '1px solid rgba(26,26,26,0.08)', color: 'var(--text-secondary)' }}
                     >
                       Keep
                     </button>
@@ -721,9 +718,9 @@ export default function Insights() {
                 ) : (
                   <div className="px-4 pb-4">
                     <div className="rounded-2xl px-4 py-3 flex items-center justify-between"
-                      style={{ background: '#FAFAFA' }}>
+                      style={{ background: '#F8F7F4' }}>
                       <div>
-                        <p className="text-sm font-medium capitalize" style={{ color: '#2B2B2B' }}>
+                        <p className="text-sm font-medium capitalize" style={{ color: '#1A1A1A' }}>
                           {state.action === 'sell' ? 'List for sale' : state.action === 'donate' ? 'Donate' : 'Restyle'}
                         </p>
                         <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
@@ -744,7 +741,7 @@ export default function Insights() {
                         )}
                         <button onClick={() => dismiss(item.id)}
                           className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ background: '#FFFFFF', border: '1px solid rgba(43,43,43,0.12)', color: 'var(--text-secondary)' }}>
+                          style={{ background: '#FFFFFF', border: '1px solid rgba(26,26,26,0.08)', color: 'var(--text-secondary)' }}>
                           Done
                         </button>
                       </div>

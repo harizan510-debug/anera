@@ -4,20 +4,19 @@ interface PageHeaderProps {
   title: string;
   subtitle?: string;
   action?: React.ReactNode;
-  leftIcon?: React.ReactNode;   // optional override for the default Shirt icon
+  leftIcon?: React.ReactNode;
 }
 
 export default function PageHeader({ title, subtitle, action, leftIcon }: PageHeaderProps) {
   return (
     <div className="flex items-start justify-between mb-6 pt-5">
       <div className="flex items-center gap-3">
-        {/* Left icon — custom or default Anera logo */}
         {leftIcon || (
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: '#C8B6FF', boxShadow: '0 2px 8px rgba(200,182,255,0.4)' }}
+            style={{ background: '#DDE5D3', boxShadow: '0 2px 8px rgba(163,177,138,0.25)' }}
           >
-            <Shirt size={17} color="#7C3AED" strokeWidth={2.2} />
+            <Shirt size={17} color="#4A5A38" strokeWidth={2.2} />
           </div>
         )}
         <div>
@@ -30,7 +29,7 @@ export default function PageHeader({ title, subtitle, action, leftIcon }: PageHe
           {subtitle && (
             <p
               className="text-sm mt-0.5"
-              style={{ color: 'rgba(43,43,43,0.5)' }}
+              style={{ color: '#6F6F6F' }}
             >
               {subtitle}
             </p>
