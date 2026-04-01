@@ -12,10 +12,10 @@
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Accent palette — warm caramel + earthy tones */
-  --accent: #C4956A;          /* warm caramel — primary */
-  --accent-dark: #A67B52;     /* deeper caramel for hover */
-  --accent-light: #F0E6DA;    /* soft warm bg */
+  /* Accent palette — chocolate brown + earthy tones */
+  --accent: #7B5B4C;          /* chocolate brown — primary */
+  --accent-dark: #634A3C;     /* dark chocolate for hover */
+  --accent-light: #EDE4DD;    /* soft warm bg */
   --sage: #C5CEAE;            /* soft sage — secondary */
   --sage-dark: #A3B18A;       /* deeper sage */
   --blush: #E8C4B8;           /* warm blush — highlight */
@@ -57,15 +57,15 @@ input, textarea, button { font-family: inherit; }
 /* ── Basics horizontal scroll — thin visible track ───────── */
 .basics-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(196,149,106,0.3) transparent;
+  scrollbar-color: rgba(123,91,76,0.3) transparent;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
 .basics-scroll > * { scroll-snap-align: start; }
 .basics-scroll::-webkit-scrollbar { height: 3px; }
-.basics-scroll::-webkit-scrollbar-track { background: rgba(196,149,106,0.1); border-radius: 3px; margin: 0 4px; }
-.basics-scroll::-webkit-scrollbar-thumb { background: rgba(196,149,106,0.35); border-radius: 3px; }
-.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(196,149,106,0.5); }
+.basics-scroll::-webkit-scrollbar-track { background: rgba(123,91,76,0.1); border-radius: 3px; margin: 0 4px; }
+.basics-scroll::-webkit-scrollbar-thumb { background: rgba(123,91,76,0.35); border-radius: 3px; }
+.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(123,91,76,0.5); }
 
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes badge-pop {

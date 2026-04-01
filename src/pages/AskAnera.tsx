@@ -87,7 +87,7 @@ export default function AskAnera() {
       {/* Header */}
       <div
         className="px-4 pt-4 pb-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid rgba(139,115,85,0.12)', background: '#F0E6DA' }}
+        style={{ borderBottom: '1px solid rgba(139,115,85,0.12)', background: '#EDE4DD' }}
       >
         <div className="flex items-center gap-3">
           {/* Back button */}
@@ -190,7 +190,7 @@ export default function AskAnera() {
       {/* Input */}
       <div
         className="flex-shrink-0 px-4 py-3 flex gap-3 items-end"
-        style={{ borderTop: '1px solid rgba(139,115,85,0.12)', background: '#F0E6DA' }}
+        style={{ borderTop: '1px solid rgba(139,115,85,0.12)', background: '#EDE4DD' }}
       >
         <textarea
           ref={inputRef}

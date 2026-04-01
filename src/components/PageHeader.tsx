@@ -15,7 +15,7 @@ export default function PageHeader({ title, subtitle, action, leftIcon }: PageHe
         {leftIcon || (
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: '#C4956A', boxShadow: '0 2px 8px rgba(196,149,106,0.4)' }}
+            style={{ background: '#7B5B4C', boxShadow: '0 2px 8px rgba(123,91,76,0.4)' }}
           >
             <Shirt size={17} color="#FFFFFF" strokeWidth={2.2} />
           </div>

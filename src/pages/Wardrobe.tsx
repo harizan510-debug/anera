@@ -60,7 +60,7 @@ const CATEGORY_TAG_COLORS: Record<WardrobeItem['category'], { bg: string; text: 
   outerwear: { bg: '#E8C4B8', text: '#7A4F3F' },  // blush
   dress:     { bg: '#E8C4B8', text: '#7A4F3F' },  // blush
   bag:       { bg: '#F0DEB4', text: '#7A5C3E' },  // warm gold
-  jewellery: { bg: '#E8D098', text: '#6B4D30' },  // deeper gold
+  jewellery: { bg: '#E8D098', text: '#4A3125' },  // deeper gold
   belt:      { bg: '#D4C5A9', text: '#5C4A26' },  // tan
   hat:       { bg: '#C5CEAE', text: '#4A5A38' },  // sage
 };
@@ -706,14 +706,14 @@ export default function Wardrobe() {
             onClick={() => setProfileOpen(true)}
             className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden"
             style={{
-              background: avatarUrl ? undefined : '#C4956A',
-              boxShadow: '0 2px 8px rgba(196,149,106,0.4)',
+              background: avatarUrl ? undefined : '#7B5B4C',
+              boxShadow: '0 2px 8px rgba(123,91,76,0.4)',
             }}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <User size={17} color="#8B6941" strokeWidth={2.2} />
+              <User size={17} color="#5C3D2E" strokeWidth={2.2} />
             )}
           </button>
         }
@@ -723,7 +723,7 @@ export default function Wardrobe() {
               onClick={() => setShowAddMenu(v => !v)}
               disabled={addLoading || linkLoading}
               className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all"
-              style={{ background: '#C4956A', color: '#2B2B2B' }}
+              style={{ background: '#7B5B4C', color: '#2B2B2B' }}
             >
               {(addLoading || linkLoading)
                 ? <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
@@ -741,7 +741,7 @@ export default function Wardrobe() {
                     className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium hover:bg-gray-50/80 transition-colors"
                     style={{ color: '#2B2B2B' }}
                   >
-                    <Camera size={16} style={{ color: '#A67B52' }} />
+                    <Camera size={16} style={{ color: '#634A3C' }} />
                     Add from photo
                   </button>
                   <div style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }} />
@@ -750,7 +750,7 @@ export default function Wardrobe() {
                     className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium hover:bg-gray-50/80 transition-colors"
                     style={{ color: '#2B2B2B' }}
                   >
-                    <Link2 size={16} style={{ color: '#A67B52' }} />
+                    <Link2 size={16} style={{ color: '#634A3C' }} />
                     Add from link
                   </button>
                 </div>
@@ -763,7 +763,7 @@ export default function Wardrobe() {
       {/* Loading progress */}
       {(addLoading || linkLoading) && addProgress && (
         <div className="mb-3 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2"
-          style={{ background: '#F0E6DA', color: '#8B6941', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          style={{ background: '#EDE4DD', color: '#5C3D2E', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
           {addProgress}
         </div>
@@ -798,7 +798,7 @@ export default function Wardrobe() {
               onClick={handleAddFromLink}
               disabled={linkLoading || !linkUrl || linkUrl.length < 10}
               className="px-6 py-3 rounded-full font-semibold text-sm flex items-center gap-2 flex-shrink-0 transition-all"
-              style={{ background: (!linkUrl || linkUrl.length < 10) ? 'rgba(0,0,0,0.08)' : '#C4956A', color: (!linkUrl || linkUrl.length < 10) ? 'rgba(43,43,43,0.4)' : '#2B2B2B' }}
+              style={{ background: (!linkUrl || linkUrl.length < 10) ? 'rgba(0,0,0,0.08)' : '#7B5B4C', color: (!linkUrl || linkUrl.length < 10) ? 'rgba(43,43,43,0.4)' : '#2B2B2B' }}
             >
               {linkLoading
                 ? <><Loader2 size={14} className="animate-spin" />Reading…</>
@@ -830,10 +830,10 @@ export default function Wardrobe() {
             onClick={() => setActiveCategory(cat)}
             className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all"
             style={{
-              background: activeCategory === cat ? '#C4956A' : '#FFFFFF',
+              background: activeCategory === cat ? '#7B5B4C' : '#FFFFFF',
               color: activeCategory === cat ? '#2B2B2B' : 'rgba(43,43,43,0.5)',
-              border: `1px solid ${activeCategory === cat ? '#C4956A' : 'rgba(0,0,0,0.06)'}`,
-              boxShadow: activeCategory === cat ? '0 2px 8px rgba(196,149,106,0.3)' : '0 1px 4px rgba(0,0,0,0.03)',
+              border: `1px solid ${activeCategory === cat ? '#7B5B4C' : 'rgba(0,0,0,0.06)'}`,
+              boxShadow: activeCategory === cat ? '0 2px 8px rgba(123,91,76,0.3)' : '0 1px 4px rgba(0,0,0,0.03)',
             }}
           >
             {cat === 'all' ? 'All' : categoryLabel[cat]} {counts[cat] > 0 && `(${counts[cat]})`}
@@ -918,7 +918,7 @@ export default function Wardrobe() {
           {BASICS_BY_CATEGORY.map(({ category, label, items: basics }) => (
             <div key={category}>
               <p className="text-[11px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: 'rgba(43,43,43,0.4)' }}>
-                <span className="inline-block w-1 h-3.5 rounded-full" style={{ background: '#C4956A' }} />
+                <span className="inline-block w-1 h-3.5 rounded-full" style={{ background: '#7B5B4C' }} />
                 {label}
               </p>
               <ScrollRow>
@@ -1055,7 +1055,7 @@ export default function Wardrobe() {
               <button
                 onClick={saveEdit}
                 className="flex-1 py-3.5 rounded-full font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-md"
-                style={{ background: '#C4956A', color: '#2B2B2B' }}
+                style={{ background: '#7B5B4C', color: '#2B2B2B' }}
               >
                 <Check size={18} /> Save changes
               </button>
@@ -1204,7 +1204,7 @@ function BasicCard({
         {!added && (
           <div
             className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center font-bold pointer-events-none"
-            style={{ background: '#C4956A', color: '#2B2B2B', fontSize: '14px', lineHeight: 1, boxShadow: '0 1px 4px rgba(196,149,106,0.4)' }}
+            style={{ background: '#7B5B4C', color: '#2B2B2B', fontSize: '14px', lineHeight: 1, boxShadow: '0 1px 4px rgba(123,91,76,0.4)' }}
           >
             +
           </div>

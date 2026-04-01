@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#C4956A', bg: 'rgba(196,149,106,0.15)', main: false },
+  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#7B5B4C', bg: 'rgba(123,91,76,0.15)', main: false },
   { to: '/social',    icon: Users,       label: 'Community',  color: '#A3B18A', bg: 'rgba(163,177,138,0.15)', main: false },
   { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    color: '#D4A896', bg: 'rgba(212,168,150,0.15)', main: true  },
   { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       color: '#B8A080', bg: 'rgba(184,160,128,0.15)', main: false },

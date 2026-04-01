@@ -90,13 +90,13 @@ export default function Social() {
         {session ? (
           <button onClick={() => setShowNewPost(true)}
             className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: '#C4956A', color: '#1F2937' }}>
+            style={{ background: '#7B5B4C', color: '#1F2937' }}>
             <Plus size={18} />
           </button>
         ) : (
           <button onClick={() => setShowAuth(true)}
             className="px-4 py-2 rounded-full text-xs font-medium"
-            style={{ background: '#C4956A', color: '#1F2937' }}>
+            style={{ background: '#7B5B4C', color: '#1F2937' }}>
             Sign in
           </button>
         )}
@@ -114,7 +114,7 @@ export default function Social() {
           <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>Be the first to share your outfit of the day!</p>
           <button onClick={() => session ? setShowNewPost(true) : setShowAuth(true)}
             className="px-6 py-3 rounded-full text-sm font-medium"
-            style={{ background: '#C4956A', color: '#1F2937' }}>
+            style={{ background: '#7B5B4C', color: '#1F2937' }}>
             Post your OOTD
           </button>
         </div>
@@ -202,8 +202,8 @@ function PostCard({ post, onLike, onComment, onShare }: {
       <div className="px-4 py-3">
         <div className="flex items-center gap-4 mb-2">
           <button onClick={onLike} className="flex items-center gap-1.5 transition-transform active:scale-90">
-            <Heart size={22} fill={post.user_has_liked ? '#C4956A' : 'none'}
-              stroke={post.user_has_liked ? '#C4956A' : 'var(--text-primary)'} strokeWidth={1.8} />
+            <Heart size={22} fill={post.user_has_liked ? '#7B5B4C' : 'none'}
+              stroke={post.user_has_liked ? '#7B5B4C' : 'var(--text-primary)'} strokeWidth={1.8} />
             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{post.likes_count ?? 0}</span>
           </button>
           <button onClick={onComment} className="flex items-center gap-1.5">
@@ -212,7 +212,7 @@ function PostCard({ post, onLike, onComment, onShare }: {
           </button>
           {typeof navigator.share === 'function' && (
             <button onClick={onShare} className="ml-auto px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: '#C4956A', color: '#1F2937' }}>
+              style={{ background: '#7B5B4C', color: '#1F2937' }}>
               Share
             </button>
           )}
@@ -301,9 +301,9 @@ function NewPostModal({ userId, onClose, onPosted }: {
             <button key={type} onClick={() => { setAcceptType(type === 'image' ? 'image/*' : 'video/*'); }}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
               style={{
-                background: mediaType === type ? '#C4956A' : 'var(--bg)',
+                background: mediaType === type ? '#7B5B4C' : 'var(--bg)',
                 color: mediaType === type ? '#1F2937' : 'var(--text-secondary)',
-                border: `1px solid ${mediaType === type ? '#C4956A' : 'var(--border)'}`,
+                border: `1px solid ${mediaType === type ? '#7B5B4C' : 'var(--border)'}`,
               }}>
               {type === 'image' ? <Image size={15} /> : <Video size={15} />}
               {type === 'image' ? 'Photo' : 'Video'}
@@ -353,7 +353,7 @@ function NewPostModal({ userId, onClose, onPosted }: {
 
         <button onClick={submit} disabled={loading || !media}
           className="w-full py-4 rounded-full font-medium flex items-center justify-center gap-2 disabled:opacity-40"
-          style={{ background: '#C4956A', color: '#1F2937' }}>
+          style={{ background: '#7B5B4C', color: '#1F2937' }}>
           {loading ? <Loader2 size={18} className="animate-spin" /> : <><Send size={16} /> Post OOTD</>}
         </button>
       </div>
@@ -426,7 +426,7 @@ function CommentsModal({ postId, currentUserId, onClose, onAuthRequired }: {
             onKeyDown={e => e.key === 'Enter' && addComment()} />
           <button onClick={addComment} disabled={!newComment.trim() || loading}
             className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-40"
-            style={{ background: '#C4956A' }}>
+            style={{ background: '#7B5B4C' }}>
             {loading ? <Loader2 size={15} color="#1F2937" className="animate-spin" /> : <Send size={15} color="#1F2937" />}
           </button>
         </div>

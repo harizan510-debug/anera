@@ -47,9 +47,9 @@ const CAT_LABELS: Record<WardrobeItem['category'], string> = {
 };
 
 // ── Design tokens ─────────────────────────────────────────────────────────
-const CARAMEL = '#C4956A';
-const CARAMEL_DARK = '#A67B52';
-const CARAMEL_LIGHT = '#F0E6DA';
+const CARAMEL = '#7B5B4C';
+const CARAMEL_DARK = '#634A3C';
+const CARAMEL_LIGHT = '#EDE4DD';
 const SAGE = '#C5CEAE';
 const SAGE_DARK = '#2D8B73';
 const BUTTER = '#F0DEB4';
@@ -160,11 +160,11 @@ const inputStyle: React.CSSProperties = {
 const inputFocusStyle = `
   .anera-input:focus {
     border-color: ${CARAMEL} !important;
-    box-shadow: 0 0 0 3px rgba(196, 149, 106, 0.2) !important;
+    box-shadow: 0 0 0 3px rgba(123, 91, 76, 0.2) !important;
   }
   .anera-select:focus {
     border-color: ${CARAMEL} !important;
-    box-shadow: 0 0 0 3px rgba(196, 149, 106, 0.2) !important;
+    box-shadow: 0 0 0 3px rgba(123, 91, 76, 0.2) !important;
   }
 `;
 
@@ -422,7 +422,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                             background: !useOriginal[item.tempId] ? CARAMEL : BG,
                             color: !useOriginal[item.tempId] ? '#1F2937' : '#9CA3AF',
                             border: `1.5px solid ${!useOriginal[item.tempId] ? CARAMEL_DARK : '#E5E7EB'}`,
-                            boxShadow: !useOriginal[item.tempId] ? '0 2px 8px rgba(196,149,106,0.3)' : 'none',
+                            boxShadow: !useOriginal[item.tempId] ? '0 2px 8px rgba(123,91,76,0.3)' : 'none',
                           }}
                         >
                           <Crop size={13} /> Cropped
@@ -434,7 +434,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
                             background: useOriginal[item.tempId] ? CARAMEL : BG,
                             color: useOriginal[item.tempId] ? '#1F2937' : '#9CA3AF',
                             border: `1.5px solid ${useOriginal[item.tempId] ? CARAMEL_DARK : '#E5E7EB'}`,
-                            boxShadow: useOriginal[item.tempId] ? '0 2px 8px rgba(196,149,106,0.3)' : 'none',
+                            boxShadow: useOriginal[item.tempId] ? '0 2px 8px rgba(123,91,76,0.3)' : 'none',
                           }}
                         >
                           <Maximize size={13} /> No crop
@@ -607,7 +607,7 @@ export default function MultiItemReview({ items: initialItems, onConfirm, onCanc
           style={{
             background: CARAMEL,
             color: '#1F2937',
-            boxShadow: '0 4px 20px rgba(196,149,106,0.4)',
+            boxShadow: '0 4px 20px rgba(123,91,76,0.4)',
             fontSize: 15,
           }}
         >

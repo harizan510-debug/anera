@@ -116,8 +116,8 @@ interface ItemState { action: Action; dismissed: boolean }
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
-const CARAMEL = '#C4956A';
-const CARAMEL_DEEP = '#A67B52';
+const CARAMEL = '#7B5B4C';
+const CARAMEL_DEEP = '#634A3C';
 const SAGE = '#C5CEAE';
 const GOLD = '#F0DEB4';
 
@@ -194,7 +194,7 @@ export default function Insights() {
     const categories = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'] as const;
     // Matching colors from Wardrobe page CATEGORY_TAG_COLORS
     const CAT_CHART_COLORS: Record<string, string> = {
-      top:       '#C4956A',  // caramel
+      top:       '#7B5B4C',  // caramel
       bottom:    '#7B8FA3',  // muted blue
       footwear:  '#5C7A52',  // muted green
       outerwear: '#9F5A4A',  // muted brick
@@ -413,7 +413,7 @@ export default function Insights() {
                       </div>
                     </div>
                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{ background: isTop ? CARAMEL_DEEP : CARAMEL, color: isTop ? '#FFFFFF' : '#6B4D30' }}>
+                      style={{ background: isTop ? CARAMEL_DEEP : CARAMEL, color: isTop ? '#FFFFFF' : '#4A3125' }}>
                       {item.wearCount}x
                     </span>
                   </div>

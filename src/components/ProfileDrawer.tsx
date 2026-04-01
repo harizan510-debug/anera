@@ -151,7 +151,7 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     {/* Progress arc */}
                     <circle
                       cx="34" cy="34" r="30" fill="none"
-                      stroke="#8B6941" strokeWidth="3" strokeLinecap="round"
+                      stroke="#5C3D2E" strokeWidth="3" strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 30}`}
                       strokeDashoffset={`${2 * Math.PI * 30 * 0.85}`}
                       transform="rotate(-90 34 34)"
@@ -160,15 +160,15 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   <div
                     className="absolute inset-0 m-auto w-[52px] h-[52px] rounded-full flex items-center justify-center text-lg font-bold"
                     style={{
-                      background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : '#C4956A',
-                      color: profile.avatarUrl ? 'transparent' : '#6B4D30',
+                      background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : '#7B5B4C',
+                      color: profile.avatarUrl ? 'transparent' : '#4A3125',
                     }}
                   >
                     {!profile.avatarUrl && initials}
                   </div>
                   <span
                     className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: '#8B6941', color: 'white' }}
+                    style={{ background: '#5C3D2E', color: 'white' }}
                   >
                     15%
                   </span>

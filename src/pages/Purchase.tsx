@@ -898,7 +898,7 @@ function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; end
                 x={x} y={yTotal}
                 width={barW} height={gainsH}
                 rx={rx} ry={rx}
-                fill="#C4956A"
+                fill="#7B5B4C"
               />
             )}
             {/* Principal portion (bottom — dark purple) */}
@@ -906,21 +906,21 @@ function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; end
               x={x} y={H - principalH}
               width={barW} height={principalH}
               rx={rx} ry={rx}
-              fill="#8B6941"
+              fill="#5C3D2E"
             />
             {/* Cover the gap between the two rects with a flat join */}
             {gainsH > 1 && (
               <rect
                 x={x} y={H - principalH - Math.min(rx, gainsH)}
                 width={barW} height={Math.min(rx * 2, gainsH + rx)}
-                fill="#C4956A"
+                fill="#7B5B4C"
               />
             )}
             {gainsH > 1 && (
               <rect
                 x={x} y={H - principalH}
                 width={barW} height={Math.min(rx, principalH)}
-                fill="#8B6941"
+                fill="#5C3D2E"
               />
             )}
           </g>

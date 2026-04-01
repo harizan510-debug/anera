@@ -34,7 +34,7 @@ const MONTH_NAMES = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
 ];
-const EVENT_COLORS = ['#8B7355','#C5CEAE','#F0DEB4','#7B8FA3','#C47860','#5C7A52','#8B6941','#9F5A4A'];
+const EVENT_COLORS = ['#8B7355','#C5CEAE','#F0DEB4','#7B8FA3','#C47860','#5C7A52','#5C3D2E','#9F5A4A'];
 const TRIP_SEASONS: TripSeason[] = ['Spring', 'Summer', 'Autumn', 'Winter'];
 const SEASON_EMOJI: Record<TripSeason, string> = { Spring: '🌸', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
 const TRIP_CAL_COLOR = '#B8A080'; // warm brown for trip indicators on calendar

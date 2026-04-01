@@ -18,9 +18,9 @@ interface UploadedPhoto {
 }
 
 // Design tokens
-const CARAMEL = '#C4956A';
-const CARAMEL_DEEP = '#A67B52';
-const CARAMEL_LIGHT = '#F0E6DA';
+const CARAMEL = '#7B5B4C';
+const CARAMEL_DEEP = '#634A3C';
+const CARAMEL_LIGHT = '#EDE4DD';
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
 
 // Demo detections for when no API key is configured
