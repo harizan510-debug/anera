@@ -119,31 +119,31 @@ function inferLifetime(name: string, p: number): number {
 const REC = {
   'no brainer': {
     label: 'No brainer',
-    color: '#3D4A2C',
-    bg: 'linear-gradient(135deg, #F0F4E8 0%, #6B7C4E 100%)',
-    glow: '0 0 48px rgba(107,124,78,0.3)',
-    border: '#6B7C4E',
+    color: '#5C4A32',
+    bg: 'linear-gradient(135deg, #F0EBE3 0%, #8B7355 100%)',
+    glow: '0 0 48px rgba(139,115,85,0.3)',
+    border: '#8B7355',
   },
   'why not': {
     label: 'Why not',
-    color: '#047857',
-    bg: 'linear-gradient(135deg, #D1FAE5 0%, #B8F2E6 100%)',
-    glow: '0 0 48px rgba(184,242,230,0.3)',
-    border: '#B8F2E6',
+    color: '#5C7A52',
+    bg: 'linear-gradient(135deg, #E2EACE 0%, #C5CEAE 100%)',
+    glow: '0 0 48px rgba(197,206,174,0.3)',
+    border: '#C5CEAE',
   },
   'maybe consider if you need it': {
     label: 'Maybe consider if you need it',
-    color: '#92400E',
-    bg: 'linear-gradient(135deg, #FFF3B0 0%, #FDE68A 100%)',
-    glow: '0 0 48px rgba(255,243,176,0.35)',
-    border: '#FFF3B0',
+    color: '#7A5C3E',
+    bg: 'linear-gradient(135deg, #F0DEB4 0%, #E8D098 100%)',
+    glow: '0 0 48px rgba(240,222,180,0.35)',
+    border: '#F0DEB4',
   },
 } as const;
 
 const PLASTIC = {
-  'plastic-free': { label: 'Plastic-free', dot: '#6B7C4E' },
-  'low':          { label: 'Low impact',   dot: '#6EE7B7' },
-  'medium':       { label: 'Medium impact',dot: '#FDE68A' },
+  'plastic-free': { label: 'Plastic-free', dot: '#8B7355' },
+  'low':          { label: 'Low impact',   dot: '#A3B18A' },
+  'medium':       { label: 'Medium impact',dot: '#E8D098' },
   'high':         { label: 'High impact',  dot: '#DC2626' },
 } as const;
 
@@ -390,7 +390,7 @@ export default function Purchase() {
   // ── Input screen ───────────────────────────────────────────────────────────
   if (!analysis) {
     return (
-      <div className="px-4 pb-24" style={{ background: '#F5F0FF', minHeight: '100vh' }}>
+      <div className="px-4 pb-24" style={{ background: '#F5F0EB', minHeight: '100vh' }}>
         <div className="mb-5 pt-4">
           <h1 className="text-2xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
             Buy decision
@@ -410,8 +410,8 @@ export default function Purchase() {
                 onClick={() => setMethod(id)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all"
                 style={{
-                  background: active ? '#6B7C4E' : '#FFFFFF',
-                  border: active ? '1px solid #6B7C4E' : '1px solid rgba(43,43,43,0.08)',
+                  background: active ? '#8B7355' : '#FFFFFF',
+                  border: active ? '1px solid #8B7355' : '1px solid rgba(43,43,43,0.08)',
                   color: active ? '#FFFFFF' : 'var(--text-secondary)',
                   boxShadow: active ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
                 }}
@@ -429,7 +429,7 @@ export default function Purchase() {
             onClick={() => (method === 'photo' ? photoRef : scanRef).current?.click()}
             className="w-full rounded-2xl cursor-pointer mb-5 overflow-hidden relative flex items-center justify-center"
             style={{
-              border: imagePreview ? 'none' : '1.5px dashed rgba(107,124,78,0.35)',
+              border: imagePreview ? 'none' : '1.5px dashed rgba(139,115,85,0.35)',
               background: imagePreview ? 'transparent' : '#FFFFFF',
               minHeight: '200px',
               boxShadow: imagePreview ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
@@ -453,10 +453,10 @@ export default function Purchase() {
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 py-10">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: '#F0F4E8' }}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: '#F0EBE3' }}>
                   {method === 'scan'
-                    ? <ScanLine size={24} style={{ color: '#6B7C4E' }} />
-                    : <Upload   size={24} style={{ color: '#6B7C4E' }} />
+                    ? <ScanLine size={24} style={{ color: '#8B7355' }} />
+                    : <Upload   size={24} style={{ color: '#8B7355' }} />
                   }
                 </div>
                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -487,7 +487,7 @@ export default function Purchase() {
                 Product URL
               </label>
               {urlDetecting && (
-                <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#6B7C4E' }}>
+                <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#8B7355' }}>
                   <Loader2 size={10} className="animate-spin" /> Detecting name, price, fabric…
                 </span>
               )}
@@ -513,7 +513,7 @@ export default function Purchase() {
                 <button
                   onClick={() => detectFromUrl(link)}
                   className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: '#F0F4E8', color: '#6B7C4E' }}
+                  style={{ background: '#F0EBE3', color: '#8B7355' }}
                 >
                   Retry
                 </button>
@@ -521,8 +521,8 @@ export default function Purchase() {
             )}
             {urlDetecting && (
               <div className="mt-2 px-1">
-                <div className="h-1 rounded-full overflow-hidden" style={{ background: '#F0F4E8' }}>
-                  <div className="h-full rounded-full animate-pulse" style={{ background: '#6B7C4E', width: '60%' }} />
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: '#F0EBE3' }}>
+                  <div className="h-full rounded-full animate-pulse" style={{ background: '#8B7355', width: '60%' }} />
                 </div>
               </div>
             )}
@@ -590,7 +590,7 @@ export default function Purchase() {
               Fabric composition
             </label>
             {fabricLoading && (
-              <span className="flex items-center gap-1 text-[10px]" style={{ color: '#6B7C4E' }}>
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: '#8B7355' }}>
                 <Loader2 size={10} className="animate-spin" /> Detecting…
               </span>
             )}
@@ -624,7 +624,7 @@ export default function Purchase() {
             />
             {fabricLoading && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Loader2 size={14} className="animate-spin" style={{ color: '#6B7C4E' }} />
+                <Loader2 size={14} className="animate-spin" style={{ color: '#8B7355' }} />
               </div>
             )}
           </div>
@@ -668,7 +668,7 @@ export default function Purchase() {
           onClick={analyse}
           disabled={loading}
           className="w-full py-4 rounded-full font-semibold flex items-center justify-center gap-2"
-          style={{ background: '#6B7C4E', color: '#FFFFFF' }}
+          style={{ background: '#8B7355', color: '#FFFFFF' }}
         >
           {loading
             ? <><Loader2 size={18} className="animate-spin" />Analysing…</>
@@ -684,7 +684,7 @@ export default function Purchase() {
   const plastic = PLASTIC[analysis.plastic_impact];
 
   return (
-    <div className="pb-24" style={{ background: '#F5F0FF', minHeight: '100vh' }}>
+    <div className="pb-24" style={{ background: '#F5F0EB', minHeight: '100vh' }}>
       <div className="px-4 mb-4 pt-5">
         <h1 className="text-xl" style={{ fontWeight: 700, letterSpacing: '-0.5px', color: '#2B2B2B' }}>
           {analysis.itemName.length > 50 ? analysis.itemName.slice(0, 50) + '…' : analysis.itemName}
@@ -777,13 +777,13 @@ export default function Purchase() {
             {/* Left — $ icon + invested amount */}
             <div
               className="w-[90px] flex-shrink-0 flex flex-col items-center justify-center gap-1.5"
-              style={{ background: '#F0F4E8', minHeight: '110px' }}
+              style={{ background: '#F0EBE3', minHeight: '110px' }}
             >
-              <CircleDollarSign size={28} style={{ color: '#6B7C4E' }} />
-              <p className="text-sm font-bold" style={{ color: '#6B7C4E' }}>
+              <CircleDollarSign size={28} style={{ color: '#8B7355' }} />
+              <p className="text-sm font-bold" style={{ color: '#8B7355' }}>
                 {analysis.currency}{analysis.price}
               </p>
-              <p className="text-[9px] font-medium" style={{ color: 'rgba(107,124,78,0.7)' }}>
+              <p className="text-[9px] font-medium" style={{ color: 'rgba(139,115,85,0.7)' }}>
                 invested
               </p>
             </div>
@@ -793,7 +793,7 @@ export default function Purchase() {
               {/* Header: badge */}
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                  style={{ background: '#F0F4E8', color: '#6B7C4E' }}>
+                  style={{ background: '#F0EBE3', color: '#8B7355' }}>
                   Investment
                 </span>
               </div>
@@ -811,7 +811,7 @@ export default function Purchase() {
                   ({((analysis.future_value_if_invested / analysis.price - 1) * 100).toFixed(1)}%)
                 </span>
               </div>
-              {/* Mini bar chart — two-tone: dark purple = principal, light = gains */}
+              {/* Mini bar chart — two-tone: dark caramel = principal, light = gains */}
               <InvestmentBarChart
                 startVal={analysis.price}
                 endVal={analysis.future_value_if_invested}
@@ -839,13 +839,13 @@ export default function Purchase() {
           onClick={() => setWished(v => !v)}
           className="flex-1 py-3 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all"
           style={{
-            background: wished ? 'rgba(107,124,78,0.12)' : '#FFFFFF',
-            border: `1px solid ${wished ? '#6B7C4E' : 'rgba(0,0,0,0.08)'}`,
-            color: wished ? '#6B7C4E' : '#2B2B2B',
+            background: wished ? 'rgba(139,115,85,0.12)' : '#FFFFFF',
+            border: `1px solid ${wished ? '#8B7355' : 'rgba(0,0,0,0.08)'}`,
+            color: wished ? '#8B7355' : '#2B2B2B',
             boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
           }}
         >
-          <Heart size={14} fill={wished ? '#6B7C4E' : 'none'} strokeWidth={wished ? 0 : 2} />
+          <Heart size={14} fill={wished ? '#8B7355' : 'none'} strokeWidth={wished ? 0 : 2} />
           {wished ? 'Saved' : 'Save to wishlist'}
         </button>
         <button
@@ -861,7 +861,7 @@ export default function Purchase() {
   );
 }
 
-// ── Investment bar chart — two-tone: dark purple = principal, lilac = gains ──
+// ── Investment bar chart — two-tone: dark caramel = principal, caramel = gains ──
 function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; endVal: number; years: number }) {
   const barCount = Math.max(Math.min(Math.round(years), 10), 3);
   const bars: number[] = [];
@@ -898,7 +898,7 @@ function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; end
                 x={x} y={yTotal}
                 width={barW} height={gainsH}
                 rx={rx} ry={rx}
-                fill="#C8B6FF"
+                fill="#C4956A"
               />
             )}
             {/* Principal portion (bottom — dark purple) */}
@@ -906,21 +906,21 @@ function InvestmentBarChart({ startVal, endVal, years }: { startVal: number; end
               x={x} y={H - principalH}
               width={barW} height={principalH}
               rx={rx} ry={rx}
-              fill="#7C3AED"
+              fill="#8B6941"
             />
             {/* Cover the gap between the two rects with a flat join */}
             {gainsH > 1 && (
               <rect
                 x={x} y={H - principalH - Math.min(rx, gainsH)}
                 width={barW} height={Math.min(rx * 2, gainsH + rx)}
-                fill="#C8B6FF"
+                fill="#C4956A"
               />
             )}
             {gainsH > 1 && (
               <rect
                 x={x} y={H - principalH}
                 width={barW} height={Math.min(rx, principalH)}
-                fill="#7C3AED"
+                fill="#8B6941"
               />
             )}
           </g>

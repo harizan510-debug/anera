@@ -116,10 +116,10 @@ interface ItemState { action: Action; dismissed: boolean }
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
-const LILAC = '#C8B6FF';
-const LILAC_DEEP = '#A78BFA';
-const MINT = '#B8F2E6';
-const BUTTER = '#FFF3B0';
+const CARAMEL = '#C4956A';
+const CARAMEL_DEEP = '#A67B52';
+const SAGE = '#C5CEAE';
+const GOLD = '#F0DEB4';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -153,9 +153,9 @@ export default function Insights() {
           onClick={() => setActiveTab(tab)}
           className="px-5 py-2 rounded-full text-xs font-semibold transition-all capitalize"
           style={{
-            background: activeTab === tab ? LILAC : 'transparent',
+            background: activeTab === tab ? CARAMEL : 'transparent',
             color: activeTab === tab ? '#2B2B2B' : 'var(--text-secondary)',
-            border: activeTab === tab ? `1px solid ${LILAC}` : '1px solid rgba(43,43,43,0.12)',
+            border: activeTab === tab ? `1px solid ${CARAMEL}` : '1px solid rgba(43,43,43,0.12)',
           }}
         >
           {tab === 'insights' ? 'Insights' : 'Declutter'}
@@ -172,7 +172,7 @@ export default function Insights() {
         <TabBar />
         <div
           className="rounded-2xl flex flex-col items-center py-16 text-center"
-          style={{ background: '#FFFFFF', border: `1.5px dashed ${LILAC}`, boxShadow: CARD_SHADOW }}
+          style={{ background: '#FFFFFF', border: `1.5px dashed ${CARAMEL}`, boxShadow: CARD_SHADOW }}
         >
           <div className="text-4xl mb-3">{activeTab === 'insights' ? '📊' : '🧹'}</div>
           <p className="font-medium text-sm mb-1" style={{ color: '#2B2B2B' }}>No data yet</p>
@@ -194,15 +194,15 @@ export default function Insights() {
     const categories = ['top', 'bottom', 'footwear', 'outerwear', 'dress', 'bag', 'jewellery', 'belt', 'hat'] as const;
     // Matching colors from Wardrobe page CATEGORY_TAG_COLORS
     const CAT_CHART_COLORS: Record<string, string> = {
-      top:       '#7C3AED',  // deep purple
-      bottom:    '#3B82F6',  // blue
-      footwear:  '#059669',  // teal
-      outerwear: '#9F1239',  // burgundy
-      dress:     '#DB2777',  // pink
-      bag:       '#D97706',  // amber
-      jewellery: '#EAB308',  // gold
-      belt:      '#6B7C4E',  // olive
-      hat:       '#0EA5E9',  // sky blue
+      top:       '#C4956A',  // caramel
+      bottom:    '#7B8FA3',  // muted blue
+      footwear:  '#5C7A52',  // muted green
+      outerwear: '#9F5A4A',  // muted brick
+      dress:     '#C47860',  // terracotta
+      bag:       '#B8A080',  // warm tan
+      jewellery: '#D4A96A',  // golden
+      belt:      '#8B7355',  // warm brown
+      hat:       '#A8B5C4',  // muted blue-grey
     };
     const CAT_CHART_TEXT: Record<string, string> = {
       top:       '#FFFFFF',
@@ -252,7 +252,7 @@ export default function Insights() {
         {/* Dormant alert */}
         {dormantCount > 0 && (
           <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-3"
-            style={{ background: BUTTER, border: '1px solid rgba(217,119,6,0.15)', boxShadow: CARD_SHADOW }}>
+            style={{ background: GOLD, border: '1px solid rgba(217,119,6,0.15)', boxShadow: CARD_SHADOW }}>
             <AlertCircle size={18} style={{ color: '#D97706', flexShrink: 0, marginTop: '1px' }} />
             <p className="text-sm" style={{ color: '#92400E' }}>
               <strong>{dormantCount} item{dormantCount > 1 ? 's' : ''}</strong> haven't been worn in 90+ days.{' '}
@@ -367,7 +367,7 @@ export default function Insights() {
           <div className="rounded-2xl px-5 py-4 mb-4"
             style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp size={15} style={{ color: LILAC_DEEP }} />
+              <TrendingUp size={15} style={{ color: CARAMEL_DEEP }} />
               <p className="text-sm" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.3px' }}>Most worn items</p>
             </div>
             {mostWorn[0].wearCount === 0 ? (
@@ -383,10 +383,10 @@ export default function Insights() {
                   <div key={item.id}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
                     style={{
-                      background: isTop ? 'rgba(167,139,250,0.08)' : 'transparent',
-                      border: isTop ? '1px solid rgba(167,139,250,0.18)' : '1px solid transparent',
+                      background: isTop ? 'rgba(166,123,82,0.08)' : 'transparent',
+                      border: isTop ? '1px solid rgba(166,123,82,0.18)' : '1px solid transparent',
                     }}>
-                    <span className="text-sm font-bold w-5 text-center" style={{ color: isTop ? LILAC_DEEP : 'rgba(43,43,43,0.3)' }}>
+                    <span className="text-sm font-bold w-5 text-center" style={{ color: isTop ? CARAMEL_DEEP : 'rgba(43,43,43,0.3)' }}>
                       {idx + 1}
                     </span>
                     <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#FAFAFA', border: '1px solid rgba(43,43,43,0.06)' }}>
@@ -413,7 +413,7 @@ export default function Insights() {
                       </div>
                     </div>
                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{ background: isTop ? LILAC_DEEP : LILAC, color: isTop ? '#FFFFFF' : '#5B21B6' }}>
+                      style={{ background: isTop ? CARAMEL_DEEP : CARAMEL, color: isTop ? '#FFFFFF' : '#6B4D30' }}>
                       {item.wearCount}x
                     </span>
                   </div>
@@ -438,8 +438,8 @@ export default function Insights() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <Award size={13} style={{ color: LILAC_DEEP }} />
-                <p className="text-xs font-medium" style={{ color: LILAC_DEEP }}>Best cost per wear</p>
+                <Award size={13} style={{ color: CARAMEL_DEEP }} />
+                <p className="text-xs font-medium" style={{ color: CARAMEL_DEEP }}>Best cost per wear</p>
               </div>
               <p className="font-semibold text-sm capitalize truncate" style={{ color: '#2B2B2B' }}>
                 {bestCPW.item.color} {bestCPW.item.subcategory}
@@ -484,9 +484,9 @@ export default function Insights() {
                     {!state?.action ? (
                       <div className="flex gap-2 px-3 pb-3">
                         {[
-                          { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: LILAC },
-                          { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: MINT },
-                          { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: BUTTER },
+                          { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: CARAMEL },
+                          { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: SAGE },
+                          { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: GOLD },
                         ].map(btn => (
                           <button
                             key={btn.id}
@@ -565,7 +565,7 @@ export default function Insights() {
         }}
       >
         <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: filter === 'plastic' ? '#16A34A' : MINT }}>
+          style={{ background: filter === 'plastic' ? '#16A34A' : SAGE }}>
           <Leaf size={18} color={filter === 'plastic' ? 'white' : '#15803D'} />
         </div>
         <div className="flex-1 min-w-0">
@@ -580,7 +580,7 @@ export default function Insights() {
         </div>
         {filter === 'plastic' && (
           <span className="font-semibold px-3 py-1 rounded-full flex-shrink-0"
-            style={{ background: MINT, color: '#15803D', fontSize: '11px' }}>
+            style={{ background: SAGE, color: '#15803D', fontSize: '11px' }}>
             Active
           </span>
         )}
@@ -599,9 +599,9 @@ export default function Insights() {
             className="px-3 py-1.5 rounded-full font-semibold"
             style={{
               fontSize: '11px',
-              background: filter === f.id ? LILAC : 'transparent',
+              background: filter === f.id ? CARAMEL : 'transparent',
               color:      filter === f.id ? '#2B2B2B' : 'var(--text-secondary)',
-              border: filter === f.id ? `1px solid ${LILAC}` : '1px solid rgba(43,43,43,0.12)',
+              border: filter === f.id ? `1px solid ${CARAMEL}` : '1px solid rgba(43,43,43,0.12)',
             }}
           >
             {f.label}
@@ -624,7 +624,7 @@ export default function Insights() {
       {/* Empty states */}
       {filtered.length === 0 ? (
         <div className="rounded-2xl flex flex-col items-center py-16 text-center"
-          style={{ background: '#FFFFFF', border: `1.5px dashed ${LILAC}`, boxShadow: CARD_SHADOW }}>
+          style={{ background: '#FFFFFF', border: `1.5px dashed ${CARAMEL}`, boxShadow: CARD_SHADOW }}>
           <div className="text-4xl mb-3">
             {filter === 'plastic' ? '🌿' : '✨'}
           </div>
@@ -668,7 +668,7 @@ export default function Insights() {
                   {/* Badge — green leaf for plastic mode, score label otherwise */}
                   {filter === 'plastic' ? (
                     <span className="text-[10px] font-medium px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
-                      style={{ background: MINT, color: '#15803D' }}>
+                      style={{ background: SAGE, color: '#15803D' }}>
                       <Leaf size={10} /> Plastic
                     </span>
                   ) : (
@@ -696,9 +696,9 @@ export default function Insights() {
                 {!state?.action ? (
                   <div className="flex gap-2 px-4 pb-4">
                     {[
-                      { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: LILAC },
-                      { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: MINT },
-                      { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: BUTTER },
+                      { id: 'sell'    as const, label: 'Sell',    Icon: ShoppingBag, color: '#2B2B2B', bg: CARAMEL },
+                      { id: 'donate'  as const, label: 'Donate',  Icon: Heart,       color: '#15803D', bg: SAGE },
+                      { id: 'restyle' as const, label: 'Restyle', Icon: RefreshCw,   color: '#92400E', bg: GOLD },
                     ].map(btn => (
                       <button
                         key={btn.id}

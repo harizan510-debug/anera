@@ -121,7 +121,7 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
       {/* Drawer panel — slides in from left */}
       <div
         className="w-[82%] max-w-sm h-full flex flex-col animate-slideIn"
-        style={{ background: '#FAFAFA' }}
+        style={{ background: '#F5F0EB' }}
       >
         {/* Close button */}
         <div className="flex justify-end p-4">
@@ -136,7 +136,7 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : profile && (
           <>
@@ -151,7 +151,7 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     {/* Progress arc */}
                     <circle
                       cx="34" cy="34" r="30" fill="none"
-                      stroke="#7C3AED" strokeWidth="3" strokeLinecap="round"
+                      stroke="#8B6941" strokeWidth="3" strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 30}`}
                       strokeDashoffset={`${2 * Math.PI * 30 * 0.85}`}
                       transform="rotate(-90 34 34)"
@@ -160,15 +160,15 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   <div
                     className="absolute inset-0 m-auto w-[52px] h-[52px] rounded-full flex items-center justify-center text-lg font-bold"
                     style={{
-                      background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : '#C8B6FF',
-                      color: profile.avatarUrl ? 'transparent' : '#5B21B6',
+                      background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : '#C4956A',
+                      color: profile.avatarUrl ? 'transparent' : '#6B4D30',
                     }}
                   >
                     {!profile.avatarUrl && initials}
                   </div>
                   <span
                     className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: '#7C3AED', color: 'white' }}
+                    style={{ background: '#8B6941', color: 'white' }}
                   >
                     15%
                   </span>

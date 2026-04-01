@@ -3,23 +3,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #FAFAFA;
+  --bg: #F5F0EB;
   --surface: #FFFFFF;
-  --border: rgba(43, 43, 43, 0.06);
-  --text-primary: #2B2B2B;
-  --text-secondary: rgba(43, 43, 43, 0.45);
+  --border: rgba(43, 35, 34, 0.06);
+  --text-primary: #2B2322;
+  --text-secondary: rgba(43, 35, 34, 0.45);
   --radius: 16px;
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Accent palette */
-  --accent: #C8B6FF;          /* soft lilac — primary */
-  --accent-dark: #A78BFA;     /* deeper lilac for hover */
-  --accent-light: #EDE9FE;    /* very light lilac bg */
-  --mint: #B8F2E6;            /* mint green — secondary */
-  --mint-dark: #6EE7B7;       /* deeper mint */
-  --yellow: #FFF3B0;          /* butter yellow — highlight */
-  --yellow-dark: #FDE68A;     /* deeper yellow */
+  /* Accent palette — warm caramel + earthy tones */
+  --accent: #C4956A;          /* warm caramel — primary */
+  --accent-dark: #A67B52;     /* deeper caramel for hover */
+  --accent-light: #F0E6DA;    /* soft warm bg */
+  --sage: #C5CEAE;            /* soft sage — secondary */
+  --sage-dark: #A3B18A;       /* deeper sage */
+  --blush: #E8C4B8;           /* warm blush — highlight */
+  --blush-dark: #D4A896;      /* deeper blush */
 
   /* Soft shadow */
   --shadow: 0 4px 20px rgba(0,0,0,0.05);
@@ -57,15 +57,15 @@ input, textarea, button { font-family: inherit; }
 /* ── Basics horizontal scroll — thin visible track ───────── */
 .basics-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(200,182,255,0.3) transparent;
+  scrollbar-color: rgba(196,149,106,0.3) transparent;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
 .basics-scroll > * { scroll-snap-align: start; }
 .basics-scroll::-webkit-scrollbar { height: 3px; }
-.basics-scroll::-webkit-scrollbar-track { background: rgba(200,182,255,0.1); border-radius: 3px; margin: 0 4px; }
-.basics-scroll::-webkit-scrollbar-thumb { background: rgba(200,182,255,0.35); border-radius: 3px; }
-.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(200,182,255,0.5); }
+.basics-scroll::-webkit-scrollbar-track { background: rgba(196,149,106,0.1); border-radius: 3px; margin: 0 4px; }
+.basics-scroll::-webkit-scrollbar-thumb { background: rgba(196,149,106,0.35); border-radius: 3px; }
+.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(196,149,106,0.5); }
 
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes badge-pop {
@@ -108,10 +108,10 @@ input, textarea, button { font-family: inherit; }
   border: 1px solid var(--border);
 }
 
-/* ── Anera button (primary lilac pill) ─────────────────────── */
+/* ── Anera button (primary caramel pill) ─────────────────── */
 .anera-btn {
   background: var(--accent);
-  color: var(--text-primary);
+  color: #FFFFFF;
   font-weight: 600;
   border-radius: var(--radius-full);
   padding: 12px 28px;
@@ -128,7 +128,7 @@ input, textarea, button { font-family: inherit; }
   transform: scale(0.97);
 }
 
-/* ── Anera tag (mint/yellow pill) ──────────────────────────── */
+/* ── Anera tag (sage/blush pill) ─────────────────────────── */
 .anera-tag {
   display: inline-flex;
   align-items: center;
@@ -136,14 +136,14 @@ input, textarea, button { font-family: inherit; }
   font-weight: 600;
   padding: 4px 12px;
   border-radius: var(--radius-full);
-  background: var(--mint);
-  color: #1a5c4a;
+  background: var(--sage);
+  color: #4A5A38;
 }
-.anera-tag--yellow {
-  background: var(--yellow);
-  color: #7c6a1a;
+.anera-tag--blush {
+  background: var(--blush);
+  color: #7A4F3F;
 }
-.anera-tag--lilac {
+.anera-tag--warm {
   background: var(--accent-light);
-  color: #5b21b6;
+  color: #7A5C3E;
 }

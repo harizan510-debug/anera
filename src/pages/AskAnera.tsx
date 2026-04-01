@@ -6,9 +6,9 @@ import { chatWithAnera } from '../api';
 import { hasClaudeKey } from '../apiHelper';
 import type { ChatMessage } from '../types';
 
-// Olive green accent palette
-const OLIVE = '#6B7C4E';
-const OLIVE_BG = 'rgba(107,124,78,0.12)';
+// Warm brown accent palette
+const WARM = '#8B7355';
+const WARM_BG = 'rgba(139,115,85,0.12)';
 
 const QUICK_PROMPTS = [
   'Style my wardrobe for today',
@@ -83,24 +83,24 @@ export default function AskAnera() {
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F0FF' }}>
+    <div className="flex flex-col h-full" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F0EB' }}>
       {/* Header */}
       <div
         className="px-4 pt-4 pb-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid rgba(107,124,78,0.12)', background: '#EDE9FE' }}
+        style={{ borderBottom: '1px solid rgba(139,115,85,0.12)', background: '#F0E6DA' }}
       >
         <div className="flex items-center gap-3">
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{ background: OLIVE_BG }}
+            style={{ background: WARM_BG }}
           >
-            <ArrowLeft size={16} color={OLIVE} strokeWidth={2.5} />
+            <ArrowLeft size={16} color={WARM} strokeWidth={2.5} />
           </button>
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ background: OLIVE }}
+            style={{ background: WARM }}
           >
             <Shirt size={15} color="white" />
           </div>
@@ -126,9 +126,9 @@ export default function AskAnera() {
                 onClick={() => send(prompt)}
                 className="px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95"
                 style={{
-                  background: OLIVE_BG,
-                  color: OLIVE,
-                  border: `1px solid rgba(107,124,78,0.2)`,
+                  background: WARM_BG,
+                  color: WARM,
+                  border: `1px solid rgba(139,115,85,0.2)`,
                 }}
               >
                 {prompt}
@@ -145,7 +145,7 @@ export default function AskAnera() {
             {msg.role === 'assistant' && (
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0 mt-auto"
-                style={{ background: OLIVE }}
+                style={{ background: WARM }}
               >
                 <Shirt size={11} color="white" />
               </div>
@@ -154,7 +154,7 @@ export default function AskAnera() {
               className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
               style={
                 msg.role === 'user'
-                  ? { background: OLIVE, color: '#FFFFFF', borderBottomRightRadius: '6px' }
+                  ? { background: WARM, color: '#FFFFFF', borderBottomRightRadius: '6px' }
                   : { background: '#FFFFFF', color: 'var(--text-primary)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderBottomLeftRadius: '6px' }
               }
             >
@@ -167,7 +167,7 @@ export default function AskAnera() {
           <div className="flex justify-start">
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0"
-              style={{ background: OLIVE }}
+              style={{ background: WARM }}
             >
               <Shirt size={11} color="white" />
             </div>
@@ -176,9 +176,9 @@ export default function AskAnera() {
               style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
             >
               <div className="flex gap-1 items-center">
-                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: OLIVE, animationDelay: '0ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: OLIVE, animationDelay: '150ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: OLIVE, animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: WARM, animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: WARM, animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: WARM, animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function AskAnera() {
       {/* Input */}
       <div
         className="flex-shrink-0 px-4 py-3 flex gap-3 items-end"
-        style={{ borderTop: '1px solid rgba(107,124,78,0.12)', background: '#EDE9FE' }}
+        style={{ borderTop: '1px solid rgba(139,115,85,0.12)', background: '#F0E6DA' }}
       >
         <textarea
           ref={inputRef}
@@ -207,7 +207,7 @@ export default function AskAnera() {
           className="flex-1 resize-none outline-none text-sm px-4 py-3 rounded-2xl"
           style={{
             background: '#FFFFFF',
-            border: '1.5px solid rgba(107,124,78,0.2)',
+            border: '1.5px solid rgba(139,115,85,0.2)',
             color: 'var(--text-primary)',
             maxHeight: '120px',
             borderRadius: '20px',
@@ -217,7 +217,7 @@ export default function AskAnera() {
           onClick={() => send(input)}
           disabled={!input.trim() || loading}
           className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40"
-          style={{ background: OLIVE }}
+          style={{ background: WARM }}
         >
           {loading ? <Loader2 size={17} color="white" className="animate-spin" /> : <Send size={17} color="white" />}
         </button>

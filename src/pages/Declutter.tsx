@@ -184,7 +184,7 @@ export default function Declutter() {
                   {[
                     { id: 'sell' as const, label: 'Sell', icon: ShoppingBag, color: '#2563EB', bg: '#EFF6FF' },
                     { id: 'donate' as const, label: 'Donate', icon: Heart, color: '#16A34A', bg: '#DCFCE7' },
-                    { id: 'restyle' as const, label: 'Restyle', icon: RefreshCw, color: '#7C3AED', bg: '#F5F3FF' },
+                    { id: 'restyle' as const, label: 'Restyle', icon: RefreshCw, color: '#8B6941', bg: '#F5F0EB' },
                   ].map(btn => {
                     const Icon = btn.icon;
                     return (

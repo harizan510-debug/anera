@@ -4,14 +4,14 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#C8B6FF', bg: 'rgba(200,182,255,0.18)', main: false },
-  { to: '/social',    icon: Users,       label: 'Community',  color: '#6EE7B7', bg: 'rgba(110,231,183,0.15)', main: false },
-  { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    color: '#F9A8D4', bg: 'rgba(249,168,212,0.15)', main: true  },
-  { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       color: '#FCD34D', bg: 'rgba(252,211,77,0.15)', main: false },
-  { to: '/insights',  icon: BarChart2,   label: 'Insights',   color: '#93C5FD', bg: 'rgba(147,197,253,0.15)', main: false },
+  { to: '/wardrobe',  icon: LayoutGrid,  label: 'Wardrobe',   color: '#C4956A', bg: 'rgba(196,149,106,0.15)', main: false },
+  { to: '/social',    icon: Users,       label: 'Community',  color: '#A3B18A', bg: 'rgba(163,177,138,0.15)', main: false },
+  { to: '/outfits',   icon: Sparkles,    label: 'Outfits',    color: '#D4A896', bg: 'rgba(212,168,150,0.15)', main: true  },
+  { to: '/purchase',  icon: ShoppingBag, label: 'Buy?',       color: '#B8A080', bg: 'rgba(184,160,128,0.15)', main: false },
+  { to: '/insights',  icon: BarChart2,   label: 'Insights',   color: '#A8B5C4', bg: 'rgba(168,181,196,0.15)', main: false },
 ];
 
-const INACTIVE_COLOR = 'rgba(43,43,43,0.32)';
+const INACTIVE_COLOR = 'rgba(43,35,34,0.30)';
 
 /* Dome radius — the convex bump that rises above the bar to house the Outfits icon */
 const DOME_R = 28;
@@ -75,7 +75,7 @@ export default function BottomNav() {
       >
         <path
           d={domePath(400, DOME_R, DOME_CURVE)}
-          fill="rgba(255,255,255,0.82)"
+          fill="rgba(255,255,255,0.85)"
         />
       </svg>
 
@@ -114,7 +114,7 @@ export default function BottomNav() {
                   style={
                     isActive
                       ? { background: main ? color : bg, color: main ? '#fff' : color }
-                      : { color: INACTIVE_COLOR, background: main ? 'rgba(249,168,212,0.12)' : undefined }
+                      : { color: INACTIVE_COLOR, background: main ? 'rgba(212,168,150,0.12)' : undefined }
                   }
                 >
                   <Icon

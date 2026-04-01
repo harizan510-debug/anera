@@ -18,9 +18,9 @@ interface UploadedPhoto {
 }
 
 // Design tokens
-const LILAC = '#C8B6FF';
-const LILAC_DEEP = '#A78BFA';
-const LILAC_LIGHT = '#EDE9FE';
+const CARAMEL = '#C4956A';
+const CARAMEL_DEEP = '#A67B52';
+const CARAMEL_LIGHT = '#F0E6DA';
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
 
 // Demo detections for when no API key is configured
@@ -143,12 +143,12 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F5F0EB' }}>
 
       {/* Header */}
       <div className="px-6 pt-14 pb-6">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: LILAC, boxShadow: CARD_SHADOW }}>
+          <div className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: CARAMEL, boxShadow: CARD_SHADOW }}>
             <Shirt size={16} color="#2B2B2B" />
           </div>
           <span className="text-lg" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
@@ -163,7 +163,7 @@ export default function Onboarding() {
         {step === 'welcome' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
             <div className="mb-10">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: LILAC_DEEP }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: CARAMEL_DEEP }}>
                 Your personal AI stylist
               </p>
               <h1 className="text-4xl mb-4" style={{ color: '#2B2B2B', fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.5px' }}>
@@ -176,7 +176,7 @@ export default function Onboarding() {
             <button
               onClick={() => setStep('name')}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
-              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               Get started <ArrowRight size={18} />
             </button>
@@ -207,7 +207,7 @@ export default function Onboarding() {
                 color: '#2B2B2B',
                 boxShadow: CARD_SHADOW,
               }}
-              onFocus={e => e.currentTarget.style.borderColor = LILAC}
+              onFocus={e => e.currentTarget.style.borderColor = CARAMEL}
               onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
               onKeyDown={e => e.key === 'Enter' && name.trim() && setStep('upload')}
             />
@@ -215,7 +215,7 @@ export default function Onboarding() {
               onClick={() => setStep('upload')}
               disabled={!name.trim()}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 transition-all"
-              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               Continue <ArrowRight size={18} />
             </button>
@@ -237,8 +237,8 @@ export default function Onboarding() {
               onDragOver={e => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = LILAC;
-                (e.currentTarget as HTMLElement).style.background = LILAC_LIGHT;
+                (e.currentTarget as HTMLElement).style.borderColor = CARAMEL;
+                (e.currentTarget as HTMLElement).style.background = CARAMEL_LIGHT;
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLElement).style.borderColor = 'rgba(43,43,43,0.12)';
@@ -247,8 +247,8 @@ export default function Onboarding() {
               className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer mb-5 transition-all"
               style={{ border: `1.5px dashed rgba(43,43,43,0.12)`, background: '#FFFFFF', padding: '40px 20px', boxShadow: CARD_SHADOW }}
             >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: LILAC_LIGHT }}>
-                <Upload size={22} style={{ color: LILAC_DEEP }} />
+              <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: CARAMEL_LIGHT }}>
+                <Upload size={22} style={{ color: CARAMEL_DEEP }} />
               </div>
               <div className="text-center">
                 <p className="font-semibold text-sm" style={{ color: '#2B2B2B' }}>
@@ -296,7 +296,7 @@ export default function Onboarding() {
               onClick={processPhotos}
               disabled={photos.length === 0}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 mb-3 transition-all"
-              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               Build my wardrobe <ArrowRight size={18} />
             </button>
@@ -312,8 +312,8 @@ export default function Onboarding() {
 
         {step === 'processing' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: LILAC_LIGHT, boxShadow: CARD_SHADOW }}>
-              <Loader2 size={32} style={{ color: LILAC_DEEP }} className="animate-spin" />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: CARAMEL_LIGHT, boxShadow: CARD_SHADOW }}>
+              <Loader2 size={32} style={{ color: CARAMEL_DEEP }} className="animate-spin" />
             </div>
             <h2 className="text-2xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Scanning your wardrobe...
@@ -326,12 +326,12 @@ export default function Onboarding() {
 
         {step === 'done' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: LILAC_LIGHT, boxShadow: CARD_SHADOW }}>
-              <CheckCircle size={32} style={{ color: LILAC_DEEP }} />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: CARAMEL_LIGHT, boxShadow: CARD_SHADOW }}>
+              <CheckCircle size={32} style={{ color: CARAMEL_DEEP }} />
             </div>
             <h2 className="text-3xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Wardrobe ready!<br />
-              <span style={{ color: LILAC_DEEP }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
+              <span style={{ color: CARAMEL_DEEP }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
             </h2>
             <p className="text-sm mb-10" style={{ color: 'rgba(43,43,43,0.5)' }}>
               Let's start styling, {name}.
@@ -339,7 +339,7 @@ export default function Onboarding() {
             <button
               onClick={() => navigate('/wardrobe')}
               className="px-8 py-4 rounded-full font-semibold text-base flex items-center gap-2 transition-all"
-              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               View my wardrobe <ArrowRight size={18} />
             </button>

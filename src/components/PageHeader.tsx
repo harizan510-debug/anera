@@ -15,22 +15,22 @@ export default function PageHeader({ title, subtitle, action, leftIcon }: PageHe
         {leftIcon || (
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: '#C8B6FF', boxShadow: '0 2px 8px rgba(200,182,255,0.4)' }}
+            style={{ background: '#C4956A', boxShadow: '0 2px 8px rgba(196,149,106,0.4)' }}
           >
-            <Shirt size={17} color="#7C3AED" strokeWidth={2.2} />
+            <Shirt size={17} color="#FFFFFF" strokeWidth={2.2} />
           </div>
         )}
         <div>
           <h1
             className="text-2xl"
-            style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.5px' }}
+            style={{ color: '#2B2322', fontWeight: 700, letterSpacing: '-0.5px' }}
           >
             {title}
           </h1>
           {subtitle && (
             <p
               className="text-sm mt-0.5"
-              style={{ color: 'rgba(43,43,43,0.5)' }}
+              style={{ color: 'rgba(43,35,34,0.5)' }}
             >
               {subtitle}
             </p>
