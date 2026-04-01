@@ -18,9 +18,9 @@ interface UploadedPhoto {
 }
 
 // Design tokens
-const LILAC = '#A3B18A';
-const LILAC_DEEP = '#8A9A72';
-const LILAC_LIGHT = '#DDE5D3';
+const LILAC = '#C8B6FF';
+const LILAC_DEEP = '#A78BFA';
+const LILAC_LIGHT = '#EDE9FE';
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
 
 // Demo detections for when no API key is configured
@@ -143,15 +143,15 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F8F7F4' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
 
       {/* Header */}
       <div className="px-6 pt-14 pb-6">
         <div className="flex items-center gap-2.5 mb-1">
           <div className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: LILAC, boxShadow: CARD_SHADOW }}>
-            <Shirt size={16} color="#1A1A1A" />
+            <Shirt size={16} color="#2B2B2B" />
           </div>
-          <span className="text-lg" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.5px' }}>
+          <span className="text-lg" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
             anera
           </span>
         </div>
@@ -166,7 +166,7 @@ export default function Onboarding() {
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: LILAC_DEEP }}>
                 Your personal AI stylist
               </p>
-              <h1 className="text-4xl mb-4" style={{ color: '#1A1A1A', fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.5px' }}>
+              <h1 className="text-4xl mb-4" style={{ color: '#2B2B2B', fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.5px' }}>
                 Meet Anera,<br />your wardrobe<br />intelligence.
               </h1>
               <p className="text-base" style={{ color: 'rgba(43,43,43,0.5)', lineHeight: '1.6' }}>
@@ -176,7 +176,7 @@ export default function Onboarding() {
             <button
               onClick={() => setStep('name')}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
-              style={{ background: LILAC, color: '#1A1A1A', boxShadow: CARD_SHADOW }}
+              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               Get started <ArrowRight size={18} />
             </button>
@@ -185,7 +185,7 @@ export default function Onboarding() {
 
         {step === 'name' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
-            <h2 className="text-3xl mb-2" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.5px' }}>
+            <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               What should I call you?
             </h2>
             <p className="mb-8 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
@@ -204,7 +204,7 @@ export default function Onboarding() {
               style={{
                 background: '#FFFFFF',
                 border: '1.5px solid rgba(43,43,43,0.08)',
-                color: '#1A1A1A',
+                color: '#2B2B2B',
                 boxShadow: CARD_SHADOW,
               }}
               onFocus={e => e.currentTarget.style.borderColor = LILAC}
@@ -215,7 +215,7 @@ export default function Onboarding() {
               onClick={() => setStep('upload')}
               disabled={!name.trim()}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 transition-all"
-              style={{ background: LILAC, color: '#1A1A1A', boxShadow: CARD_SHADOW }}
+              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               Continue <ArrowRight size={18} />
             </button>
@@ -224,7 +224,7 @@ export default function Onboarding() {
 
         {step === 'upload' && (
           <div>
-            <h2 className="text-3xl mb-2 mt-2" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.5px' }}>
+            <h2 className="text-3xl mb-2 mt-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Upload your outfits,<br />{name}.
             </h2>
             <p className="mb-6 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
@@ -251,7 +251,7 @@ export default function Onboarding() {
                 <Upload size={22} style={{ color: LILAC_DEEP }} />
               </div>
               <div className="text-center">
-                <p className="font-semibold text-sm" style={{ color: '#1A1A1A' }}>
+                <p className="font-semibold text-sm" style={{ color: '#2B2B2B' }}>
                   Tap to upload photos
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'rgba(43,43,43,0.45)' }}>
@@ -296,7 +296,7 @@ export default function Onboarding() {
               onClick={processPhotos}
               disabled={photos.length === 0}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 mb-3 transition-all"
-              style={{ background: LILAC, color: '#1A1A1A', boxShadow: CARD_SHADOW }}
+              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               Build my wardrobe <ArrowRight size={18} />
             </button>
@@ -315,7 +315,7 @@ export default function Onboarding() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: LILAC_LIGHT, boxShadow: CARD_SHADOW }}>
               <Loader2 size={32} style={{ color: LILAC_DEEP }} className="animate-spin" />
             </div>
-            <h2 className="text-2xl mb-3" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.5px' }}>
+            <h2 className="text-2xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Scanning your wardrobe...
             </h2>
             <p className="text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
@@ -329,7 +329,7 @@ export default function Onboarding() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: LILAC_LIGHT, boxShadow: CARD_SHADOW }}>
               <CheckCircle size={32} style={{ color: LILAC_DEEP }} />
             </div>
-            <h2 className="text-3xl mb-3" style={{ color: '#1A1A1A', fontWeight: 700, letterSpacing: '-0.5px' }}>
+            <h2 className="text-3xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Wardrobe ready!<br />
               <span style={{ color: LILAC_DEEP }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
             </h2>
@@ -339,7 +339,7 @@ export default function Onboarding() {
             <button
               onClick={() => navigate('/wardrobe')}
               className="px-8 py-4 rounded-full font-semibold text-base flex items-center gap-2 transition-all"
-              style={{ background: LILAC, color: '#1A1A1A', boxShadow: CARD_SHADOW }}
+              style={{ background: LILAC, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
             >
               View my wardrobe <ArrowRight size={18} />
             </button>

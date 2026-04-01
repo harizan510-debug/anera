@@ -6,9 +6,9 @@ import { chatWithAnera } from '../api';
 import { hasClaudeKey } from '../apiHelper';
 import type { ChatMessage } from '../types';
 
-// Sage green accent palette
-const OLIVE = '#A3B18A';
-const OLIVE_BG = 'rgba(163,177,138,0.12)';
+// Olive green accent palette
+const OLIVE = '#6B7C4E';
+const OLIVE_BG = 'rgba(107,124,78,0.12)';
 
 const QUICK_PROMPTS = [
   'Style my wardrobe for today',
@@ -83,11 +83,11 @@ export default function AskAnera() {
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F8F7F4' }}>
+    <div className="flex flex-col h-full" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F0FF' }}>
       {/* Header */}
       <div
         className="px-4 pt-4 pb-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid rgba(26,26,26,0.06)', background: '#F0EDE8' }}
+        style={{ borderBottom: '1px solid rgba(107,124,78,0.12)', background: '#EDE9FE' }}
       >
         <div className="flex items-center gap-3">
           {/* Back button */}
@@ -190,7 +190,7 @@ export default function AskAnera() {
       {/* Input */}
       <div
         className="flex-shrink-0 px-4 py-3 flex gap-3 items-end"
-        style={{ borderTop: '1px solid rgba(26,26,26,0.06)', background: '#F0EDE8' }}
+        style={{ borderTop: '1px solid rgba(107,124,78,0.12)', background: '#EDE9FE' }}
       >
         <textarea
           ref={inputRef}

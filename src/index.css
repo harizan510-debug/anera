@@ -3,23 +3,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #F8F7F4;
+  --bg: #FAFAFA;
   --surface: #FFFFFF;
-  --border: rgba(26, 26, 26, 0.06);
-  --text-primary: #1A1A1A;
-  --text-secondary: #6F6F6F;
+  --border: rgba(43, 43, 43, 0.06);
+  --text-primary: #2B2B2B;
+  --text-secondary: rgba(43, 43, 43, 0.45);
   --radius: 16px;
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Accent palette — sage green, used sparingly */
-  --accent: #A3B18A;
-  --accent-dark: #8A9A72;
-  --accent-light: #DDE5D3;
-  --green: #A3B18A;
-  --yellow: #F2C94C;
-  --orange: #F2994A;
-  --red: #EB5757;
+  /* Accent palette */
+  --accent: #C8B6FF;          /* soft lilac — primary */
+  --accent-dark: #A78BFA;     /* deeper lilac for hover */
+  --accent-light: #EDE9FE;    /* very light lilac bg */
+  --mint: #B8F2E6;            /* mint green — secondary */
+  --mint-dark: #6EE7B7;       /* deeper mint */
+  --yellow: #FFF3B0;          /* butter yellow — highlight */
+  --yellow-dark: #FDE68A;     /* deeper yellow */
 
   /* Soft shadow */
   --shadow: 0 4px 20px rgba(0,0,0,0.05);
@@ -57,21 +57,21 @@ input, textarea, button { font-family: inherit; }
 /* ── Basics horizontal scroll — thin visible track ───────── */
 .basics-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(163,177,138,0.3) transparent;
+  scrollbar-color: rgba(200,182,255,0.3) transparent;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
 .basics-scroll > * { scroll-snap-align: start; }
 .basics-scroll::-webkit-scrollbar { height: 3px; }
-.basics-scroll::-webkit-scrollbar-track { background: rgba(163,177,138,0.08); border-radius: 3px; margin: 0 4px; }
-.basics-scroll::-webkit-scrollbar-thumb { background: rgba(163,177,138,0.3); border-radius: 3px; }
-.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(163,177,138,0.45); }
+.basics-scroll::-webkit-scrollbar-track { background: rgba(200,182,255,0.1); border-radius: 3px; margin: 0 4px; }
+.basics-scroll::-webkit-scrollbar-thumb { background: rgba(200,182,255,0.35); border-radius: 3px; }
+.basics-scroll::-webkit-scrollbar-thumb:hover { background: rgba(200,182,255,0.5); }
 
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes badge-pop {
   0%   { transform: scale(0.65) translateY(6px); opacity: 0; }
-  65%  { transform: scale(1.04) translateY(-1px); opacity: 1; }
-  82%  { transform: scale(0.98) translateY(0px); }
+  65%  { transform: scale(1.07) translateY(-2px); opacity: 1; }
+  82%  { transform: scale(0.97) translateY(0px); }
   100% { transform: scale(1) translateY(0px); opacity: 1; }
 }
 
@@ -108,7 +108,7 @@ input, textarea, button { font-family: inherit; }
   border: 1px solid var(--border);
 }
 
-/* ── Anera button (primary sage pill) ──────────────────────── */
+/* ── Anera button (primary lilac pill) ─────────────────────── */
 .anera-btn {
   background: var(--accent);
   color: var(--text-primary);
@@ -128,7 +128,7 @@ input, textarea, button { font-family: inherit; }
   transform: scale(0.97);
 }
 
-/* ── Anera tag (neutral pill) ─────────────────────────────── */
+/* ── Anera tag (mint/yellow pill) ──────────────────────────── */
 .anera-tag {
   display: inline-flex;
   align-items: center;
@@ -136,14 +136,14 @@ input, textarea, button { font-family: inherit; }
   font-weight: 600;
   padding: 4px 12px;
   border-radius: var(--radius-full);
-  background: var(--accent-light);
-  color: #4A5A38;
+  background: var(--mint);
+  color: #1a5c4a;
 }
 .anera-tag--yellow {
-  background: #FDF6E3;
-  color: #8B7A2B;
+  background: var(--yellow);
+  color: #7c6a1a;
 }
-.anera-tag--sage {
+.anera-tag--lilac {
   background: var(--accent-light);
-  color: #4A5A38;
+  color: #5b21b6;
 }
