@@ -60,19 +60,51 @@ export default function Onboarding() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordUpdated, setPasswordUpdated] = useState(false);
 
-  // Listen for PASSWORD_RECOVERY event from Supabase (when user clicks reset link in email)
+  // Listen for auth events (PASSWORD_RECOVERY, SIGNED_IN via OAuth, etc.)
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    if (!isSupabaseConfigured) return;
+
+    // Check if Supabase already processed hash fragments before this listener registered
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // Check URL hash for recovery type
+        const hash = window.location.hash;
+        if (hash.includes('type=recovery')) {
+          setStep('reset');
+          setAuthError('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setPasswordUpdated(false);
+          // Clean up hash from URL
+          window.history.replaceState(null, '', window.location.pathname);
+          return;
+        }
+        // If signed in via OAuth (Google) redirect — go to wardrobe
+        if (hash.includes('access_token') || session.user?.app_metadata?.provider === 'google') {
+          // Clean up hash from URL
+          window.history.replaceState(null, '', window.location.pathname);
+          completeOnboarding(session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || 'You', []);
+          navigate('/wardrobe');
+          return;
+        }
+      }
+    });
+
+    // Also listen for future auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setStep('reset');
         setAuthError('');
         setNewPassword('');
         setConfirmPassword('');
         setPasswordUpdated(false);
+      } else if (event === 'SIGNED_IN' && session?.user?.app_metadata?.provider === 'google') {
+        completeOnboarding(session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || 'You', []);
+        navigate('/wardrobe');
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleFilePick = useCallback(async (files: FileList | null) => {
     if (!files) return;
@@ -104,7 +136,7 @@ export default function Onboarding() {
     setAuthLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/onboarding` },
     });
     if (error) { setAuthError(error.message); setAuthLoading(false); }
   };
