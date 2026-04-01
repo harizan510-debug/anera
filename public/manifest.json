@@ -1,7 +1,7 @@
 {
-  "name": "Anera – AI Wardrobe Stylist",
+  "name": "Anera – Your personal stylist for conscious fashion",
   "short_name": "Anera",
-  "description": "Your personal AI wardrobe stylist. Organize, style, and make smarter fashion choices.",
+  "description": "Your personal stylist for conscious fashion. Organise, style, and make smarter choices.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",

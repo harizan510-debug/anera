@@ -1,5 +1,5 @@
 // Anera Service Worker — Network-first for everything
-const CACHE_NAME = 'anera-v5';
+const CACHE_NAME = 'anera-v6';
 const PRECACHE_URLS = ['/', '/index.html'];
 
 // Install: clear ALL old caches and precache shell
