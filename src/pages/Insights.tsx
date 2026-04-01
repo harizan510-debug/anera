@@ -413,7 +413,7 @@ export default function Insights() {
                       </div>
                     </div>
                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{ background: isTop ? CARAMEL_DEEP : CARAMEL, color: isTop ? '#FFFFFF' : '#4A3125' }}>
+                      style={{ background: isTop ? CARAMEL_DEEP : CARAMEL, color: '#FFFFFF' }}>
                       {item.wearCount}x
                     </span>
                   </div>

@@ -90,13 +90,13 @@ export default function Social() {
         {session ? (
           <button onClick={() => setShowNewPost(true)}
             className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: '#7B5B4C', color: '#1F2937' }}>
+            style={{ background: '#7B5B4C', color: '#FFFFFF' }}>
             <Plus size={18} />
           </button>
         ) : (
           <button onClick={() => setShowAuth(true)}
             className="px-4 py-2 rounded-full text-xs font-medium"
-            style={{ background: '#7B5B4C', color: '#1F2937' }}>
+            style={{ background: '#7B5B4C', color: '#FFFFFF' }}>
             Sign in
           </button>
         )}
@@ -114,7 +114,7 @@ export default function Social() {
           <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>Be the first to share your outfit of the day!</p>
           <button onClick={() => session ? setShowNewPost(true) : setShowAuth(true)}
             className="px-6 py-3 rounded-full text-sm font-medium"
-            style={{ background: '#7B5B4C', color: '#1F2937' }}>
+            style={{ background: '#7B5B4C', color: '#FFFFFF' }}>
             Post your OOTD
           </button>
         </div>
@@ -212,7 +212,7 @@ function PostCard({ post, onLike, onComment, onShare }: {
           </button>
           {typeof navigator.share === 'function' && (
             <button onClick={onShare} className="ml-auto px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: '#7B5B4C', color: '#1F2937' }}>
+              style={{ background: '#7B5B4C', color: '#FFFFFF' }}>
               Share
             </button>
           )}
@@ -302,7 +302,7 @@ function NewPostModal({ userId, onClose, onPosted }: {
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
               style={{
                 background: mediaType === type ? '#7B5B4C' : 'var(--bg)',
-                color: mediaType === type ? '#1F2937' : 'var(--text-secondary)',
+                color: mediaType === type ? '#FFFFFF' : 'var(--text-secondary)',
                 border: `1px solid ${mediaType === type ? '#7B5B4C' : 'var(--border)'}`,
               }}>
               {type === 'image' ? <Image size={15} /> : <Video size={15} />}
@@ -353,7 +353,7 @@ function NewPostModal({ userId, onClose, onPosted }: {
 
         <button onClick={submit} disabled={loading || !media}
           className="w-full py-4 rounded-full font-medium flex items-center justify-center gap-2 disabled:opacity-40"
-          style={{ background: '#7B5B4C', color: '#1F2937' }}>
+          style={{ background: '#7B5B4C', color: '#FFFFFF' }}>
           {loading ? <Loader2 size={18} className="animate-spin" /> : <><Send size={16} /> Post OOTD</>}
         </button>
       </div>
@@ -427,7 +427,7 @@ function CommentsModal({ postId, currentUserId, onClose, onAuthRequired }: {
           <button onClick={addComment} disabled={!newComment.trim() || loading}
             className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-40"
             style={{ background: '#7B5B4C' }}>
-            {loading ? <Loader2 size={15} color="#1F2937" className="animate-spin" /> : <Send size={15} color="#1F2937" />}
+            {loading ? <Loader2 size={15} color="#FFFFFF" className="animate-spin" /> : <Send size={15} color="#FFFFFF" />}
           </button>
         </div>
       </div>

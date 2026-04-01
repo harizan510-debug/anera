@@ -149,7 +149,7 @@ export default function Onboarding() {
       <div className="px-6 pt-14 pb-6">
         <div className="flex items-center gap-2.5 mb-1">
           <div className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: CARAMEL, boxShadow: CARD_SHADOW }}>
-            <Shirt size={16} color="#2B2B2B" />
+            <Shirt size={16} color="#FFFFFF" />
           </div>
           <span className="text-lg" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
             anera
@@ -176,7 +176,7 @@ export default function Onboarding() {
             <button
               onClick={() => setStep('name')}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
-              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               Get started <ArrowRight size={18} />
             </button>
@@ -215,7 +215,7 @@ export default function Onboarding() {
               onClick={() => setStep('upload')}
               disabled={!name.trim()}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 transition-all"
-              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               Continue <ArrowRight size={18} />
             </button>
@@ -296,7 +296,7 @@ export default function Onboarding() {
               onClick={processPhotos}
               disabled={photos.length === 0}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 mb-3 transition-all"
-              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               Build my wardrobe <ArrowRight size={18} />
             </button>
@@ -339,7 +339,7 @@ export default function Onboarding() {
             <button
               onClick={() => navigate('/wardrobe')}
               className="px-8 py-4 rounded-full font-semibold text-base flex items-center gap-2 transition-all"
-              style={{ background: CARAMEL, color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               View my wardrobe <ArrowRight size={18} />
             </button>

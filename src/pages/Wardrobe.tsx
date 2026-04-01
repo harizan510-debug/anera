@@ -723,7 +723,7 @@ export default function Wardrobe() {
               onClick={() => setShowAddMenu(v => !v)}
               disabled={addLoading || linkLoading}
               className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all"
-              style={{ background: '#7B5B4C', color: '#2B2B2B' }}
+              style={{ background: '#7B5B4C', color: '#FFFFFF' }}
             >
               {(addLoading || linkLoading)
                 ? <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
@@ -798,7 +798,7 @@ export default function Wardrobe() {
               onClick={handleAddFromLink}
               disabled={linkLoading || !linkUrl || linkUrl.length < 10}
               className="px-6 py-3 rounded-full font-semibold text-sm flex items-center gap-2 flex-shrink-0 transition-all"
-              style={{ background: (!linkUrl || linkUrl.length < 10) ? 'rgba(0,0,0,0.08)' : '#7B5B4C', color: (!linkUrl || linkUrl.length < 10) ? 'rgba(43,43,43,0.4)' : '#2B2B2B' }}
+              style={{ background: (!linkUrl || linkUrl.length < 10) ? 'rgba(0,0,0,0.08)' : '#7B5B4C', color: (!linkUrl || linkUrl.length < 10) ? 'rgba(43,43,43,0.4)' : '#FFFFFF' }}
             >
               {linkLoading
                 ? <><Loader2 size={14} className="animate-spin" />Reading…</>
@@ -831,7 +831,7 @@ export default function Wardrobe() {
             className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all"
             style={{
               background: activeCategory === cat ? '#7B5B4C' : '#FFFFFF',
-              color: activeCategory === cat ? '#2B2B2B' : 'rgba(43,43,43,0.5)',
+              color: activeCategory === cat ? '#FFFFFF' : 'rgba(43,43,43,0.5)',
               border: `1px solid ${activeCategory === cat ? '#7B5B4C' : 'rgba(0,0,0,0.06)'}`,
               boxShadow: activeCategory === cat ? '0 2px 8px rgba(123,91,76,0.3)' : '0 1px 4px rgba(0,0,0,0.03)',
             }}
@@ -1055,7 +1055,7 @@ export default function Wardrobe() {
               <button
                 onClick={saveEdit}
                 className="flex-1 py-3.5 rounded-full font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-md"
-                style={{ background: '#7B5B4C', color: '#2B2B2B' }}
+                style={{ background: '#7B5B4C', color: '#FFFFFF' }}
               >
                 <Check size={18} /> Save changes
               </button>
@@ -1204,7 +1204,7 @@ function BasicCard({
         {!added && (
           <div
             className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center font-bold pointer-events-none"
-            style={{ background: '#7B5B4C', color: '#2B2B2B', fontSize: '14px', lineHeight: 1, boxShadow: '0 1px 4px rgba(123,91,76,0.4)' }}
+            style={{ background: '#7B5B4C', color: '#FFFFFF', fontSize: '14px', lineHeight: 1, boxShadow: '0 1px 4px rgba(123,91,76,0.4)' }}
           >
             +
           </div>
