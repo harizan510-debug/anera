@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, CheckCircle, ArrowRight, Loader2, Shirt, Mail, Lock, User } from 'lucide-react';
 import { detectClothingItems } from '../api';
@@ -10,7 +10,7 @@ import { cropImage } from '../utils/cropImage';
 import MultiItemReview from '../components/MultiItemReview';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
-type Step = 'welcome' | 'signin' | 'signup' | 'forgot' | 'name' | 'upload' | 'processing' | 'review' | 'done';
+type Step = 'welcome' | 'signin' | 'signup' | 'forgot' | 'reset' | 'name' | 'upload' | 'processing' | 'review' | 'done';
 
 interface UploadedPhoto {
   file: File;
@@ -56,6 +56,23 @@ export default function Onboarding() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [resetSent, setResetSent] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+
+  // Listen for PASSWORD_RECOVERY event from Supabase (when user clicks reset link in email)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setStep('reset');
+        setAuthError('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordUpdated(false);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleFilePick = useCallback(async (files: FileList | null) => {
     if (!files) return;
@@ -133,6 +150,18 @@ export default function Onboarding() {
     if (error) { setAuthError(error.message); setAuthLoading(false); return; }
     setAuthLoading(false);
     setResetSent(true);
+  };
+
+  const handleUpdatePassword = async () => {
+    setAuthError('');
+    if (!newPassword) { setAuthError('Please enter a new password.'); return; }
+    if (newPassword.length < 6) { setAuthError('Password must be at least 6 characters.'); return; }
+    if (newPassword !== confirmPassword) { setAuthError('Passwords do not match.'); return; }
+    setAuthLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) { setAuthError(error.message); setAuthLoading(false); return; }
+    setAuthLoading(false);
+    setPasswordUpdated(true);
   };
 
   const processPhotos = async () => {
@@ -524,6 +553,86 @@ export default function Onboarding() {
             >
               Back to sign in
             </button>
+          </div>
+        )}
+
+        {/* ── Reset Password (after clicking email link) ── */}
+        {step === 'reset' && (
+          <div className="flex flex-col justify-center min-h-[70vh]">
+            <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
+              {passwordUpdated ? 'Password updated' : 'Set new password'}
+            </h2>
+            <p className="mb-8 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
+              {passwordUpdated
+                ? 'Your password has been updated successfully. You can now sign in.'
+                : 'Enter your new password below.'}
+            </p>
+
+            {!passwordUpdated ? (
+              <>
+                <div className="space-y-3 mb-6">
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                    <input
+                      type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                      placeholder="New password (min. 6 characters)"
+                      autoFocus
+                      className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                      style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                      onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                    <input
+                      type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                      style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                      onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                      onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()}
+                    />
+                  </div>
+                </div>
+
+                {authError && (
+                  <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                    {authError}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleUpdatePassword}
+                  disabled={authLoading}
+                  className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+                >
+                  {authLoading ? <Loader2 size={18} className="animate-spin" /> : 'Update password'}
+                </button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-2xl px-5 py-5" style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <CheckCircle size={20} style={{ color: '#16A34A' }} />
+                    <span className="font-semibold text-sm" style={{ color: '#2B2B2B' }}>Password updated</span>
+                  </div>
+                  <p className="text-sm" style={{ color: 'rgba(43,43,43,0.5)', lineHeight: '1.6' }}>
+                    Your password has been changed. You can now sign in with your new password.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => { setAuthError(''); setStep('signin'); }}
+                  className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
+                  style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+                >
+                  Sign in <ArrowRight size={18} />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
