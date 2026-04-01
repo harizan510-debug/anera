@@ -10,7 +10,7 @@ import { cropImage } from '../utils/cropImage';
 import MultiItemReview from '../components/MultiItemReview';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
-type Step = 'welcome' | 'signin' | 'signup' | 'name' | 'upload' | 'processing' | 'review' | 'done';
+type Step = 'welcome' | 'signin' | 'signup' | 'forgot' | 'name' | 'upload' | 'processing' | 'review' | 'done';
 
 interface UploadedPhoto {
   file: File;
@@ -55,6 +55,7 @@ export default function Onboarding() {
   const [password, setPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
 
   const handleFilePick = useCallback(async (files: FileList | null) => {
     if (!files) return;
@@ -120,6 +121,18 @@ export default function Onboarding() {
     setAuthLoading(false);
     // New user — continue to name step
     setStep('name');
+  };
+
+  const handleForgotPassword = async () => {
+    setAuthError('');
+    if (!email) { setAuthError('Please enter your email address.'); return; }
+    setAuthLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/onboarding`,
+    });
+    if (error) { setAuthError(error.message); setAuthLoading(false); return; }
+    setAuthLoading(false);
+    setResetSent(true);
   };
 
   const processPhotos = async () => {
@@ -343,6 +356,14 @@ export default function Onboarding() {
               {authLoading ? <Loader2 size={18} className="animate-spin" /> : 'Sign in'}
             </button>
 
+            <button
+              onClick={() => { setAuthError(''); setResetSent(false); setStep('forgot'); }}
+              className="w-full text-sm font-medium text-center mt-4"
+              style={{ color: BROWN }}
+            >
+              Forgot my password?
+            </button>
+
             <p className="text-center text-sm mt-4" style={{ color: 'rgba(43,43,43,0.5)' }}>
               Don't have an account?{' '}
               <button onClick={() => { setAuthError(''); setStep('signup'); }}
@@ -435,6 +456,73 @@ export default function Onboarding() {
               style={{ color: 'rgba(43,43,43,0.35)' }}
             >
               Back
+            </button>
+          </div>
+        )}
+
+        {/* ── Forgot Password ── */}
+        {step === 'forgot' && (
+          <div className="flex flex-col justify-center min-h-[70vh]">
+            <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
+              Reset password
+            </h2>
+            <p className="mb-8 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
+              {resetSent
+                ? 'Check your inbox for a password reset link.'
+                : 'Enter your email and we\'ll send you a link to reset your password.'}
+            </p>
+
+            {!resetSent ? (
+              <>
+                <div className="space-y-3 mb-6">
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                    <input
+                      type="email" value={email} onChange={e => setEmail(e.target.value)}
+                      placeholder="Email address"
+                      autoFocus
+                      className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                      style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                      onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                      onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
+                    />
+                  </div>
+                </div>
+
+                {authError && (
+                  <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                    {authError}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleForgotPassword}
+                  disabled={authLoading}
+                  className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+                >
+                  {authLoading ? <Loader2 size={18} className="animate-spin" /> : 'Send reset link'}
+                </button>
+              </>
+            ) : (
+              <div className="rounded-2xl px-5 py-5 mb-6" style={{ background: '#FFFFFF', boxShadow: CARD_SHADOW }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <CheckCircle size={20} style={{ color: '#16A34A' }} />
+                  <span className="font-semibold text-sm" style={{ color: '#2B2B2B' }}>Email sent</span>
+                </div>
+                <p className="text-sm" style={{ color: 'rgba(43,43,43,0.5)', lineHeight: '1.6' }}>
+                  We've sent a password reset link to <strong style={{ color: '#2B2B2B' }}>{email}</strong>. It may take a minute to arrive — check your spam folder if needed.
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={() => { setAuthError(''); setStep('signin'); }}
+              className="w-full py-3 text-sm font-medium text-center mt-2"
+              style={{ color: 'rgba(43,43,43,0.35)' }}
+            >
+              Back to sign in
             </button>
           </div>
         )}
