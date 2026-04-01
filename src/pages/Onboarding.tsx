@@ -64,22 +64,25 @@ export default function Onboarding() {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
+    const params = new URLSearchParams(window.location.search);
+    const isResetMode = params.get('mode') === 'reset';
+
     // Check if Supabase already processed hash fragments before this listener registered
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // Check URL hash for recovery type
-        const hash = window.location.hash;
-        if (hash.includes('type=recovery')) {
+        // Password reset flow: ?mode=reset query param survives Supabase hash processing
+        if (isResetMode) {
           setStep('reset');
           setAuthError('');
           setNewPassword('');
           setConfirmPassword('');
           setPasswordUpdated(false);
-          // Clean up hash from URL
+          // Clean up query param from URL
           window.history.replaceState(null, '', window.location.pathname);
           return;
         }
         // If signed in via OAuth (Google) redirect — go to wardrobe
+        const hash = window.location.hash;
         if (hash.includes('access_token') || session.user?.app_metadata?.provider === 'google') {
           // Clean up hash from URL
           window.history.replaceState(null, '', window.location.pathname);
@@ -177,7 +180,7 @@ export default function Onboarding() {
     if (!email) { setAuthError('Please enter your email address.'); return; }
     setAuthLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/onboarding`,
+      redirectTo: `${window.location.origin}/onboarding?mode=reset`,
     });
     if (error) { setAuthError(error.message); setAuthLoading(false); return; }
     setAuthLoading(false);
