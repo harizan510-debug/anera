@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, CheckCircle, ArrowRight, Loader2, Shirt } from 'lucide-react';
+import { Upload, X, CheckCircle, ArrowRight, Loader2, Shirt, Mail, Lock, User } from 'lucide-react';
 import { detectClothingItems } from '../api';
 import { hasClaudeKey } from '../apiHelper';
 import type { RawDetection } from '../api';
@@ -8,8 +8,9 @@ import { completeOnboarding, fileToBase64, genId } from '../store';
 import type { WardrobeItem, DetectedItem } from '../types';
 import { cropImage } from '../utils/cropImage';
 import MultiItemReview from '../components/MultiItemReview';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
-type Step = 'welcome' | 'name' | 'upload' | 'processing' | 'review' | 'done';
+type Step = 'welcome' | 'signin' | 'signup' | 'name' | 'upload' | 'processing' | 'review' | 'done';
 
 interface UploadedPhoto {
   file: File;
@@ -18,10 +19,17 @@ interface UploadedPhoto {
 }
 
 // Design tokens
-const CARAMEL = '#7B5B4C';
-const CARAMEL_DEEP = '#634A3C';
-const CARAMEL_LIGHT = '#EDE4DD';
+const BROWN = '#7B5B4C';
+const BROWN_DEEP = '#634A3C';
+const BROWN_LIGHT = '#EDE4DD';
 const CARD_SHADOW = '0 4px 20px rgba(0,0,0,0.05)';
+
+const inputStyle: React.CSSProperties = {
+  background: '#FFFFFF',
+  border: '1.5px solid rgba(43,43,43,0.08)',
+  color: '#2B2B2B',
+  boxShadow: CARD_SHADOW,
+};
 
 // Demo detections for when no API key is configured
 const DEMO_DETECTIONS: RawDetection[] = [
@@ -41,6 +49,12 @@ export default function Onboarding() {
   const [detectedItems, setDetectedItems] = useState<DetectedItem[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auth state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   const handleFilePick = useCallback(async (files: FileList | null) => {
     if (!files) return;
@@ -64,6 +78,48 @@ export default function Onboarding() {
       URL.revokeObjectURL(prev[idx].previewUrl);
       return prev.filter((_, i) => i !== idx);
     });
+  };
+
+  // ── Auth handlers ───────────────────────────────────────────────────────────
+  const handleGoogleSignIn = async () => {
+    if (!isSupabaseConfigured) return;
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) { setAuthError(error.message); setAuthLoading(false); }
+  };
+
+  const handleSignIn = async () => {
+    setAuthError('');
+    if (!email || !password) { setAuthError('Please fill in all fields.'); return; }
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setAuthError(error.message); setAuthLoading(false); return; }
+    setAuthLoading(false);
+    // Existing user — go straight to wardrobe
+    completeOnboarding(name || 'You', []);
+    navigate('/wardrobe');
+  };
+
+  const handleSignUp = async () => {
+    setAuthError('');
+    if (!email || !password) { setAuthError('Please fill in all fields.'); return; }
+    if (password.length < 6) { setAuthError('Password must be at least 6 characters.'); return; }
+    setAuthLoading(true);
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) { setAuthError(error.message); setAuthLoading(false); return; }
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        username: email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_'),
+        display_name: email.split('@')[0],
+      }).catch(() => {});
+    }
+    setAuthLoading(false);
+    // New user — continue to name step
+    setStep('name');
   };
 
   const processPhotos = async () => {
@@ -142,13 +198,43 @@ export default function Onboarding() {
     setStep('done');
   };
 
+  // ── Google Sign In button (reusable) ────────────────────────────────────────
+  const GoogleButton = ({ label = 'Continue with Google' }: { label?: string }) => (
+    <button
+      onClick={handleGoogleSignIn}
+      disabled={authLoading}
+      className="w-full py-3.5 rounded-2xl font-medium flex items-center justify-center gap-3 transition-all"
+      style={{ background: '#FFFFFF', border: '1.5px solid rgba(43,43,43,0.08)', color: '#2B2B2B', boxShadow: CARD_SHADOW }}
+    >
+      {authLoading ? <Loader2 size={18} className="animate-spin" /> : (
+        <>
+          <svg width="18" height="18" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          {label}
+        </>
+      )}
+    </button>
+  );
+
+  const Divider = ({ text = 'or' }: { text?: string }) => (
+    <div className="flex items-center gap-3 my-4">
+      <div className="flex-1 h-px" style={{ background: 'rgba(43,43,43,0.08)' }} />
+      <span className="text-xs" style={{ color: 'rgba(43,43,43,0.35)' }}>{text}</span>
+      <div className="flex-1 h-px" style={{ background: 'rgba(43,43,43,0.08)' }} />
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F5F0EB' }}>
 
       {/* Header */}
       <div className="px-6 pt-14 pb-6">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: CARAMEL, boxShadow: CARD_SHADOW }}>
+          <div className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: BROWN, boxShadow: CARD_SHADOW }}>
             <Shirt size={16} color="#FFFFFF" />
           </div>
           <span className="text-lg" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
@@ -160,11 +246,12 @@ export default function Onboarding() {
       {/* Steps */}
       <div className="flex-1 px-6">
 
+        {/* ── Welcome — Sign In or Create Account ── */}
         {step === 'welcome' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
             <div className="mb-10">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: CARAMEL_DEEP }}>
-                Your personal AI stylist
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: BROWN_DEEP }}>
+                Your personal stylist for conscious fashion
               </p>
               <h1 className="text-4xl mb-4" style={{ color: '#2B2B2B', fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.5px' }}>
                 Meet Anera,<br />your wardrobe<br />intelligence.
@@ -173,16 +260,186 @@ export default function Onboarding() {
                 Upload your outfits. Anera learns your style, curates daily looks, and tells you exactly what to wear — or buy.
               </p>
             </div>
+
+            <div className="space-y-3">
+              {/* Create account — primary */}
+              <button
+                onClick={() => { setAuthError(''); setStep('signup'); }}
+                className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
+                style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+              >
+                Create account <ArrowRight size={18} />
+              </button>
+
+              {/* Sign in — secondary */}
+              <button
+                onClick={() => { setAuthError(''); setStep('signin'); }}
+                className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
+                style={{ background: '#FFFFFF', color: '#2B2B2B', border: '1.5px solid rgba(43,43,43,0.1)', boxShadow: CARD_SHADOW }}
+              >
+                I already have an account
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Sign In ── */}
+        {step === 'signin' && (
+          <div className="flex flex-col justify-center min-h-[70vh]">
+            <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
+              Welcome back
+            </h2>
+            <p className="mb-8 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
+              Sign in to access your wardrobe.
+            </p>
+
+            {/* Google */}
+            {isSupabaseConfigured && (
+              <>
+                <GoogleButton label="Sign in with Google" />
+                <Divider />
+              </>
+            )}
+
+            {/* Email/Password */}
+            <div className="space-y-3 mb-6">
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                  style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                />
+              </div>
+              <div className="relative">
+                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                <input
+                  type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                  style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                  onKeyDown={e => e.key === 'Enter' && handleSignIn()}
+                />
+              </div>
+            </div>
+
+            {authError && (
+              <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                {authError}
+              </div>
+            )}
+
             <button
-              onClick={() => setStep('name')}
-              className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all"
-              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+              onClick={handleSignIn}
+              disabled={authLoading}
+              className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
-              Get started <ArrowRight size={18} />
+              {authLoading ? <Loader2 size={18} className="animate-spin" /> : 'Sign in'}
+            </button>
+
+            <p className="text-center text-sm mt-4" style={{ color: 'rgba(43,43,43,0.5)' }}>
+              Don't have an account?{' '}
+              <button onClick={() => { setAuthError(''); setStep('signup'); }}
+                className="font-semibold" style={{ color: BROWN }}>
+                Create one
+              </button>
+            </p>
+
+            <button
+              onClick={() => setStep('welcome')}
+              className="w-full py-3 text-sm font-medium text-center mt-2"
+              style={{ color: 'rgba(43,43,43,0.35)' }}
+            >
+              Back
             </button>
           </div>
         )}
 
+        {/* ── Sign Up ── */}
+        {step === 'signup' && (
+          <div className="flex flex-col justify-center min-h-[70vh]">
+            <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
+              Create your account
+            </h2>
+            <p className="mb-8 text-sm" style={{ color: 'rgba(43,43,43,0.5)' }}>
+              Join Anera and start building your smart wardrobe.
+            </p>
+
+            {/* Google */}
+            {isSupabaseConfigured && (
+              <>
+                <GoogleButton label="Sign up with Google" />
+                <Divider text="or sign up with email" />
+              </>
+            )}
+
+            {/* Email/Password */}
+            <div className="space-y-3 mb-6">
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                  style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                />
+              </div>
+              <div className="relative">
+                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+                <input
+                  type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="Password (min. 6 characters)"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+                  style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                  onKeyDown={e => e.key === 'Enter' && handleSignUp()}
+                />
+              </div>
+            </div>
+
+            {authError && (
+              <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                {authError}
+              </div>
+            )}
+
+            <button
+              onClick={handleSignUp}
+              disabled={authLoading}
+              className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+            >
+              {authLoading ? <Loader2 size={18} className="animate-spin" /> : <>Create account <ArrowRight size={18} /></>}
+            </button>
+
+            <p className="text-center text-sm mt-4" style={{ color: 'rgba(43,43,43,0.5)' }}>
+              Already have an account?{' '}
+              <button onClick={() => { setAuthError(''); setStep('signin'); }}
+                className="font-semibold" style={{ color: BROWN }}>
+                Sign in
+              </button>
+            </p>
+
+            <button
+              onClick={() => setStep('welcome')}
+              className="w-full py-3 text-sm font-medium text-center mt-2"
+              style={{ color: 'rgba(43,43,43,0.35)' }}
+            >
+              Back
+            </button>
+          </div>
+        )}
+
+        {/* ── Name ── */}
         {step === 'name' && (
           <div className="flex flex-col justify-center min-h-[70vh]">
             <h2 className="text-3xl mb-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
@@ -194,34 +451,33 @@ export default function Onboarding() {
             <label className="block mb-2 font-bold uppercase" style={{ fontSize: '11px', color: 'rgba(43,43,43,0.45)', letterSpacing: '0.05em' }}>
               Your name
             </label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Sarah"
-              autoFocus
-              className="w-full px-4 py-3.5 rounded-2xl text-base outline-none mb-6 transition-all"
-              style={{
-                background: '#FFFFFF',
-                border: '1.5px solid rgba(43,43,43,0.08)',
-                color: '#2B2B2B',
-                boxShadow: CARD_SHADOW,
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = CARAMEL}
-              onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
-              onKeyDown={e => e.key === 'Enter' && name.trim() && setStep('upload')}
-            />
+            <div className="relative mb-6">
+              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(43,43,43,0.3)' }} />
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="e.g. Sarah"
+                autoFocus
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-base outline-none transition-all"
+                style={inputStyle}
+                onFocus={e => e.currentTarget.style.borderColor = BROWN}
+                onBlur={e => e.currentTarget.style.borderColor = 'rgba(43,43,43,0.08)'}
+                onKeyDown={e => e.key === 'Enter' && name.trim() && setStep('upload')}
+              />
+            </div>
             <button
               onClick={() => setStep('upload')}
               disabled={!name.trim()}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 transition-all"
-              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+              style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               Continue <ArrowRight size={18} />
             </button>
           </div>
         )}
 
+        {/* ── Upload ── */}
         {step === 'upload' && (
           <div>
             <h2 className="text-3xl mb-2 mt-2" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
@@ -237,8 +493,8 @@ export default function Onboarding() {
               onDragOver={e => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = CARAMEL;
-                (e.currentTarget as HTMLElement).style.background = CARAMEL_LIGHT;
+                (e.currentTarget as HTMLElement).style.borderColor = BROWN;
+                (e.currentTarget as HTMLElement).style.background = BROWN_LIGHT;
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLElement).style.borderColor = 'rgba(43,43,43,0.12)';
@@ -247,8 +503,8 @@ export default function Onboarding() {
               className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer mb-5 transition-all"
               style={{ border: `1.5px dashed rgba(43,43,43,0.12)`, background: '#FFFFFF', padding: '40px 20px', boxShadow: CARD_SHADOW }}
             >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: CARAMEL_LIGHT }}>
-                <Upload size={22} style={{ color: CARAMEL_DEEP }} />
+              <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: BROWN_LIGHT }}>
+                <Upload size={22} style={{ color: BROWN_DEEP }} />
               </div>
               <div className="text-center">
                 <p className="font-semibold text-sm" style={{ color: '#2B2B2B' }}>
@@ -296,7 +552,7 @@ export default function Onboarding() {
               onClick={processPhotos}
               disabled={photos.length === 0}
               className="w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 mb-3 transition-all"
-              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+              style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               Build my wardrobe <ArrowRight size={18} />
             </button>
@@ -310,10 +566,11 @@ export default function Onboarding() {
           </div>
         )}
 
+        {/* ── Processing ── */}
         {step === 'processing' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: CARAMEL_LIGHT, boxShadow: CARD_SHADOW }}>
-              <Loader2 size={32} style={{ color: CARAMEL_DEEP }} className="animate-spin" />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: BROWN_LIGHT, boxShadow: CARD_SHADOW }}>
+              <Loader2 size={32} style={{ color: BROWN_DEEP }} className="animate-spin" />
             </div>
             <h2 className="text-2xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Scanning your wardrobe...
@@ -324,14 +581,15 @@ export default function Onboarding() {
           </div>
         )}
 
+        {/* ── Done ── */}
         {step === 'done' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: CARAMEL_LIGHT, boxShadow: CARD_SHADOW }}>
-              <CheckCircle size={32} style={{ color: CARAMEL_DEEP }} />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: BROWN_LIGHT, boxShadow: CARD_SHADOW }}>
+              <CheckCircle size={32} style={{ color: BROWN_DEEP }} />
             </div>
             <h2 className="text-3xl mb-3" style={{ color: '#2B2B2B', fontWeight: 700, letterSpacing: '-0.5px' }}>
               Wardrobe ready!<br />
-              <span style={{ color: CARAMEL_DEEP }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
+              <span style={{ color: BROWN_DEEP }}>{savedCount} item{savedCount !== 1 ? 's' : ''}</span> added
             </h2>
             <p className="text-sm mb-10" style={{ color: 'rgba(43,43,43,0.5)' }}>
               Let's start styling, {name}.
@@ -339,7 +597,7 @@ export default function Onboarding() {
             <button
               onClick={() => navigate('/wardrobe')}
               className="px-8 py-4 rounded-full font-semibold text-base flex items-center gap-2 transition-all"
-              style={{ background: CARAMEL, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
+              style={{ background: BROWN, color: '#FFFFFF', boxShadow: CARD_SHADOW }}
             >
               View my wardrobe <ArrowRight size={18} />
             </button>
